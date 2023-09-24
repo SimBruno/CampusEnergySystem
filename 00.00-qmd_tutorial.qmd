@@ -1,0 +1,276 @@
+
+# Tools {#sec-tool}
+
+This is a _sample_ book written in   [Quarto](https://quarto.org/). **Quarto** is an advanced version of Rmarkdown, which can combine LATEX with the simplicity of taking notes and integrating codes and calculations in the same document. Quarto is based on a text language [markdown](https://daringfireball.net/projects/markdown/basics) enriched with some functionalities of the [Pandoc's Markdown](https://pandoc.org/MANUAL.html#pandocs-markdown) package that allows for example to integrate a math equation $a^2 + b^2 = c^2$. A summary of the instructions available in **Quarto** are in the [Cheat sheet](https://quarto.org/docs/get-started/hello/vscode.html). 
+
+## Overview
+
+In the very beginning, we introduce you the tools to be used during the semester, including:
+
+- Virtual Machine
+- Gitlab
+- Quarto
+- Visual studio code
+
+From **Section 2.2 to 2.5** is a step-by-step tutorial for you to follow to start the project. **Section 2.6** is a brief introduction how you can use Gitlab with VS code. **Section 2.7** introduces the common Quarto syntax.
+
+## Step 1 - Log into your Virtual Machine
+
+To avoid setup issues, we created a virtual machine [^1] (**VM**) for you where all the necessary material is already installed. To access the VM, you have to install [VMware Horizon](https://vdi.epfl.ch/) and to log on **STI-FM-cours-2023** with your EPFL Gaspar account. 
+
+**Important here!!!!!** **Everything that is stored on the VM will be erased once you log off**. However, python and quarto are not able to access your document folder due to path issues on Windows. Therefore, store your project files in your personal document folder and while you are working on the project, move your project folder from your documents to the desktop to by-pass this issue. Don't forget to regularly send your work progress on gitlab (`commit` + `push`), especially when you log-off. We will try to find another way to avoid this copy-pasting step.
+
+## Step 2 - Git Clone the project
+
+### Set up your Gitlab account
+
+> [What is git?](https://wiki.epfl.ch/git-epfl/documents/git.html)
+
+Since you are from EPFL, you already have a [gitlab account](https://gitlab.epfl.ch/). If you are using gitlab for the first time, you will have to **reset your password**. You can do it in your perfornal profile. To do so, go to your public avatar - edit profile - Password and enter three times your gaspar password. Click Save password. 
+
+```{r git_password, out.width='100%', fig.align='center', fig.cap='Where to change the password in your git account'}
+knitr::include_graphics('Figures/git_password.png')
+```
+
+
+### Clone the project repository to your VM and local machine
+
+For this course, we prepared a git repository with the template for your **final report** and your starting pack for the project. We will grant you access to the repo of your group once you formed your project group. Make sure that you have access to this repository. If you have any questions, do not hesitate to contact a TA.
+
+Your project is created online. To have it locally on your VM/computer do the followings:
+
+1. Open your git repository in gitlab and copy the HTTPS url of your repository  (@fig-url-clone). 
+2. Open your *terminal* or *command prompt* and go to the folder where you would like to clone your repository using the `cd` command. In @fig-git-clone, you can see that I chose the `Desktop` folder.
+3. Clone the repo using the command `git clone` (@fig-git-clone). While cloning the repo, it could be that you are asked to enter Gaspar credentials in the Password section (@fig-git-login). If you didn't reset your password, you can not pass the authentification here.
+
+```{r url-clone, out.width='100%', fig.align='center', fig.cap='Copy the URL'}
+#| label: fig-url-clone
+knitr::include_graphics('Figures/url_clone.png')
+```
+
+```{r git-clone, out.width='100%', fig.align='center', fig.cap='Clone the repo'}
+#| label: fig-git-clone
+knitr::include_graphics('Figures/git_clone.png')
+```
+
+
+```{r git-login, out.width='100%', fig.align='center', fig.cap='Login to git'}
+#| label: fig-git-login
+knitr::include_graphics('Figures/git_login.png')
+```
+
+Your repo is now in local. You can start to work on it! In the following two sections, we will briefly introduce visual studio code.
+
+## Step 3 - Run the project on Visual studio code
+
+An easy way to manage your project and git is through visual studio code. You need to do the following step-by-step:
+
+1. Open the software, select "File" and open the folder you just clone from the repository (@fig-vs-folder).
+2. Check the extensions installed. The following extensions are required for the project. You can install those extensions by clicking the tool box icon on the side bar and search them by name and the clicking "Install" (@fig-vs-extensions). You might be missing the extensions for Quarto and Ampl.
+    * Python, by Microsoft
+    * Quarto, by Quarto
+    * R, by REditorSupport
+    * AMPL by Michael Sundvick
+  You can as well install these extensions to help you with git:
+    * Git History, by Don Jayamanne
+    * Git Graph, by mhutchie
+3. Open the terminal bar in VS code (@fig-vs-check)
+4. Input `quarto check` in the terminal and then `enter` to check the environment setting of you quarto (@fig-quarto-check). 
+5. Input `quarto preview` in the terminal to open a temperary report on your browser(@fig-quarto-preview). It will take several minutes for your first run. No worries and be patient. Continue reading the tutorial while the setup is being done. You can edit the content in the `qmd` file and the report will adapt the changes automatically when you save the changes. It is like that you are building a website or using overleaf.
+6. Open a new terminal and input `quarto render` in the terminal to generate a report in html format in the `_book` folder(@fig-quarto-render).
+
+If everything went smoothly until now, then please receive my congratulations. You have finished the set-up processes that took the TA team 2 months to prepare.
+```{r vs-folder, out.width='100%', fig.align='center', fig.cap='Rosmose setup, do not install miniconda'}
+#| label: fig-vs-folder
+knitr::include_graphics('Figures/vs_open_folder.png')
+```
+
+```{r vs-extensions, out.width='50%', fig.align='center', fig.cap='How to install extentions'}
+#| label: fig-vs-extensions
+knitr::include_graphics('Figures/vs_extensions.png')
+```
+
+```{r vs-check, out.width='100%', fig.align='center', fig.cap='Where to open terminal in VS code'}
+#| label: fig-vs-check
+knitr::include_graphics('Figures/vs_check.png')
+```
+
+```{r quarto-check, out.width='100%', fig.align='center', fig.cap='How to preview the report'}
+#| label: fig-quarto-check
+knitr::include_graphics('Figures/quarto_check.png')
+```
+
+```{r quarto-preview, out.width='80%', fig.align='center', fig.cap='How to preview the report'}
+#| label: fig-quarto-preview
+knitr::include_graphics('Figures/quarto_preview.png')
+```
+
+```{r vs-render, out.width='100%', fig.align='center', fig.cap='How to render the report'}
+#| label: fig-quarto-render
+knitr::include_graphics('Figures/quarto_render.png')
+```
+
+
+## Play with Git and VS code
+
+During the semester, you will have to share your work and code with your colleagues. By VS code and Git, you can easily achive the target. 
+
+> **Important!!!! You can not do the following for this repository, because you are not granted manager authorities**
+
+In VS code, if you have install the extenstion `git history` and `git graph`, you can find the **Git icon** on the side bar.
+
+```{r vs-git, out.width='80%', fig.align='center', fig.cap='Git tools in VS code'}
+knitr::include_graphics('Figures/vs_git.png')
+```
+
+You can see all the changes that you have made. There are three steps to save all the changes.
+
+`git add` --> By clicking the "+", you add the changes.
+
+```{r vs-git-add, out.width='50%', fig.align='center', fig.cap='Where to find git add'}
+knitr::include_graphics('Figures/git_add.png')
+```
+
+`git commit` --> Input the words you want your collaborator to see and click "Commit", you commit your changes to your local branch
+
+```{r vs-git-commit, out.width='50%', fig.align='center', fig.cap='Where to find git commit'}
+knitr::include_graphics('Figures/git_commit.png')
+```
+
+`git push` --> Push your local changes to the git server
+
+```{r vs-git-push, out.width='50%', fig.align='center', fig.cap='Where to find git push'}
+knitr::include_graphics('Figures/git_push.png')
+```
+
+You will find you changed the files on the git website.
+```{r vs-git-changes, out.width='50%', fig.align='center', fig.cap='Changes on git website'}
+knitr::include_graphics('Figures/git_server.png')
+```
+
+You can also do all the steps above in `command` or `terminal`. You can find a lot of tutorials on google, like [this one](https://www.earthdatascience.org/workshops/intro-version-control-git/basic-git-commands/). Git is a very powerful tool and it will be very useful in your future courses or career.
+
+
+
+## Quarto syntax {#sec-rmd-syntax}
+### Chunks and codes
+Quarto uses chunks (also called cells) to include your codes into the report (see below). First, you define the language (r, python, ...) and a label to you chunk (my-first-chunk). You decide whether you want to show the code (echo=TRUE or echo=T) or not (echo=FALSE or echo=F). The keyboard shortcut to initialize a chunk is `Ctrl` + `Shift` + `i`. It is worth mentioning that you can specify general settings for your code display:
+```{r setup}
+knitr::opts_chunk$set(echo = F, warning = F, message = F)
+```
+
+I want to show the code:
+
+```{r my first chunk, echo=TRUE}
+consumption=10 #[kg/h]
+t_op=8760 #[h/year]
+cost= 2 #[CHF/kg]
+total=consumption*t_op*cost
+total
+```
+
+I don't want to show the code:
+
+```{r my second chunk, echo=F}
+total=200000
+total
+```
+
+Finally, you can use in-line calculation. For example, you want to show that the total costs are `r consumption*t_op*cost/1000` kCHF/year. Or using latex syntax that it is `r consumption*t_op*cost/1000` $\frac{kCHF}{year}$.
+
+
+### Labels, figures, tables, equations, references {#sec-tuto}
+
+
+You can label chapter and section titles using `{#sec-xxx}` after them and refer to the with `@sec-xxx`, for example this is @sec-tuto. 
+
+To write equations you can use the latex syntax in between two set of `$$` symbols. To label your equation use `{#eq-xxx}` and refer with `@eq-xxx`. This is @eq-my-label. Use the character `-` instead of white spaces.
+
+$$
+k_{\mathrm{th}} = U_{\mathrm{env}} + \dot{m}_{\mathrm{air}} \cdot c_{p,air}
+$$ {#eq-my-label}
+
+
+Figures are displayed using the following structure `![caption](path to figure){@fig-xxx}`. You can add options like ` fig-align="left"` or `width=70%` next to your label and you refer to the figure with `@fig-xxx` like in @fig-intro.
+
+![My introductive funny picture](Figures/intro_figure.PNG){#fig-intro fig-align="left" width=70%}
+
+Of course you can also plot your own figures directly with a quarto chunk as in @fig-plots. To add a label to a plot from a chunk, write `#| label: fig-xxx` in the chunk.
+
+```{r nice-fig, fig.cap='Here is a nice figure!', out.width='80%', fig.asp=.75, fig.align='center'}
+#| label: fig-plots
+plot(pressure, type = 'b', pch = 19)
+```
+
+
+Just like figures, tables in latex format are printed only in a pdf document. You can create tables using this [link](https://www.tablesgenerator.com/markdown_tables). An example is given below on @tbl-occupancy. The caption of the table is set at the end with `Table: caption`. You can add a label with the format `{#tbl-xxx}` after the caption.
+
+
+|category|E$^{demand}$|Heat gains|Surface|Q$_{tot}$|
+|--------  |:-|:----:|:--:|---:|
+|classroom | 1  | 5  |  1 |  5 |
+|restaurant| 2  | 5  |  2 |  3 |
+|offices   | 3  |   9| 3  | 5  |
+Table: My first table {#tbl-occupancy}
+
+
+An option to plot tables with your own data is to use a chunk and to use the function `knitr::kable()` to generate the table (Ex:@tbl-kable). To label your table, add `#| label: tbl-xxx` in the chunk.
+
+
+```{r nice-tab, tidy=FALSE}
+#| label: tbl-kable
+knitr::kable(
+  head(iris, 5), caption = 'Here is a nice table',
+  booktabs = TRUE
+)
+```
+
+
+You can write citations, too. For example, we are using the **bookdown** package [@R-bookdown] in this sample book, which was built on top of R Markdown and **knitr** [@xie2015]. The list of references available are in project.bib.
+
+The bibliography is stored in the _project.bib_ file in the book folder. You can generate this file from your bibliography management system. We recommend the use of open source system [Zotero](https://www.zotero.org) to manage biography. In zotero any subgroup of your library can be exported as a library in the report folder. If you want to change the name of the bibliography file, it is in the header of the file index.Rmd, citations can be directly obtained by a right click in the Zotero application.
+
+When the book is build, all paths are set from the first level of the folder (where the .yml files are). Keep this in mind when you call figures and data files for your report. 
+
+
+### Interactive figures
+
+The strength of building html files instead of pdf is the interactivity they allow between the user and the report. The results are dynamic, we can zoom, select data and explore the dataset. @fig-ggplot-figure shows an interactive plot using the library plotly.
+
+
+```{r plot-library, echo=F, fig.cap= 'An interactive figure produced with plotly.'}
+#| label: fig-ggplot-figure
+library(ggplot2)
+library(plotly, warn.conflicts=FALSE)
+
+p <- ggplot(data = diamonds, aes(x = cut, fill = clarity)) +
+            geom_bar(position = "dodge")
+ggplotly(p)
+```
+
+
+Similarly, an interactive table can be embedded in the report, as shown in @fig-kables. Pay attention that dynamic tables are treated like figures. Therefore, to refer to them, use `@fig-xxx` and not `@tab-xxx`.
+
+```{r table-widget, echo=F, fig.cap= 'A table widget rendered via the DT package.'}
+#| label: fig-kables
+library(DT)
+datatable(
+  iris,
+  caption = NULL
+)
+```
+
+**Further Information**
+
+Further guidelines, additional features and possible customization are provided here:
+
+* [Quarto: The Guide](https://quarto.org/docs/guide/)
+* [Labeling and referencing](https://quarto.org/docs/authoring/cross-references.html)
+
+In addition, you will find some documentation on Rmarkdown below. It is the former version of Quarto and shares more or less the same syntax than Quarto.
+
+* [Authoring Books and Technical Documents with R Markdown](https://bookdown.org/yihui/bookdown/markdown-syntax.html),
+* [R Markdown Cookbook](https://bookdown.org/yihui/rmarkdown-cookbook/).
+
+
+[^1]: <span style="font-family:Calibri; font-size: 0.8em;"> A Virtual Machine (VM) is a compute resource that uses software instead of a physical computer to run programs and deploy apps. 

@@ -1,0 +1,108 @@
+# Adapt file for your fluids, according to the number of measurements you have
+# complete according to the number of measurements are available for the periods of your fluid
+
+
+set Time := 1 2 3 4 5 !!!;
+
+
+
+param T_ext := # [°C]  external temperature
+1
+2
+3
+4
+5
+!!!
+;  
+
+
+param T_cond := # [°C]  condensation temperature of hp, HP6_T
+1 4.6
+2 5
+3 6
+4 9.1
+5 14.4
+6 11.5
+7 6.6
+8 2.1
+; 
+
+param T_evap := # [°C]  condensation temperature of hp, HP2_T
+1
+2
+3
+4
+5
+!!!
+; 
+
+param T_hp_5 := # [°C]  temperature of hp at point 5
+1
+2
+3
+4
+5
+!!!
+; 
+
+
+param T_EPFL_in := # [°C]  temperature of EPFL in: EPFL_IN_T
+1
+2
+3
+4
+5
+!!!
+; 
+
+
+param T_EPFL_out := # [°C]  temperature of EPFL out: EPFL_OUT_T
+1
+2
+3
+4
+5
+!!!
+; 
+
+
+
+
+
+
+param Q_cond := # [kW] heat provided by heat pump, Q_COND_LOAD
+1
+2
+3
+4
+5
+!!!
+;
+
+
+param Q_evap := # [kW] heat provided by heat pump, Q_EVAP_LOAD 
+1
+2
+3
+4
+5
+!!!
+;
+
+param W_comp1 := # [kW] electricity needed by heat pump compressor 1 ,  W_HP_COMP1_POWER  
+1
+2
+3
+4
+5
+!!!
+;
+
+param W_comp2 := # [kW] electricity needed by heat pump compressor 1 ,  W_HP_COMP2_POWER  
+1
+2
+3
+4
+5
+!!!
+;

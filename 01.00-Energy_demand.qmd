@@ -1,0 +1,126 @@
+---
+title: "Energy demand of the EPFL campus"
+editor: visual
+---
+
+Here you report what you have done and found concerning part 1. It includes the parametric estimations of the electricity demand, the heat gains from the people, the Kth and Ksun values using Newton_Raphson and the typical period clustering. All .qmd files present in the main folder are read while rendering the book. The four folders called **codes** are here to make your calculations. The files contained in these folders are not read while rendering the book. **We advice you to work and develop your models in the subfolders only**. Then you will use the .qmd in the main folder to report the models and data generated in the sub-folders. 
+
+**Important note: when you are working on your functions and models, open VScode at the level of the subfolders to avoid path issues!**
+
+## Objective
+
+The main objective of this part of the project is to **analyze the energy demands of the EPFL campus**, with a focus on the heating demands and design characteristics of the various buildings on-site. Understanding the thermal design of the buildings (wall properties, heat gains, thermal losses) is important for a proper control of the amount of energy required to ensure thermal comfort throughout the year. To this end you are asked to: 
+
+ 1. calculate the thermal gains from people and electronic appliances, based on the occupancy profiles of the buildings 
+ 2. estimate the thermal properties of the buildings based on the annual heating demand 
+ 3. Identify the most frequent and extreme working conditions (typical periods)
+ 4. Derive the hourly heating demand over the whole year for the buildings
+
+In the reminaing of the project, you will use the results obtained at the end of this part.
+
+## Code Guidelines
+
+For this **Part 1** you have at your disposition:
+
+ - Two .csv files *Buildings.csv* and *Weather.csv* containing the data to process
+ - A python file *NR_functions.py* where you will develop your functions to solve part 1
+ - A **book** in **Quarto** *01.00-Energy_demand.qmd* (the file where you are now) where you will call your functions and data to report the results
+
+Most of the development will take place in the python file *NR_functions.py*. Once your functions are running well, you will use to this .qmd file for the reporting and call your functions to generate and plot results.
+
+In *NR_functions.py*, the data are imported using [Pandas](http://pandas.pydata.org) library, and we suggest you to make your calculations using the [Numpy](http://www.numpy.org) library. In addition to this, you are welcome to use any other libraries or toolboxes for the project. Regarding the plots, we advise you to use either [Matplotlib](https://matplotlib.org/), [Seaborn](https://seaborn.pydata.org/) or [Plotly Python](https://plotly.com/python/). **Even though we propose a certain structure for the function, you are totally free to restructure them the way you prefer. It only aims to help you start with the project by providing skeleton functions. If you find it more convenient to do it very differently, you are welcome to do so.**
+
+Before starting, check that your venv folder has been created the first time you have rendered the index.qmd. 
+
+
+## Reporting
+In the following, we provide you some piece of codes to integrate your functions and data in the report. 
+In the first chunk, you specify the path to your venv folder. 
+
+```{r}
+path <- file.path('./venv/Scripts/python.exe')
+library(reticulate)
+use_python(path)
+```
+
+If some python packages are missing, you can install them yourself in the venv. Below is an example. Don't forget to comment the chunk once the package has been installed in your venv (echo=F). Note that here we are using an R chunk to do this. You could as well use the terminal.
+```{r, eval=F}
+py_install("seaborn")
+```
+
+
+Load the data:
+
+```{python package, echo=T, results='hide'}
+import codes_01_energy_demand.NR_functions as fct1
+weather, buildings = fct1.load_data_weather_buildings()
+```
+
+Overview of the Buildings dataframe
+
+```{python table plot, echo=F}
+import plotly.graph_objects as go
+fig = go.Figure(data=[go.Table(
+    header=dict(values=list(buildings.columns),
+                fill_color='lightskyblue',
+                line_color='darkslategray',
+                align='center'),
+    cells=dict(values=[buildings[col] for col in buildings],
+               fill_color='white',
+               line_color='darkslategray',
+               align='center'))
+])
+fig.update_layout(width=800, height=700)
+
+```
+
+
+## TASK 1 - Calculation of the internal heat gains (people & appliances)
+
+Using python chunks and functions in NR_functions.py, calculate the heat gains from people and appliances.
+
+Then find the values of kth and ksun for every building. Finally, store all your results in a new .csv file to use them later. 
+
+### Internal gains - People
+
+```{python, echo=T, results='hide'}
+# Generate the yearly occupancy profile of the buildings
+occ_profile = fct1.occupancy_profile()
+```
+
+
+```{python, echo=T, results='hide'}
+# Returns the annual profile of heat generated by people of a specified building
+building_id=None
+occ_profile=None
+fct1.people_gains(building_id, occ_profile)
+```
+
+### Internal gains - Electronic appliances
+
+```{python, echo=T, results='hide'}
+# Returns the annual profile of heat generated by appliances of a specified building
+building_id= 1
+fct1.elec_gains(building_id, occ_profile)
+```
+
+## TASK 2 - Calculation of the building thermal properties (k<sub>th</sub> and k<sub>sun</sub>)
+
+Parameters for Newton-Raphson iterations
+
+
+Mean values computation and proper initialisation
+
+```{python, echo=T, results='hide'}
+# Returns the heat transfer coefficients k_th and k_sun of a specified building, as well as the number of Newton-Raphson iterations
+fct1.solving_NR()
+```
+
+## TASK 4 - Clustering
+
+The clustering should be performed on weather data, in our case external temperature and irradiation. Remind that it is highly recommended to normalize the data before clustering.
+
+It is required to apply at least two clustering methods and to compare the quality of the generated typical periods. It is your choice to select the preferred methodology to reduce the data. Give some visual representations of your clustering results.
+
+Optional: To conclude this first part, you can plot the hourly heat demand of the campus based on the internal heat gains, k_sun, k_th and your typical periods.
+

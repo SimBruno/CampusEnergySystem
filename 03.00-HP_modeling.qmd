@@ -1,0 +1,96 @@
+# Modelling of a heat pump and data reconciliation
+
+## Degrees of Freedom (DOF) analysis
+
+**Given:**
+
+The VALI model of the 2-stage heat pump with tags set to OFF (the default working fluid is R290, you should not change it) – *R-290.bls*. 
+
+A csv file with 5 combinations of sets, only one of which is correct.
+
+**Task**
+
+Perform a DOF analysis to identify which tags must be set to CST and which ones must remain OFF.
+
+Activate the tags and make sure the model is running properly.
+
+*Hint*: For each component, identify how many measurements are needed for mass and energy balances, how many measurements are set as parameters and how many are calculated by the model. 
+
+**Result**
+
+Working model of the 2-stage HP for the working fluid R290.
+
+### Model adjustment to a second working fluid (Optional)
+
+**Task**
+
+Adjust the model from the previous section to a second working fluid of your choice between the 7 options listed in Table 4.1.
+
+*Hints*:
+
+- Modify the working fluid (Thermod) in your simulation file.
+- Correct the pressure ratio of the compressors so that the high-pressure level corresponds to the saturation pressure for the desired condensation temperature.
+- Adjust the flow rate so that the heat pump has a heating capacity of 6000 kW (the maximum capacity of the HP is in this magnitude).
+
+**Result**
+
+Working model of the 2-stage HP for the working fluid of your choice.
+
+## Data reconciliation
+
+**Given**
+
+Measurements for 7 working fluids, each with 2 temperature levels (low-temperature and medium-temperature) and between 6 and 11 periods.
+
+**Task**
+
+Run the VALI model with the corresponding measurements.
+
+**Result**
+
+Obtain the reconciled files.
+
+*Hint*:
+Note that the measurement file indicates where the reconciled file should be saved. For instance, for the *R-290_LT_1.txt* file, the location is defined by the command `ARCHIVE -T Reconciled/reconc_R-290_LT_1.txt`. Make sure to have a folder named *Reconciled* in the same folder as the Vali model.
+
+## Performance and cost evaluation
+
+**Given**
+
+Three AMPL files: *moes2021_P4_Rxxx.dat*, *moes2021_P4.mod* and *moes2021_P4.run*.
+
+Table with ambient temperatures for each measurement.
+
+**Task**
+
+For the performance evaluation:
+
+- Use the information in the reconciled files from VALI to complete the AMPL model.
+- Derive a regression curve that calculates the Carnot factor as a polynomial function of the ambient temperature for both stages of the HP. You are asked to derive the factors *a*, *b* and *c*. In general, you can assume:
+
+\begin{equation}
+C_{Carnot}^*(t) = a \cdot T_{amb}^2(t) - b \cdot T_{amb}(t) + c
+(\#eq:Carnot1)
+\end{equation}
+
+\begin{equation}
+C_{Carnot} = \frac {Q(t)}{W(t)} \cdot \frac {T_{cond}(t)-T_{evap}(t)}{T_{cond}(t)}
+(\#eq:Carnot2)
+\end{equation}
+
+- Make sure to identify the evaporator and the condenser temperature of both sides accordingly. You will find some hints in the AMPL code. Note that the temperatures in Eq. \@ref(eq:Carnot2) must be in K.
+
+For the cost evaluation:
+
+- Assume the worst case conditions to evaluate the area of the heat exchangers, which is then fixed, and to size the other components (e.g. compressors).
+Calculate the cost for the two-stage HP with cost functions provided in the literature or taken from previous sections. Consider only the costs of the heat exchangers and the compressor, since they are the main contributors to the investment cost of heat pumps. 
+
+**Result**
+
+Polynomial function for the Carnot factor as a function of the ambient temperature Ta.
+
+Size of the heat exchangers and compressor.
+
+Cost of the total system.
+
+Unit cost of the system per kW of heating capacity.

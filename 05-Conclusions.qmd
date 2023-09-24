@@ -1,0 +1,6 @@
+# Conclusions
+
+At the end of the project, the main recommendations and findings are reported.
+
+The most important values are reported and presented in a synthetic (graphical and tabulated) way. The conclusions should include the key take-home messages with the key numbers associated. 
+

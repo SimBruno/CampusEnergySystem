@@ -1,0 +1,15 @@
+# Preface
+You can use this section as a title page, make your creativity shine here.
+
+```{r setup venv, eval = T, echo=FALSE, message=FALSE, results="hide"}
+# To set up your virtual environment in python, input the following code in your terminal after running this chunk:
+# For mac
+# 'source venv/bin/activate'
+# 'python3 -m pip install jupyter matplotlib pandas'
+# For windows
+# 'env\Scripts\activate.bat'
+# 'py -m pip install jupyter matplotlib pandas'
+# after you successfully set your virtual environment for python, you can comment out this chunk
+source("./setup-venv.R", local = knitr::knit_global())
+```
+

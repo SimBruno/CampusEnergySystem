@@ -1,0 +1,78 @@
+# Run the optimization with you own parameters
+
+Below are a some pieces of codes to help you using sending your own parameters from part 1 to ampl. Note that here we used a quarto document, but you can as well write everything in a python file. You need quarto only for your final report.
+
+
+```{r}
+path <- file.path('../venv/Scripts/python.exe')
+library(reticulate)
+use_python(path)
+```
+
+We will be using the amplpy interface to do so. It will basically replace the .run file you were using. The interface allows to import models, send parameters, run the optimization and retrieve the results using python. The strong advantage of this interface is to have an automated flow of data between your ampl models and your report. It will avoid you a lot of copy-pasting!
+
+First, we need to import the ampl files (.mod and .dat) and set solving options. Pay attention to the paths, depending on the root where you opened VScode the paths might change. To avoid path issues always open VScode in the folder you are working on.
+
+
+```{python initialize ampl, echo=F, results='hide'}
+from amplpy import AMPL, Environment
+ampl = AMPL()
+
+ampl.cd("1.Reference_case") # select the right folder
+
+ampl.read("NLP_ref.mod")
+ampl.readData("NLP_ref.dat")
+
+ampl.setOption('solver', 'gurobi')
+ampl.setOption('presolve_eps', 8.53e-15)
+
+```
+
+
+For the heat recovery with air ventilation (options 3 and 4) you need the parameters from part 1. You can send them to ampl with this chunk. Ignore the chunk for the reference and data center cases (options 1 and 2).
+
+```{python send data to ampl, echo=F, results='hide', eval=F}
+import pandas as pd
+import os
+
+data=pd.read_csv("../codes_01_energy_demand/data_MOES.csv")
+
+# the index of the dataframe has to match the values of the set "Buildings" in ampl
+data.index = ["Building" + str(i) for i in range(1,len(data)+1)] 
+
+# send parameters to ampl
+ for col in data.columns:
+  ampl.getParameter(col).setValues(data[col])
+
+data
+
+```
+
+
+Solve the model:
+
+```{python solve ampl, echo=F, results='hide'}
+# Solve
+ampl.solve()
+```
+
+
+The `save_ampl_results` function is located in the file `functions.py` and is there to store all your parameters, variables and objective value in a .pkl file in the results folder.
+
+```{python}
+from functions import save_ampl_results
+save_ampl_results(ampl, pkl_name="scenario1")
+```
+
+You can easily access your data as shown below. We advice you to use this chunk in your report to get the data for your plots / tables.
+
+```{python}
+import pandas as pd
+myData = pd.read_pickle("results//scenario1.pkl")
+myData["OPEX"]
+```
+
+
+
+
+

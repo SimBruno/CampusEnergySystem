@@ -1,0 +1,58 @@
+project:
+  type: book
+
+book:
+  title: "Modeling and optimization of energy systems"
+  author: "Student 1, student 2, ..."
+  date: "today"
+  chapters:
+    - index.qmd
+    - 00.00-qmd_tutorial.qmd
+    - 01.00-Energy_demand.qmd
+    - 02.00-Heat_recovery.qmd
+    - 03.00-HP_modeling.qmd
+    - 04.00-energy_system_integration.qmd
+    - 05-Conclusions.qmd
+    
+advisor: Prof. François Maréchal
+unitname:
+  faculty: School of Engineering
+  institute: Mechanical Engineering
+  laboratory: "Industrial Process and Energy Systems Engineering"
+description: "MOES project report"
+documentclass: book
+always_allow_html: yes
+bibliography: [project.bib]
+link-citations: true
+biblio-style: apalike
+venv: ./venv
+
+# bibliography: references.bib
+format: 
+  html:
+    css: ./style.css
+    config:
+      toc:
+        before: |
+          <li class="header-light">
+            <a class="logo" href="/">
+              <img src="https://web2018.epfl.ch/2.0.0/icons/epfl-logo.svg" alt="Logo EPFL, Ecole polytechnique fédérale de Lausanne" class="img-fluid">
+            </a>
+            <h1>IPESE</h1>
+          </li>
+        after: |
+          <li class="summary-footer"><a class="logo" href="https://ipese.epfl.ch"><img alt="IPESE" src="https://ipesevm73.epfl.ch/static/ipese-logo-black.png"></a></li>
+      download: ["pdf"]
+      #edit: https://gitlab.epfl.ch/ipese/lepour/report_template/edit/master/%s
+      sharing: no
+    includes:
+      in_header: [ipese/hypothesis.html, ipese/hide_code.html]
+      after_body: ipese/footer.html.include
+    split_by: chapter
+    number_sections: true
+  # pdf:
+  #   includes:
+  #   latex_engine: xelatex
+  #   citation_package: natbib
+  #   keep_tex: yes
+  #   template: ipese/template.tex

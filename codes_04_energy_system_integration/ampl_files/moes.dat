@@ -1,0 +1,115 @@
+/*---------------------------------------------------------------------------------------------------------------------------------------
+Course: Modelling and optimisation of energy systems course spring semester 2019
+EPFL Campus energ system optimization
+IPESE, EPFL
+---------------------------------------------------------------------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------------------------------------------------------------------
+This is a data file which will contains the informations on sets and parameters. Depending on the modifications and additions to the 
+model, the data file is subject to change.
+---------------------------------------------------------------------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------------------------------------------------------------------
+Sets
+---------------------------------------------------------------------------------------------------------------------------------------*/
+set Time := 															# set of typical periods
+1
+2
+;
+
+set Technologies := 													# set of technologies
+Boiler 
+PV 
+;			
+
+set Grids :=															# set of grid units
+ElecGridBuy 
+ElecGridSell 
+NatGasGrid
+;	
+
+set Layers :=															# set of layers (resources)
+Natgas
+Electricity
+;	
+
+set HeatingLevel :=														# set of heating levels
+LowT 
+MediumT
+;										
+
+set UtilityType :=														# set of utility type
+Heating 
+ElectricitySup
+ElectricityCons
+;
+
+set UtilitiesOfType[Heating] :=											# set to assign utilities to utility type
+Boiler
+;
+
+set UtilitiesOfType[ElectricitySup] :=
+PV
+ElecGridBuy
+;
+
+set UtilitiesOfType[ElectricityCons] :=
+ElecGridSell
+;
+
+set UtilitiesOfLayer[Electricity] := 
+PV 
+ElecGridBuy 
+ElecGridSell 
+;
+
+set UtilitiesOfLayer[Natgas] :=
+Boiler 
+NatGasGrid 
+;
+
+/*---------------------------------------------------------------------------------------------------------------------------------------
+Generic Parameters
+---------------------------------------------------------------------------------------------------------------------------------------*/
+param top :=															# operating time of each typical period
+1 1
+2 1
+;
+
+param Theating :=														# temperature of heating demand
+MediumT 65
+LowT 50
+;
+
+param irradiation :=													# irradiation at each typical period
+1 0.154
+2 0.133
+;
+
+
+/*---------------------------------------------------------------------------------------------------------------------------------------
+Heating demand parameters
+---------------------------------------------------------------------------------------------------------------------------------------*/
+param Text := 															# external temperature [C] at each typical period
+1 5
+2 25
+;
+
+/*---------------------------------------------------------------------------------------------------------------------------------------
+Utility parameters
+---------------------------------------------------------------------------------------------------------------------------------------*/
+param c_spec :=															# specific cost of resources[CHF/kWh)]
+NatGasGrid 0.0303
+ElecGridBuy 0.0916
+ElecGridSell -0.06
+;
+
+/*---------------------------------------------------------------------------------------------------------------------------------------
+Set the grid parameters: resource flow and fmax
+---------------------------------------------------------------------------------------------------------------------------------------*/
+let  Flowout['Natgas','NatGasGrid'] := refSize;							# Initialization of Grids
+let  Fmax['NatGasGrid'] := 1000;
+let  Flowout['Electricity','ElecGridBuy'] := refSize;
+let  Fmax['ElecGridBuy'] := 1000;
+let  Flowin['Electricity','ElecGridSell'] := refSize;
+let  Fmax['ElecGridSell'] := 1000;

@@ -1,0 +1,79 @@
+---
+title: "Vali in Rosmose"
+author: "Michel lopez <michel.lopez@epfl.ch>"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+    html_document:
+        theme: simplex
+        toc_depth: 3
+        toc: true
+        toc_float: true
+        collapse: true
+        smooth_scroll: true
+        code_folding: hide
+        number_sections: true
+        mathjax: default
+    pdf_document:
+        template: ../ipese/template.tex
+        citation_package: natbib
+        keep_tex: yes
+        dev: pdf
+always_allow_html: yes
+venv: "./venv"
+---
+
+Remark: while running a new simulation, pay attention to restart R. You can use the functionality `Restart R and Run All Chunks` in Rstudio.
+
+```{r setup, warning = F, results = "hide", message=F}
+source("rosmose-setup.R", local = knitr::knit_global())
+```
+
+# Define a Vali Model
+```{rosmose vali-model-definition}
+: MODEL myValiModel
+
+|Software   |Location               | Comment               |
+|:----------|:----------------------|:----------------------|
+|VALI       |vali_files//R-290.bls    |That's my vali model   |
+```
+
+As we define our Belsim Vali Model, we can now set the inputs of this model.
+
+# Define Model inputs
+
+```{rosmose vali-model-inputs, echo=T}
+: MODEL INPUTS myValiModel
+
+| Name                  | Value            | Units     | Comments  |
+|:----------------------|------------------:|:----------|:----------|
+| COP_REAL              | 4.6                  |           |           |
+```
+
+
+
+
+# Define Model outputs
+
+Here, with Vali you have 2 possibilities, if you want to retrieve specific outputs for your model, you can define which
+one you want or if you want to retrieve all of them, you can skip the outputs definition step.
+```{rosmose vali-model-outputs, eval=F}
+: MODEL OUTPUTS myValiModel
+
+| Name           | Units | Comments |
+|:---------------|:------|:---------|
+| COP_REAL       |       |          |
+```
+
+In this case, we only want to retrieve the output `COP_REAL`. As you can see, the output have no value as we still
+don't solve the model with de inputs.
+
+# Solve the Model
+
+```{rosmose vali-model-solve}
+! MODEL SOLVE-LOCAL myValiModel
+```
+After solving the model, we can now check the output result.
+
+```{rosmose vali-model-display-outputs}
+: MODEL DISPLAY_OUTPUTS myValiModel [nvud]
+```
