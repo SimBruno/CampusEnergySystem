@@ -1,0 +1,72 @@
+# Specific to this project
+
+codes_03_HP_modeling/venv
+codes_03_HP_modeling/vali_files/*
+!R-290.bls
+!TAGS_MT_input_VALI.txt
+venv
+venv/
+
+#codes_03_HP_modeling/results
+#codes_04_energy_system_integration/results/*
+
+# figures
+#uncomment this if you don't want tracking of your figures folder
+#figures
+
+# Code
+#uncomment this if you don't want tracking of your code folder
+#code
+
+
+# RStudio elements
+*.Rproj
+.Rproj.*
+.Rhistory
+.RData
+.Ruserdata
+
+# Generated elements
+_book
+_bookdown_files
+/*.log
+/*.acn
+/*.glo
+/*.ist
+/*.nlo
+*.html
+libs
+!ipese/hide_code.html
+!ipese/hypothesis.html
+__pycache__
+*.pyc
+
+# Covers JetBrains IDEs
+.idea
+
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+.Rproj.user
+
+/.quarto/
