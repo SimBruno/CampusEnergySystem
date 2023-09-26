@@ -38,9 +38,10 @@ In the following, we provide you some piece of codes to integrate your functions
 In the first chunk, you specify the path to your venv folder. 
 
 ```{r}
-path <- file.path('./venv/Scripts/python.exe')
+#path <- file.path('./venv/bin/python')
 library(reticulate)
-use_python(path)
+#use_python(path)
+use_virtualenv('./venv', required=TRUE)
 ```
 
 If some python packages are missing, you can install them yourself in the venv. Below is an example. Don't forget to comment the chunk once the package has been installed in your venv (echo=F). Note that here we are using an R chunk to do this. You could as well use the terminal.
