@@ -75,10 +75,6 @@ def elec_gains(building_id, occ_profile):
 
 
 
-
-
-
-
 def solving_NR():
     
     # NEEDS TO BE COMPLETED
