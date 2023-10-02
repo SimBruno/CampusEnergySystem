@@ -30,7 +30,7 @@ def load_data_weather_buildings():
 
     buildings = pd.read_csv(os.path.join(path, "Buildings.csv"),header=0,encoding = 'unicode_escape')
     buildings.columns = ['Name', 'Year', 'Ground', 'Heat', 'Elec']
-    
+
     return weather, buildings
 
 
@@ -76,19 +76,21 @@ def people_gains(building_id, occ_profile):
     # Yearly profile of heat gains from people
     result=occupancy_profile()
     surface_building=buildings.Ground
+    surface_building_value=surface_building.iloc[building_id]
     Q_build_hourly=[0]*len(result[1])
     Q_build_tot=[0]*len(result[1])
     for i in range(len(result[1])):
         Q_build_hourly[i]=heat_gain_off*share_off*result[0][i] + heat_gain_rest*share_rest*result[2][i] + heat_gain_class*share_class*result[1][i]
-        Q_build_tot[i]=Q_build_hourly[i]*surface_building[building_id] ### W hourly
+        Q_build_tot[i]=Q_build_hourly[i]*surface_building_value ### W hourly
     return Q_build_tot 
 
 
 
 def elec_gains(building_id, occ_profile):
-    elec_build=buildings.Elec  ###Wh
+    elec_build=buildings.Elec ###Wh
+    elec_build_value=elec_build.iloc[building_id]
     result=occupancy_profile()
-    elec_hour=elec_build/3654 ##### W
+    elec_hour=elec_build_value/3654 ##### W
     elec_gain=[0]*len(result[1])
     for i in range(len(result[1])):
         if result[3][i]==1:
@@ -132,7 +134,7 @@ if __name__ == '__main__':
     
     occ_profile = occupancy_profile()
 
-    building_id=0
+    building_id=1
     #occ_profile=None
     people_gains(building_id, occ_profile)
 
