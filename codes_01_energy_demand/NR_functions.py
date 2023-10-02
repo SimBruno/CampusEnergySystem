@@ -11,13 +11,13 @@ import os
 # NEEDS TO BE COMPLETED
 # Pay attention to the physical units implied !
 
-h = ... # Hours in a year
-T_th = ... # Cut off temperature [...]
-cp_air = ... # Air specific heat capacity [...] 
-T_int = ... # Set point temperature [...]
-air_new = ... # Air renewal [...]
-Vent = ... # [...]
-f_el = ... # Share of electricity demand which is converted to heat appliances
+h = 8760  # Hours in a year
+T_th = 289 # Cut off temperature [K]
+cp_air = 1152 # Air specific heat capacity [J/(m3.K)] 
+T_int = 294 # Set point temperature [K]
+air_new = 2.5 # Air renewal [m3/(m2.h)]
+Vent = 0 # [...]
+f_el = 0.8 # Share of electricity demand which is converted to heat appliances
 
 
 
@@ -36,40 +36,65 @@ def load_data_weather_buildings():
 
 def occupancy_profile():
     # NEEDS TO BE COMPLETED
-    
     # Daily weekday profile for office, canteen and classroom
-    ...
-    
+    occ_off=[0,0,0,0,0,0,0,0.2,0.4,0.6,0.8,0.8,0.4,0.6,0.8,0.8,0.4,0.2,0,0,0,0,0,0]
+    occ_class=[0,0,0,0,0,0,0,0.4,0.6,1,1,0.8,0.2,0.6,1,0.8,0.8,0.4,0,0,0,0,0,0]
+    occ_can=[0,0,0,0,0,0,0,0,0.4,0.2,0.4,1,0.4,0.2,0.4,0,0,0,0,0,0,0,0,0]
+    weekend=[0]*24
+    week_off=occ_off*5 + weekend + weekend
+    week_class=occ_class*5 + weekend + weekend
+    week_can=occ_can*5 + weekend + weekend
+    weekday_elec=[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0]
+    week_elec=weekday_elec*5 + weekend + weekend
+    yearly_off=week_off*52 + occ_off  ##### Lundi *2
+    yearly_class=week_class*52 + occ_class
+    yearly_can=week_can*52 + occ_can
+    yearly_elec=week_elec*52 + weekday_elec
     # Yearly profile considering weekends for each usage (office, canteen and classroom)
-    ...  
+      
     
-    return ...
+    return [yearly_off,yearly_class,yearly_can,yearly_elec]
 
 
 def people_gains(building_id, occ_profile):
     
     # NEEDS TO BE COMPLETED
-
+   
+    
     # Heat gains from people (Office, Restaurant, Classroom)
-    ...
+    heat_gain_off=5
+    heat_gain_rest=35
+    heat_gain_class=23.3
+    heat_gain_others=0
     
     # Share areas (Office, Restaurant, Classroom)
-    ...
+    share_off=0.3
+    share_rest=0.05
+    share_class=0.35
+    share_others=0.33
     
     # Yearly profile of heat gains from people
-    ...
-    
-    return ...
+    result=occupancy_profile()
+    surface_building=buildings.Ground
+    Q_build_hourly=[0]*len(result[1])
+    Q_build_tot=[0]*len(result[1])
+    for i in range(len(result[1])):
+        Q_build_hourly[i]=heat_gain_off*share_off*result[0][i] + heat_gain_rest*share_rest*result[2][i] + heat_gain_class*share_class*result[1][i]
+        Q_build_tot[i]=Q_build_hourly[i]*surface_building[building_id] ### W hourly
+    return Q_build_tot 
 
 
 
 def elec_gains(building_id, occ_profile):
-    
-    # NEEDS TO BE COMPLETED
-
-    ...
-    
-    return ...
+    elec_build=buildings.Elec  ###Wh
+    result=occupancy_profile()
+    elec_hour=elec_build/3654 ##### W
+    elec_gain=[0]*len(result[1])
+    for i in range(len(result[1])):
+        if result[3][i]==1:
+            elec_gain[i]=elec_hour
+   
+    return elec_gain
 
 
 
@@ -111,11 +136,11 @@ if __name__ == '__main__':
     
     occ_profile = occupancy_profile()
 
-    building_id=None
-    occ_profile=None
+    building_id=0
+    #occ_profile=None
     people_gains(building_id, occ_profile)
 
-    building_id= 1
+    building_id=12
     elec_gains(building_id, occ_profile)
 
 
