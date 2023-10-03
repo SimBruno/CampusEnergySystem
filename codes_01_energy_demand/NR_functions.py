@@ -12,7 +12,7 @@ import os
 # Pay attention to the physical units implied !
 
 h = 8760  # Hours in a year
-T_th = 288 # Cut off temperature [K]
+T_th = 289 # Cut off temperature [K]
 cp_air = 1152 # Air specific heat capacity [J/(m3.K)] 
 T_int = 294 # Set point temperature [K]
 air_new = 2.5 # Air renewal [m3/(m2.h)]
@@ -67,7 +67,7 @@ def people_gains(building_id: str, occ_profile):
     share_off=0.3
     share_rest=0.05
     share_class=0.35
-    share_others=0.33
+    share_others=0.3
     
     # Yearly profile of heat gains from people
     surface_building_value=float(buildings[buildings['Name']==building_id]['Ground'])
@@ -83,7 +83,7 @@ def people_gains(building_id: str, occ_profile):
 def elec_gains(building_id: str, occ_profile):
     #elec_build=buildings.Elec ###Wh
     elec_build_value=float(buildings[buildings['Name']==building_id]['Elec'])
-    elec_hour=elec_build_value/3654 ##### W
+    elec_hour=1000*elec_build_value/3654 ##### W
     elec_gain=[0]*len(occ_profile[1])
     for i in range(len(occ_profile[1])):
         if occ_profile[3][i]==1:
@@ -103,17 +103,33 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
     # Initialize guess values
     k=np.array([k_th_guess,k_sun_guess])
 
-    # Mean values calculation (for second part of the function)
-    irr_mean=weather['Irr'].mean()
-    Q_build_tot_mean=np.mean(Q_build_tot)
-    elec_gain_mean=np.mean(elec_gain)
-
     # Getting other parameters
     surface_building_value=float(buildings[buildings['Name']==building_id]['Ground'])
-    buildings_annual_heat=buildings.Heat
-    buildings_annual_heat_value=1000*(float(buildings[buildings['Name']==building_id]['Heat']))
-    temperature=weather.Temp
+    buildings_annual_heat_value=float(buildings[buildings['Name']==building_id]['Heat'])
+    buildings_annual_heat_value=buildings_annual_heat_value*1000
+    temperature=weather.Temp +273
     irradiance=weather.Irr
+    
+
+    # Mean values calculation (for second part of the function)
+    count_mean=0
+    count_irr_mean=0
+    count_Q_build_tot_mean=0
+    count_elec_gain_mean=0
+    for j in range(len(Q_build_tot)):
+        if ((temperature[j]>=T_th-1) and (temperature[j]<=T_th+1)):
+            count_mean=count_mean+1
+            count_irr_mean=count_irr_mean+irradiance[j]
+            count_Q_build_tot_mean=count_Q_build_tot_mean+Q_build_tot[j]
+            count_elec_gain_mean=count_elec_gain_mean+elec_gain[j]
+    
+    irr_mean=count_irr_mean/count_mean
+    Q_build_tot_mean=count_Q_build_tot_mean/count_mean
+    elec_gain_mean=count_elec_gain_mean/count_mean
+    
+      
+
+    
 
     # Construct problem
     while (((np.abs(error[0])>=tolerance) or (np.abs(error[1])>=tolerance)) and (counter<max_iteration)): #Note that there are 2 errors to check. This is because the function is bidimmensional
@@ -126,10 +142,10 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
 
         #Construction of the first part of func1
         for j in range(len(Q_build_tot)):
-            func1_temp=surface_building_value*(k[0]*(T_int-273-temperature[j])-k[1]*irradiance[j])-Q_build_tot[j]-f_el*elec_gain[j]
-            if ((func1_temp>=0) and (temperature[j]+273<=T_th)): #Add value only if on "Heating mode"
+            func1_temp=surface_building_value*(k[0]*(T_int-temperature[j])-k[1]*irradiance[j])-Q_build_tot[j]-f_el*elec_gain[j]
+            if ((func1_temp>=0) and (temperature[j]<=T_th) and (occ_profile[3][j]==1)): #Add value only if on "Heating mode"
                 func1[0]=func1[0]+func1_temp
-                jacobian[0,0]=jacobian[0,0]+surface_building_value*(T_int-temperature[j]-273)
+                jacobian[0,0]=jacobian[0,0]+surface_building_value*(T_int-temperature[j])
                 jacobian[0,1]=jacobian[0,1]-surface_building_value*irradiance[j]
         
         #Lastly, since the newton raphson model seeks solution for F(x)=0, we must substract the annual heating value to the first part of the function
@@ -137,16 +153,19 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
 
         # Solving with the Newton Raphson method
         k=k.transpose()-np.dot(np.linalg.inv(jacobian),func1)
+        
+        
     
 
         # Compute error
         func1=np.array([0,surface_building_value*(k[0]*(T_int-T_th)-k[1]*irr_mean)-Q_build_tot_mean-f_el*elec_gain_mean])
         for j in range(len(Q_build_tot)):
-            func1_temp=surface_building_value*(k[0]*(T_int-273-temperature[j])-k[1]*irradiance[j])-Q_build_tot[j]-f_el*elec_gain[j]
-            if ((func1_temp>=0) and (temperature[j]+273<=T_th)):
+            func1_temp=surface_building_value*(k[0]*(T_int-temperature[j])-k[1]*irradiance[j])-Q_build_tot[j]-f_el*elec_gain[j]
+            if ((func1_temp>=0) and (temperature[j]<=T_th)):
                 func1[0]=func1[0]+func1_temp
         error=np.array([func1[0]-buildings_annual_heat_value,func1[1]])
         counter=counter+1
+
 
 
 
@@ -181,10 +200,11 @@ if __name__ == '__main__':
     #Compute gains and profile
     occ_profile = occupancy_profile()
     
+    
 
     # State required tolerances and maximum number of iterations
-    tolerance=0.00001
-    max_iteration=10000
+    tolerance=0.001
+    max_iteration=100
 
     # State initial guesses for k_th and k_sun
     k_th_guess=1
