@@ -191,7 +191,7 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
 #Clustering of Weather data with the use of k-means clustering method from Scikit-learn
 def clustering_weather():
     #load weather data
-    weather = pd.read_csv("Weather.csv",header=0,encoding = 'unicode_escape')
+    weather = pd.read_csv('Weather.csv',header=0,encoding = 'unicode_escape')
     weather.columns = ['Temp', 'Irr']
     #clustering
     kmeans = KMeans(n_clusters=2, random_state=0).fit(weather)
