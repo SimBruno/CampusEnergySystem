@@ -35,28 +35,29 @@ def load_data_weather_buildings():
 
 
 def occupancy_profile():
-    # NEEDS TO BE COMPLETED
-    # Daily weekday profile for office, canteen and classroom
-    occ_off=[0,0,0,0,0,0,0,0.2,0.4,0.6,0.8,0.8,0.4,0.6,0.8,0.8,0.4,0.2,0,0,0,0,0,0]
-    occ_class=[0,0,0,0,0,0,0,0.4,0.6,1,1,0.8,0.2,0.6,1,0.8,0.8,0.4,0,0,0,0,0,0]
-    occ_can=[0,0,0,0,0,0,0,0,0.4,0.2,0.4,1,0.4,0.2,0.4,0,0,0,0,0,0,0,0,0]
-    weekend=[0]*24
-    week_off=occ_off*5 + weekend + weekend
-    week_class=occ_class*5 + weekend + weekend
-    week_can=occ_can*5 + weekend + weekend
-    weekday_elec=[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0]
-    week_elec=weekday_elec*5 + weekend + weekend
-    yearly_off=week_off*52 + occ_off  ##### Lundi *2
-    yearly_class=week_class*52 + occ_class
-    yearly_can=week_can*52 + occ_can
-    yearly_elec=week_elec*52 + weekday_elec
-    # Yearly profile considering weekends for each usage (office, canteen and classroom)
-      
-    return [yearly_off,yearly_class,yearly_can,yearly_elec]
+    # Define occupancy and electricity profiles
+    occ_off = [0, 0, 0, 0, 0, 0, 0, 0.2, 0.4, 0.6, 0.8, 0.8, 0.4, 0.6, 0.8, 0.8, 0.4, 0.2, 0, 0, 0, 0, 0, 0]
+    occ_class = [0, 0, 0, 0, 0, 0, 0, 0.4, 0.6, 1, 1, 0.8, 0.2, 0.6, 1, 0.8, 0.8, 0.4, 0, 0, 0, 0, 0, 0]
+    occ_can = [0, 0, 0, 0, 0, 0, 0, 0, 0.4, 0.2, 0.4, 1, 0.4, 0.2, 0.4, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    weekday_elec = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0]
+    occ_all = pd.DataFrame({'Office': occ_off, 'Class': occ_class, 'Restaurant': occ_can, 'Electricity': weekday_elec})
+
+    # Create a date range
+    start_date = '2023-01-01'
+    end_date = '2024-01-01' 
+    date_range = pd.date_range(start=start_date, end=end_date, freq='H', inclusive='right')
+
+    occupancy = occ_all # initialize
+    while len(occupancy) < len(date_range): #extend to a year
+        occupancy= pd.concat([occupancy, occ_all], ignore_index=True)
+    occupancy = occupancy.iloc[0:len(date_range),:]  # drop extra rows if needed
+
+    # Create the occupancy DataFrame
+    occupancy.loc[(date_range.weekday >= 5), ['Office', 'Class', 'Restaurant', 'Electricity']] = 0 #set to 0 on weekends
+    return occupancy.Office.values, occupancy.Class.values, occupancy.Restaurant.values, occupancy.Electricity.values
 
 
-def people_gains(building_id: str, occ_profile):
-    
+def people_gains(building_id, profile_class, profile_rest, profile_off):
     # Heat gains from people (Office, Restaurant, Classroom)
     hg_off=5
     hg_rest=35
@@ -75,39 +76,30 @@ def people_gains(building_id: str, occ_profile):
     sf_rest = hg_rest*A_rest
     sf_class = hg_class*A_class
     sf_others = hg_others*A_others
-
-    # Profiles of heat gains from people (Office, Restaurant, Classroom)    
-
-    profile_off = occ_profile[0]
-    profile_class = occ_profile[1]
-    profile_rest = occ_profile[2]
     
     # Yearly profile of heat gains from people
     #A_th=buildings['Ground'].loc[buildings.Name==building_id].values[0]
-    q_people_hourly=np.zeros(len(occ_profile[1]))
+    q_people_hourly=np.zeros(len(profile_class))
     #Q_build_tot=np.zeros(len(occ_profile[1]))
-    for i in range(len(occ_profile[1])):
-        q_people_hourly[i]= sf_off*profile_off[i] + sf_rest*profile_rest[i] + sf_class*profile_class[i]
+    for i in range(len(profile_class)):
+        q_people_hourly[i]= sf_off*profile_off[i] + sf_rest*profile_rest[i] + sf_class*profile_class[i] 
     return q_people_hourly
 
 
-
-def elec_gains(building_id: str, occ_profile):
+def elec_gains(building_id, profile_elec):
     #elec_build=buildings.Elec ###Wh
-    cf = 1000/3654 # Conversion factor from Wh to W and capacity factor
-    A_th=buildings['Ground'].loc[buildings.Name==building_id].values[0]
-    E_elec = buildings['Elec'].loc[buildings.Name==building_id].values[0]
-    q_elec_hour = E_elec*cf/A_th
-    profile_elec = occ_profile[3]
-    q_elec_hourly=np.zeros(len(occ_profile[1])) # create q_elec(t) over the year
-    for i in range(len(occ_profile[1])):
-        if profile_elec[1] == 1:
+    cf = 1000/profile_elec.sum() # Conversion factor from Wh to W and capacity factor
+    A_th=buildings['Ground'].loc[buildings.Name==building_id].values[0] # m2
+    E_elec = buildings['Elec'].loc[buildings.Name==building_id].values[0] # W
+    q_elec_hour = E_elec*cf/A_th # W/m2, for one hour when on -> uniform distribution assumption
+    q_elec_hourly=np.zeros(len(profile_elec)) # create q_elec(t) over the year
+    for i in range(len(profile_elec)):
+        if profile_elec[i] == 1 :
             q_elec_hourly[i]=q_elec_hour
-    return q_elec_hourly
+    return q_elec_hourly # W/m2 for each hour of the year
 
 
-
-def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
+def solving_NR(tolerance,max_iteration,building_id, k_th_guess, k_sun_guess):
     
     # Initialize counters and tolerances
     e_th = 1
@@ -119,10 +111,10 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
     k_sun = k_sun_guess
 
     # Getting other parameters
-    A_th=buildings['Ground'].loc[buildings.Name==building_id].values[0]
-    Q_th=buildings['Heat'].loc[buildings.Name==building_id].values[0]*1000
-    T_ext=weather.Temp +273
-    irr=weather.Irr
+    A_th=buildings['Ground'].loc[buildings.Name==building_id].values[0] # m2
+    Q_th=buildings['Heat'].loc[buildings.Name==building_id].values[0]*1000 # W
+    T_ext=weather.Temp +273 # K
+    irr=weather.Irr # W/m2
 
     #Compute mean values for irradiance, heat gain from people and appliances
     cutoff_indicator = ((T_ext >= T_th -1) & (T_ext <= T_th + 1)) # state switch on/off conditions
@@ -132,6 +124,7 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
     q_people_mean = q_people[cutoff_indicator].mean()
     irr_mean = irr[cutoff_indicator].mean()
 
+    specQ_people = q_people_mean.mean()
     # Newton Raphson method
     
     while iteration < max_iteration:
@@ -167,62 +160,41 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
             break  # Converged, exit the loop
 
         iteration += 1        
-
-    #############Old guidelines###################
-
-    # define the conditions for switching on the heating system
-    ## T ext < T cutoff
-    ## During opening hours of the campus
-    ...
     
-    # find the mean values for irradiance, heat gain from people and appliances over the +/- 1°C interval around the T cutoff (for the second equation)
-    ...
-    
-    # initialise NR
-    ...
-    
-    # iterate over k and solve the NR 2-D equations. Don't forget to consider only positive heat demands (non linear term of the first equation) 
-    # Check the termination criteria (epsilon and max iter)
-    ...
-    
-    return k_th, k_sun, iteration, e_th, e_sun
-
+    return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, q_elec_mean 
 
 
 if __name__ == '__main__': 
     # the code below will be executed only if you run the NR_function.py file as main file, not if you import the functions from another file (another .py or .qmd)
     
-    building_id = 'BS'
     # Load data
     weather, buildings = load_data_weather_buildings()
 
     #Compute gains and profile
-    occ_profile = occupancy_profile()
+    profile_off, profile_class, profile_rest, profile_elec = occupancy_profile()
 
     # State required tolerances and maximum number of iterations
     tol=1e-6
     max_iteration=1000
 
     # State initial guesses for k_th and k_sun
-    k_th_guess=100
-    k_sun_guess=100
+    k_th_guess=10
+    k_sun_guess=1
 
     # Initialize array to record values for each building
     
+    Solution  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_sun', 'specQ_people'])
+
     for building_id in buildings['Name']:
-        q_people = people_gains(building_id, occ_profile)
-        q_elec =elec_gains(building_id, occ_profile)
-        print(building_id,solving_NR(tol,max_iteration,building_id,k_th_guess,k_sun_guess))
-
-    
-    """
-    #Storing everything in a pandas dataframe
-    data={'Name':buildings['Name'].to_numpy(), 'k_th': k_th, 'k_sun':k_sun,'number_iteration':number_iteration,'error1':error1,'error2':error2} #Note that there are 2 errors. This is because the function is bidimmensional
-    Solution=pd.DataFrame(data)
-
+        #building_id = 'BS'
+        q_people = people_gains(building_id, profile_class, profile_rest, profile_off)
+        q_elec = elec_gains(building_id, profile_elec)
+        [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean]=solving_NR(tol,max_iteration,building_id,k_th_guess,k_sun_guess)
+        Solution.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean, 'k_th': k_th, 'k_sun': k_sun,'specQ_people': specQ_people})
+        
     #Saving dataframe in thermal_properties.csv
     path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
-    Solution.to_csv(os.path.join(path, "thermal_properties.csv"),index=False)
+    #Solution.to_csv(os.path.join(path, "thermal_properties.csv"),index=False)
 
     #Printing solutions
-    #print(Solution)"""
+    print(Solution)
