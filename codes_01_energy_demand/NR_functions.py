@@ -20,7 +20,6 @@ Vent = 0 # [...]
 f_el = 0.8 # Share of electricity demand which is converted to heat appliances
 
 
-
 def load_data_weather_buildings():
     
     path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
