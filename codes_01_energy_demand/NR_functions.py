@@ -202,7 +202,6 @@ def clustering_weather():
     plt.show()
     return kmeans
 
-clustering_weather()
 
 
 
