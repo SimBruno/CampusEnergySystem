@@ -69,13 +69,24 @@ def people_gains(building_id: str, occ_profile):
     share_others=0.3
     
     # Yearly profile of heat gains from people
-    surface_building_value=float(buildings[buildings['Name']==building_id]['Ground'])
+    #surface_building_value=float(buildings[buildings['Name']==building_id]['Ground'])
+    #Q_build_hourly=[0]*len(occ_profile[1])
+   # Q_build_tot=[0]*len(occ_profile[1])
+    #for i in range(len(occ_profile[1])):
+     #   Q_build_hourly[i]=heat_gain_off*share_off*occ_profile[0][i] + heat_gain_rest*share_rest*occ_profile[2][i] + heat_gain_class*share_class*occ_profile[1][i]
+     #   Q_build_tot[i]=Q_build_hourly[i]*surface_building_value ### W hourly
+   # return Q_build_tot 
+
+    surface_building_value = float(buildings.loc[buildings['Name'] == building_id, 'Ground'].values[0])
     Q_build_hourly=[0]*len(occ_profile[1])
     Q_build_tot=[0]*len(occ_profile[1])
     for i in range(len(occ_profile[1])):
-        Q_build_hourly[i]=heat_gain_off*share_off*occ_profile[0][i] + heat_gain_rest*share_rest*occ_profile[2][i] + heat_gain_class*share_class*occ_profile[1][i]
-        Q_build_tot[i]=Q_build_hourly[i]*surface_building_value ### W hourly
+            Q_build_hourly[i]=heat_gain_off*share_off*occ_profile[0][i] + heat_gain_rest*share_rest*occ_profile[2][i] + heat_gain_class*share_class*occ_profile[1][i]
+            Q_build_tot[i]=Q_build_hourly[i]*surface_building_value ### W hourly
     return Q_build_tot 
+
+
+
 
 
 
