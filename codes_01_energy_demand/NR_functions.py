@@ -7,9 +7,10 @@ from sklearn.cluster import KMeans
 import os
 
 
-# Parameters
-# NEEDS TO BE COMPLETED
-# Pay attention to the physical units implied !
+
+####################
+#### Parameters ####
+####################
 
 h = 8760  # Hours in a year
 T_th = 289 # Cut off temperature [K]
@@ -19,6 +20,11 @@ air_new = 2.5 # Air renewal [m3/(m2.h)]
 Vent = 0 # [...]
 f_el = 0.8 # Share of electricity demand which is converted to heat appliances
 
+
+
+#################################
+#### Function that loads data ###
+#################################
 
 def load_data_weather_buildings():
     
@@ -33,8 +39,13 @@ def load_data_weather_buildings():
     return weather, buildings
 
 
+
+#########################################################################################################
+#### Function that returns profiles for people (in offices, canteens and classrooms) and electricity ####
+#########################################################################################################
+
 def occupancy_profile():
-    # NEEDS TO BE COMPLETED
+
     # Daily weekday profile for office, canteen and classroom
     occ_off=[0,0,0,0,0,0,0,0.2,0.4,0.6,0.8,0.8,0.4,0.6,0.8,0.8,0.4,0.2,0,0,0,0,0,0]
     occ_class=[0,0,0,0,0,0,0,0.4,0.6,1,1,0.8,0.2,0.6,1,0.8,0.8,0.4,0,0,0,0,0,0]
@@ -45,16 +56,22 @@ def occupancy_profile():
     week_can=occ_can*5 + weekend + weekend
     weekday_elec=[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0]
     week_elec=weekday_elec*5 + weekend + weekend
+    
+    # Yearly profile considering weekends for each usage (office, canteen and classroom)
     yearly_off=week_off*52 + occ_off  ##### Lundi *2
     yearly_class=week_class*52 + occ_class
     yearly_can=week_can*52 + occ_can
     yearly_elec=week_elec*52 + weekday_elec
-    # Yearly profile considering weekends for each usage (office, canteen and classroom)
-      
-    return [yearly_off,yearly_class,yearly_can,yearly_elec]
+
+    return [np.array(yearly_off),np.array(yearly_class),np.array(yearly_can),np.array(yearly_elec)]
 
 
-def people_gains(building_id: str, occ_profile):
+
+##################################################################
+#### Function that returnes the heat gain profile from people ####
+##################################################################
+
+def people_gains(office_profile,class_profile,cantine_profile):
     
     # Heat gains from people (Office, Restaurant, Classroom)
     heat_gain_off=5
@@ -67,106 +84,85 @@ def people_gains(building_id: str, occ_profile):
     share_rest=0.05
     share_class=0.35
     share_others=0.3
-    
-    # Yearly profile of heat gains from people
-    surface_building_value=float(buildings[buildings['Name']==building_id]['Ground'])
-    Q_build_hourly=[0]*len(occ_profile[1])
-    Q_build_tot=[0]*len(occ_profile[1])
-    for i in range(len(occ_profile[1])):
-        Q_build_hourly[i]=heat_gain_off*share_off*occ_profile[0][i] + heat_gain_rest*share_rest*occ_profile[2][i] + heat_gain_class*share_class*occ_profile[1][i]
-        Q_build_tot[i]=Q_build_hourly[i]*surface_building_value ### W hourly
-    return Q_build_tot 
+ 
+    q_people=heat_gain_off*share_off*office_profile + heat_gain_rest*share_rest*cantine_profile + heat_gain_class*share_class*class_profile
+    return q_people
 
 
 
-def elec_gains(building_id: str, occ_profile):
-    #elec_build=buildings.Elec ###Wh
-    elec_build_value=float(buildings[buildings['Name']==building_id]['Elec'])
-    elec_hour=1000*elec_build_value/3654 ##### W
-    elec_gain=[0]*len(occ_profile[1])
-    for i in range(len(occ_profile[1])):
-        if occ_profile[3][i]==1:
-            elec_gain[i]=elec_hour
-    return elec_gain
+#################################################################
+#### Function that returns the electricity heat gain profile ####
+#################################################################
+
+def elec_gains(building_id: str,elec_profile):
+    q_elec=elec_profile*buildings[buildings['Name']==building_id]['Elec'].to_numpy()/3654
+    return q_elec
 
 
 
+######################################################
+#### Main function that solves the Newton-Raphson ####
+######################################################
 
-
-def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
+def solving_NR(tolerance,max_iteration,building_id: str,k_sun_guess):
     
     # Initialize counters and tolerances
-    error=[1,1]
+    error=1
     counter=0
 
-    # Initialize guess values
-    k=np.array([k_th_guess,k_sun_guess])
-
     # Getting other parameters
-    surface_building_value=float(buildings[buildings['Name']==building_id]['Ground'])
-    buildings_annual_heat_value=float(buildings[buildings['Name']==building_id]['Heat'])
-    buildings_annual_heat_value=buildings_annual_heat_value*1000
-    temperature=weather.Temp +273
-    irradiance=weather.Irr
-    
-
+    A_th=buildings[buildings['Name']==building_id]['Ground'].values[0]
+    Q_year=buildings[buildings['Name']==building_id]['Heat'].values[0]*1000
+    temperature=weather.Temp.to_numpy()+273
+    irradiance=weather.Irr.to_numpy()
+   
     # Mean values calculation (for second part of the function)
-    count_mean=0
-    count_irr_mean=0
-    count_Q_build_tot_mean=0
-    count_elec_gain_mean=0
-    for j in range(len(Q_build_tot)):
-        if ((temperature[j]>=T_th-1) and (temperature[j]<=T_th+1)):
-            count_mean=count_mean+1
-            count_irr_mean=count_irr_mean+irradiance[j]
-            count_Q_build_tot_mean=count_Q_build_tot_mean+Q_build_tot[j]
-            count_elec_gain_mean=count_elec_gain_mean+elec_gain[j]
+    irr_mean=irradiance.mean()
+    q_people_mean=q_people.mean()
+    q_elec_mean=q_elec.mean()
+    #irr_mean=irradiance[(temperature>=T_th-1) & (temperature<=T_th+1) & (elec_profile==1)].mean()
+    #q_people_mean=q_people[(temperature>=T_th-1) & (temperature<=T_th+1) & (elec_profile==1)].mean()
+    #q_elec_mean=q_elec[(temperature>=T_th-1) & (temperature<=T_th+1) & (elec_profile==1)].mean()
     
-    irr_mean=count_irr_mean/count_mean
-    Q_build_tot_mean=count_Q_build_tot_mean/count_mean
-    elec_gain_mean=count_elec_gain_mean/count_mean
-    
-      
+    # Initialize guess values
+    k_th=k_th_guess
+    k_sun=(k_th*(T_int-T_th)-f_el*q_elec_mean/A_th-q_people_mean)/irr_mean
+    k=np.array([k_th,k_sun])
 
-    
+ 
+    #### Main while loop for NR ####
 
-    # Construct problem
-    while (((np.abs(error[0])>=tolerance) or (np.abs(error[1])>=tolerance)) and (counter<max_iteration)): #Note that there are 2 errors to check. This is because the function is bidimmensional
+    while ((np.abs(error)>=tolerance) and (counter<max_iteration)):
 
-        # func1 is a two dimmensional function, grouping equations 1 and 2 of the problem
-        func1=np.array([0,surface_building_value*(k[0]*(T_int-T_th)-k[1]*irr_mean)-Q_build_tot_mean-f_el*elec_gain_mean])
+        #### Construction of the function ####
 
-        #Jacobian is the derivative of func1, wrt k_th and k_sun
-        jacobian=np.array([[0,0],[surface_building_value*(T_int-T_th),-surface_building_value*irr_mean]])
-
-        #Construction of the first part of func1
-        for j in range(len(Q_build_tot)):
-            func1_temp=surface_building_value*(k[0]*(T_int-temperature[j])-k[1]*irradiance[j])-Q_build_tot[j]-f_el*elec_gain[j]
-            if ((func1_temp>=0) and (temperature[j]<=T_th) and (occ_profile[3][j]==1)): #Add value only if on "Heating mode"
-                func1[0]=func1[0]+func1_temp
-                jacobian[0,0]=jacobian[0,0]+surface_building_value*(T_int-temperature[j])
-                jacobian[0,1]=jacobian[0,1]-surface_building_value*irradiance[j]
-        
+        # Determine Q(t), and sum all that respect the conditions
+        Q_t=A_th*(k[0]*(T_int-temperature)-k[1]*irradiance-q_people)-f_el*q_elec
+        Q_tot=Q_t[(temperature<=T_th) & (Q_t>=0) & (elec_profile==1)].sum()
         #Lastly, since the newton raphson model seeks solution for F(x)=0, we must substract the annual heating value to the first part of the function
-        func1[0]=func1[0]-buildings_annual_heat_value
+        Q_tot=Q_tot-Q_year
 
-        # Solving with the Newton Raphson method
-        k=k.transpose()-np.dot(np.linalg.inv(jacobian),func1)
-        
-        
-    
+        # Compute the derivative the same way
+        deriv=A_th*(T_int-temperature)
+        deriv_tot=deriv[(temperature<=T_th) & (Q_t>=0) & (elec_profile==1)].sum()
 
-        # Compute error
-        func1=np.array([0,surface_building_value*(k[0]*(T_int-T_th)-k[1]*irr_mean)-Q_build_tot_mean-f_el*elec_gain_mean])
-        for j in range(len(Q_build_tot)):
-            func1_temp=surface_building_value*(k[0]*(T_int-temperature[j])-k[1]*irradiance[j])-Q_build_tot[j]-f_el*elec_gain[j]
-            if ((func1_temp>=0) and (temperature[j]<=T_th)):
-                func1[0]=func1[0]+func1_temp
-        error=np.array([func1[0]-buildings_annual_heat_value,func1[1]])
+
+        #### Solving with the Newton Raphson method ####
+
+        k_th_new=k[0]-Q_tot/deriv_tot
+        k_sun_new=(k_th_new*(T_int-T_th)-f_el*q_elec_mean/A_th-q_people_mean)/irr_mean
+        k=np.array([k_th_new,k_sun_new])
+
+        
+        #### Loop flags computation ####
+
+        # Compute again the function with the new k_th and k_sun, to get the error
+        Q_t=A_th*(k[0]*(T_int-temperature)-k[1]*irradiance-q_people)-f_el*q_elec
+        Q_tot=Q_t[(temperature<=T_th) & (Q_t>=0) & (elec_profile==1)].sum()
+        error=Q_tot-Q_year
+
+        # Increment the loop counter
         counter=counter+1
-
-
-
 
     #############Old guidelines###################
 
@@ -189,44 +185,47 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
 
 
 
+###################################
+#### Getting all work together ####
+###################################
 
 if __name__ == '__main__': 
     # the code below will be executed only if you run the NR_function.py file as main file, not if you import the functions from another file (another .py or .qmd)
     
-
     # Load data
     weather, buildings = load_data_weather_buildings()
 
-    #Compute gains and profile
-    occ_profile = occupancy_profile()
+    #Compute profile and heat gains from people
+    [office_profile,class_profile,cantine_profile,elec_profile] = occupancy_profile()
+    q_people = people_gains(office_profile,class_profile,cantine_profile)
     
-    
-
     # State required tolerances and maximum number of iterations
-    tolerance=0.001
+    tolerance=0.00001
     max_iteration=100
 
-    # State initial guesses for k_th and k_sun
-    k_th_guess=1
-    k_sun_guess=0.1
-
+    # State initial guesses for k_th
+    k_th_guess=5
+  
     # Initialize array to record values for each building
     k_th=[0]*len(buildings)
     k_sun=[0]*len(buildings)
     number_iteration=[0]*len(buildings)
     error1=[0]*len(buildings)
     error2=[0]*len(buildings)
+    spec_elec=[0]*len(buildings)
+    floor_area=[0]*len(buildings)
 
     # Loop to get values for each building
     count=0
     for building_id in buildings['Name']:
-        Q_build_tot = people_gains(building_id, occ_profile)
-        elec_gain=elec_gains(building_id, occ_profile)
-        [[k_th[count],k_sun[count]],number_iteration[count],[error1[count],error2[count]]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess,k_sun_guess)
+        q_elec=elec_gains(building_id, elec_profile)
+        [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
+        spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
+        floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
         count=count+1
   
     #Storing everything in a pandas dataframe
-    data={'Name':buildings['Name'].to_numpy(), 'k_th': k_th, 'k_sun':k_sun,'number_iteration':number_iteration,'error1':error1,'error2':error2} #Note that there are 2 errors. This is because the function is bidimmensional
+    data={'Name':buildings['Name'].to_numpy(), 'FloorArea':floor_area, 'specElec':spec_elec, 'k_th': k_th, 'k_sun':k_sun,'specQ_people':error1} #Note that there are 2 errors. This is because the function is bidimmensional
     Solution=pd.DataFrame(data)
 
     #Saving dataframe in thermal_properties.csv
