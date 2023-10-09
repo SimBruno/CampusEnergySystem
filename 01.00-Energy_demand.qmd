@@ -61,6 +61,7 @@ Overview of the Buildings dataframe
 
 ```{python table plot, echo=F}
 import plotly.graph_objects as go
+
 fig = go.Figure(data=[go.Table(
     header=dict(values=list(buildings.columns),
                 fill_color='lightskyblue',
