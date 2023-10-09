@@ -69,13 +69,24 @@ def people_gains(building_id: str, occ_profile):
     share_others=0.3
     
     # Yearly profile of heat gains from people
-    surface_building_value=float(buildings[buildings['Name']==building_id]['Ground'])
+    #surface_building_value=float(buildings[buildings['Name']==building_id]['Ground'])
+    #Q_build_hourly=[0]*len(occ_profile[1])
+   # Q_build_tot=[0]*len(occ_profile[1])
+    #for i in range(len(occ_profile[1])):
+     #   Q_build_hourly[i]=heat_gain_off*share_off*occ_profile[0][i] + heat_gain_rest*share_rest*occ_profile[2][i] + heat_gain_class*share_class*occ_profile[1][i]
+     #   Q_build_tot[i]=Q_build_hourly[i]*surface_building_value ### W hourly
+   # return Q_build_tot 
+
+    surface_building_value = float(buildings.loc[buildings['Name'] == building_id, 'Ground'].values[0])
     Q_build_hourly=[0]*len(occ_profile[1])
     Q_build_tot=[0]*len(occ_profile[1])
     for i in range(len(occ_profile[1])):
-        Q_build_hourly[i]=heat_gain_off*share_off*occ_profile[0][i] + heat_gain_rest*share_rest*occ_profile[2][i] + heat_gain_class*share_class*occ_profile[1][i]
-        Q_build_tot[i]=Q_build_hourly[i]*surface_building_value ### W hourly
+            Q_build_hourly[i]=heat_gain_off*share_off*occ_profile[0][i] + heat_gain_rest*share_rest*occ_profile[2][i] + heat_gain_class*share_class*occ_profile[1][i]
+            Q_build_tot[i]=Q_build_hourly[i]*surface_building_value ### W hourly
     return Q_build_tot 
+
+
+
 
 
 
@@ -187,51 +198,35 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_th_guess,k_sun_guess):
     
     return k,counter,error
 
-
-
+#Clustering of Weather data with the use of k-means clustering method from Scikit-learn
+def clustering_weather():
+    #load weather data
+    weather = pd.read_csv('Weather.csv',header=0,encoding = 'unicode_escape')
+    weather.columns = ['Temp', 'Irr']
+    #clustering
+    kmeans = KMeans(n_clusters=2, random_state=0).fit(weather)
+    #plotting
+    plt.scatter(weather['Temp'], weather['Irr'], c=kmeans.labels_.astype(float), s=50, alpha=0.5)
+    plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], c='red', s=50)
+    plt.xlabel('Temperature [°C]')
+    plt.ylabel('Irradiance [W/m2]')
+    plt.show()
+    return kmeans
 
 if __name__ == '__main__': 
     # the code below will be executed only if you run the NR_function.py file as main file, not if you import the functions from another file (another .py or .qmd)
     
-
-    # Load data
     weather, buildings = load_data_weather_buildings()
-
-    #Compute gains and profile
+    print(buildings)
+    
     occ_profile = occupancy_profile()
-    
-    
 
-    # State required tolerances and maximum number of iterations
-    tolerance=0.001
-    max_iteration=100
+    building_id=None
+    occ_profile=None
+    people_gains(building_id, occ_profile)
 
-    # State initial guesses for k_th and k_sun
-    k_th_guess=1
-    k_sun_guess=0.1
+    building_id= 1
+    elec_gains(building_id, occ_profile)
 
-    # Initialize array to record values for each building
-    k_th=[0]*len(buildings)
-    k_sun=[0]*len(buildings)
-    number_iteration=[0]*len(buildings)
-    error1=[0]*len(buildings)
-    error2=[0]*len(buildings)
 
-    # Loop to get values for each building
-    count=0
-    for building_id in buildings['Name']:
-        Q_build_tot = people_gains(building_id, occ_profile)
-        elec_gain=elec_gains(building_id, occ_profile)
-        [[k_th[count],k_sun[count]],number_iteration[count],[error1[count],error2[count]]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess,k_sun_guess)
-        count=count+1
-  
-    #Storing everything in a pandas dataframe
-    data={'Name':buildings['Name'].to_numpy(), 'k_th': k_th, 'k_sun':k_sun,'number_iteration':number_iteration,'error1':error1,'error2':error2} #Note that there are 2 errors. This is because the function is bidimmensional
-    Solution=pd.DataFrame(data)
-
-    #Saving dataframe in thermal_properties.csv
-    path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
-    Solution.to_csv(os.path.join(path, "thermal_properties.csv"),index=False)
-
-    #Printing solutions
-    print(Solution)
+    solving_NR()
