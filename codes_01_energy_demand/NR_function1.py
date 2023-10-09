@@ -191,7 +191,7 @@ def solving_NR(tolerance,max_iteration,building_id, k_th_guess, k_sun_guess):
     specQ_people = q_people.mean()
     # Newton Raphson method
     
-    #alpha = 0.7 # relaxation factor
+    alpha = 0.7 # relaxation factor
 
     while iteration < max_iteration:
 
