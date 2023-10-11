@@ -40,8 +40,7 @@ plt.title('Weather data')
 weather_df = []
 
 for k in range(0, len(weather.Temp)-1):
-    #select only k that is between 7 and 21 modulo 24
-    if (k % 24 >= 7 and k % 24 <= 21) and weather.Temp[k] < 16:
+    if (k % 24 >= 7 and k % 24 <= 21) and weather.Temp[k] < 16 and (k % 168 <= 120):
             weather_df.append([k, weather.Temp[k], weather.Irr[k], 'A'])
     else:
         weather_df.append([k, weather.Temp[k], weather.Irr[k], 'B'])
@@ -91,6 +90,80 @@ plt.grid(True)
 plt.legend(['Type A', 'Type B', 'Outliers'], loc='upper right')
 plt.show()
 
+#cluster type A in 4 clusters
+#select the data for type A
+weather_A = weather_df[weather_df.Type == 'A']
+#select the data for type B
+weather_B = weather_df[weather_df.Type == 'B']
+#select the data for outliers
+weather_O = weather_df[weather_df.Type == 'O']
+
+#select the data for type A
+weather_A = weather_A[['Temp', 'Irr']]
+#select the data for type B
+weather_B = weather_B[['Temp', 'Irr']]
+#select the data for outliers
+weather_O = weather_O[['Temp', 'Irr']]
+#cluster the data in 4 clusters
+kmeans_A = KMeans(n_clusters=6, random_state=0).fit(weather_A)
+#add the cluster column to the dataframe
+weather_A['Cluster'] = kmeans_A.labels_
+#plot the data
+plt.figure()
+plt.scatter(weather_A.Temp, weather_A.Irr, c=weather_A.Cluster)
+#plot the centroids in red
+plt.scatter(kmeans_A.cluster_centers_[:, 0], kmeans_A.cluster_centers_[:, 1], c='red', s=200, alpha=0.5)
+plt.xlabel('Temperature [°C]')
+plt.ylabel('Irradiation [W/m2]')
+plt.title('Weather data type A')
+
+'''
+#print the centroids of the clusters
+print(kmeans_A.cluster_centers_)
+#print the labels of the clusters
+print(kmeans_A.labels_)
+#print the inertia of the clusters
+print(kmeans_A.inertia_)
+#print the number of iterations of the clusters
+print(kmeans_A.n_iter_)
+#print the score of the clusters
+print(kmeans_A.score(weather_A))
+'''
+
+weather_A.to_csv('weather_A.csv', index=False)
+
+#plot temperature and irradiation depending on the hour in 2 figures for type A in 4 different colors depending on the cluster
+plt.figure()
+plt.plot(weather_A[weather_A.Cluster == 0].Temp, '+')
+'''
+plt.plot(weather_A[weather_A.Cluster == 1].Temp, '+')
+plt.plot(weather_A[weather_A.Cluster == 2].Temp, '+')
+plt.plot(weather_A[weather_A.Cluster == 3].Temp, '+')
+plt.plot(weather_A[weather_A.Cluster == 4].Temp, '+')
+plt.plot(weather_A[weather_A.Cluster == 5].Temp, '+')
+'''
+#plt.plot(weather_df.Temp)
+plt.xlabel('Hour')
+plt.ylabel('Temperature [°C]')
+plt.title('Weather data')
+#grid on
+plt.grid(True)
+
+
+plt.figure()
+plt.plot(weather_A[weather_A.Cluster == 0].Irr, '+')
+plt.plot(weather_A[weather_A.Cluster == 1].Irr, '+')
+plt.plot(weather_A[weather_A.Cluster == 2].Irr, '+')
+plt.plot(weather_A[weather_A.Cluster == 3].Irr, '+')
+plt.plot(weather_A[weather_A.Cluster == 4].Irr, '+')
+plt.plot(weather_A[weather_A.Cluster == 5].Irr, '+')
+#plt.plot(weather_df.Temp)
+plt.xlabel('Hour')
+plt.ylabel('Irradiance [W/m2]')
+plt.title('Weather data')
+#grid on
+plt.grid(True)
+plt.show()
 
 '''
 #Type A
