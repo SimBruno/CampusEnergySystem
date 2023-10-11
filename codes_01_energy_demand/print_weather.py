@@ -19,30 +19,29 @@ def load_data_weather_buildings():
 
 weather, buildings = load_data_weather_buildings()
 
-'''
+
 #plot weather in 2 figures one for temperature and one for irradiation
 plt.figure()
-plt.plot(weather.Temp)
+plt.plot(weather.Temp, '+')
 plt.xlabel('Hour')
 plt.ylabel('Temperature [°C]')
 plt.title('Weather data')
 
 plt.figure()
-plt.plot(weather.Irr)
+plt.plot(weather.Irr, '+')
 plt.xlabel('Hour')
 plt.ylabel('Irradiation [W/m2]')
 plt.title('Weather data')
 #plt.show()
-'''
+
 
 #cluster with sklearn using kmeans algorithm using 2 types: Type A) timesteps were the buildings are used (Monday to Friday 7am to 9pm) and the external temperature is below the cut off temperature of 16 °C.• Type B) the exact opposite of type A leaving the timesteps when the buildings are not used (night,weekend) and the external temperature is greater than 16 °C
 #intialize the weather_df with columns names index, temperature, irradiation and type
 weather_df = []
 
-for k in range(0, 8759):
+for k in range(0, len(weather.Temp)-1):
     #select only k that is between 7 and 21 modulo 24
-    if (k % 24 >= 7 and k % 24 <= 21):
-        if weather.Temp[k] > 16:
+    if (k % 24 >= 7 and k % 24 <= 21) and weather.Temp[k] < 16:
             weather_df.append([k, weather.Temp[k], weather.Irr[k], 'A'])
     else:
         weather_df.append([k, weather.Temp[k], weather.Irr[k], 'B'])
@@ -55,6 +54,9 @@ std_w = weather_df.Temp.std()
 # Z-score = 3
 ZSCORE = 2.3
 weather_df.loc[(weather_df.Temp < mean_w - ZSCORE*std_w) | (weather_df.Temp > mean_w + ZSCORE*std_w), 'Type'] = 'O'
+
+#save weather_df in a new csv file
+weather_df.to_csv('weather_df.csv', index=False)
 
 #plot weather in 2 figures one for temperature and one for irradiation and 2 colours depending on type A or type B
 plt.figure()
