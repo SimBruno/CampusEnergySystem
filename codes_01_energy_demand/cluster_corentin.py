@@ -105,7 +105,7 @@ weather_B = weather_B[['Temp', 'Irr']]
 #select the data for outliers
 weather_O = weather_O[['Temp', 'Irr']]
 #cluster the data in 4 clusters
-kmeans_A = KMeans(n_clusters=4, random_state=0).fit(weather_A)
+kmeans_A = KMeans(n_clusters=6, random_state=0).fit(weather_A)
 #add the cluster column to the dataframe
 weather_A['Cluster'] = kmeans_A.labels_
 #plot the data
@@ -135,9 +135,13 @@ weather_A.to_csv('weather_A.csv', index=False)
 #plot temperature and irradiation depending on the hour in 2 figures for type A in 4 different colors depending on the cluster
 plt.figure()
 plt.plot(weather_A[weather_A.Cluster == 0].Temp, '+')
+'''
 plt.plot(weather_A[weather_A.Cluster == 1].Temp, '+')
 plt.plot(weather_A[weather_A.Cluster == 2].Temp, '+')
 plt.plot(weather_A[weather_A.Cluster == 3].Temp, '+')
+plt.plot(weather_A[weather_A.Cluster == 4].Temp, '+')
+plt.plot(weather_A[weather_A.Cluster == 5].Temp, '+')
+'''
 #plt.plot(weather_df.Temp)
 plt.xlabel('Hour')
 plt.ylabel('Temperature [°C]')
@@ -151,6 +155,8 @@ plt.plot(weather_A[weather_A.Cluster == 0].Irr, '+')
 plt.plot(weather_A[weather_A.Cluster == 1].Irr, '+')
 plt.plot(weather_A[weather_A.Cluster == 2].Irr, '+')
 plt.plot(weather_A[weather_A.Cluster == 3].Irr, '+')
+plt.plot(weather_A[weather_A.Cluster == 4].Irr, '+')
+plt.plot(weather_A[weather_A.Cluster == 5].Irr, '+')
 #plt.plot(weather_df.Temp)
 plt.xlabel('Hour')
 plt.ylabel('Irradiance [W/m2]')
