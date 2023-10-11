@@ -5,6 +5,10 @@ from sklearn.cluster import KMeans
 # Read in CSV file
 df = pd.read_csv('/Users/simon/Documents/GitHub/MOES2023/report-group-3/codes_01_energy_demand/Weather.csv', header=0, encoding='unicode_escape')
 df.columns = ['T_amb_degree_C', 'Irr_W_per_m2']
+#add a column with the hours of the day starting at 0 and continuing until no more data
+df['Hours'] = range(0, len(df.index))
+
+
 
 # Plot temperature and irradiance vs hours of the day
 plt.figure()
@@ -17,11 +21,11 @@ plt.title('Temperature and Irradiance vs Hours of the day')
 plt.legend()
 plt.show()
 
-# Reshape the data for K-Means clustering
-X = df[['T_amb_degree_C', 'Irr_W_per_m2']]
+# Reshape the data for K-Means clustering of Irradiance vs hours of the day
+X = df[['Hours','Irr_W_per_m2']]
 
 # Perform K-Means clustering
-kmeans = KMeans(n_clusters=3, random_state=0).fit(X)
+kmeans_irr = KMeans(n_clusters=3, random_state=0).fit(X)
 
 # Plot not in scatter way clustered Irradiance vs hours of the day
 
@@ -29,8 +33,8 @@ kmeans = KMeans(n_clusters=3, random_state=0).fit(X)
 
 #test
 plt.figure()
-plt.scatter(df.index, df['Irr_W_per_m2'], c=kmeans.labels_.astype(float), s=50, alpha=0.5)
-plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], c='red', s=50)
+plt.scatter(df.index, df['Irr_W_per_m2'], c=kmeans_irr.labels_.astype(float), s=50, alpha=0.5)
+plt.scatter(kmeans_irr.cluster_centers_[:, 0], kmeans_irr.cluster_centers_[:, 1], c='red', s=50)
 plt.xlabel('Hours of the day')
 plt.ylabel('Irradiance [W/m2]')
 plt.title('Irradiance vs Hours of the day (Clustered)')
@@ -38,7 +42,27 @@ plt.legend(['Hours (hr)', 'Irradiance (W/m2)'])
 plt.show()
 
 
+# Reshape the data for K-Means clustering of Temperature vs hours of the day
+X = df[['T_amb_degree_C','Hours']]
 
+# Perform K-Means clustering
+kmeans_temp = KMeans(n_clusters=3, random_state=0).fit(X)
+
+# Plot not in scatter way clustered Irradiance vs hours of the day
+
+
+
+#test
+plt.figure()
+plt.scatter(df.index, df['T_amb_degree_C'], c=kmeans_temp.labels_.astype(float), s=50, alpha=0.5)
+plt.scatter(kmeans_temp.cluster_centers_[:, 0], kmeans_temp.cluster_centers_[:, 1], c='red', s=50)
+plt.xlabel('Hours of the day')
+plt.ylabel('Temperature [°C]')
+plt.title('Temperature vs Hours of the day (Clustered)')
+plt.legend(['Hours (hr)', 'Temperature (°C)'])
+plt.show()
+
+'''
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
@@ -67,3 +91,6 @@ plt.ylabel('Irradiance [W/m2]')
 plt.title('Irradiance vs Hours of the day (Clustered)')
 plt.legend()
 plt.show()
+
+
+'''

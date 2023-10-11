@@ -52,7 +52,7 @@ weather_df = pd.DataFrame(weather_df, columns=['Hours', 'Temp', 'Irr', 'Type'])
 mean_w = weather_df.Temp.mean()
 std_w = weather_df.Temp.std()
 # Z-score = 3
-ZSCORE = 2.3
+ZSCORE = 2.5
 weather_df.loc[(weather_df.Temp < mean_w - ZSCORE*std_w) | (weather_df.Temp > mean_w + ZSCORE*std_w), 'Type'] = 'O'
 
 #save weather_df in a new csv file
