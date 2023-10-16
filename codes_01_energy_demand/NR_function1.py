@@ -89,8 +89,8 @@ def elec_gains(building_id, profile_elec):
     #q_elec_hourly[profile_elec==1]=q_elec_hour # fill q_elec(t) with q_elec_hour when on
     return cf*profile_elec*buildings.loc[buildings.Name==building_id].apply(lambda x: x['Elec']/x['Ground'] , axis=1).to_numpy()[0] # W/m2 for each hour of the year
 
-
-"""def solving_NR(tolerance,max_iteration,building_id, k_th_guess, k_sun_guess):
+"""
+def solving_NR(tolerance,max_iteration,building_id, k_th_guess, k_sun_guess):
     
     # Initialize counters and tolerances
     e_th = 1
@@ -111,9 +111,13 @@ def elec_gains(building_id, profile_elec):
     cutoff_indicator = ((T_th -1 <= T_ext) & (T_ext <= T_th + 1)) # state switch on/off conditions
     #cutoff_indicator = ((T_ext >= T_th +1) & (T_ext <= T_th - 1)) # state switch on/off conditions
 
-    q_elec_mean = q_elec[cutoff_indicator].mean() 
-    q_people_mean = q_people[cutoff_indicator].mean()
-    irr_mean = irr[cutoff_indicator].mean()
+    #q_elec_mean = q_elec[cutoff_indicator].mean() 
+    #q_people_mean = q_people[cutoff_indicator].mean()
+    #irr_mean = irr[cutoff_indicator].mean()
+
+    q_elec_mean = q_elec.mean() 
+    q_people_mean = q_people.mean()
+    irr_mean = irr.mean()
 
     specQ_people = q_people.mean()
     # Newton Raphson method
@@ -159,8 +163,8 @@ def elec_gains(building_id, profile_elec):
     print(building_id, iteration, k_th, k_sun, e_th, e_sun)
 
     return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, q_elec_mean 
-"""
 
+"""
 def solving_NR(tolerance,max_iteration,building_id, k_th_guess, k_sun_guess):
     
     # Initialize counters and tolerances
@@ -191,7 +195,7 @@ def solving_NR(tolerance,max_iteration,building_id, k_th_guess, k_sun_guess):
     specQ_people = q_people.mean()
     # Newton Raphson method
     
-    alpha = 0.7 # relaxation factor
+    alpha = 0.8 # relaxation factor
 
     while iteration < max_iteration:
 
@@ -226,8 +230,6 @@ def solving_NR(tolerance,max_iteration,building_id, k_th_guess, k_sun_guess):
 
     return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, q_elec_mean 
 
-
-
 if __name__ == '__main__': 
     # the code below will be executed only if you run the NR_function.py file as main file, not if you import the functions from another file (another .py or .qmd)
     
@@ -239,7 +241,7 @@ if __name__ == '__main__':
 
     # State required tolerances and maximum number of iterations
     tol=1e-6
-    max_iteration=10000
+    max_iteration=1000
 
     # State initial guesses for k_th and k_sun
     k_th_guess=5
@@ -257,7 +259,7 @@ if __name__ == '__main__':
     
     #Saving dataframe in thermal_properties.csv
     path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
-    Solution.to_csv(os.path.join(path, "thermal_properties.csv"),index=False)
+    #Solution.to_csv(os.path.join(path, "thermal_properties.csv"),index=False)
 
     #Printing solutions
     print(Solution)
