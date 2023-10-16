@@ -251,3 +251,5 @@ Qthbase = Qth.sum()
 
 def clustering_error(Qthbase, Qth_cluster):
     return (Qth_cluster - Qthbase) / Qthbase
+
+#test
