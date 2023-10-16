@@ -106,15 +106,34 @@ weather_A = weather_A[['Temp', 'Irr']]
 weather_B = weather_B[['Temp', 'Irr']]
 #select the data for outliers
 weather_O = weather_O[['Temp', 'Irr']]
-#cluster the data in 4 clusters
-kmeans_A = KMeans(n_clusters=6, random_state=0).fit(weather_A)
+
+weather_A_norm = []
+#normalize weather_A data for each column with gaussian normalization
+for i in range(0, len(weather_A.columns)):
+    weather_A_norm.append((weather_A.iloc[:, i] - weather_A.iloc[:, i].mean())/weather_A.iloc[:, i].std())
+
+weather_A_norm = pd.DataFrame(weather_A_norm).transpose()
+#rename the columns
+weather_A_norm.columns = ['Temp', 'Irr']
+
+#cluster the data in 5 clusters
+kmeans_A = KMeans(n_clusters=5, random_state=0).fit(weather_A_norm)
 #add the cluster column to the dataframe
+weather_A_norm['Cluster'] = kmeans_A.labels_
 weather_A['Cluster'] = kmeans_A.labels_
 #plot the data
 plt.figure()
 plt.scatter(weather_A.Temp, weather_A.Irr, c=weather_A.Cluster)
+
+cluster = kmeans_A.cluster_centers_
+for c in cluster:
+    c[0] = c[0]*weather_A.Temp.std() + weather_A.Temp.mean()
+    c[1] = c[1]*weather_A.Irr.std() + weather_A.Irr.mean()
+
+print(cluster)
+
 #plot the centroids in red
-plt.scatter(kmeans_A.cluster_centers_[:, 0], kmeans_A.cluster_centers_[:, 1], c='red', s=200, alpha=0.5)
+plt.scatter(cluster[:, 0], cluster[:, 1], c='red', s=200, alpha=0.5)
 plt.xlabel('Temperature [°C]')
 plt.ylabel('Irradiation [W/m2]')
 plt.title('Weather data type A')
@@ -137,13 +156,11 @@ weather_A.to_csv('weather_A.csv', index=False)
 #plot temperature and irradiation depending on the hour in 2 figures for type A in 4 different colors depending on the cluster
 plt.figure()
 plt.plot(weather_A[weather_A.Cluster == 0].Temp, '+')
-'''
 plt.plot(weather_A[weather_A.Cluster == 1].Temp, '+')
 plt.plot(weather_A[weather_A.Cluster == 2].Temp, '+')
 plt.plot(weather_A[weather_A.Cluster == 3].Temp, '+')
 plt.plot(weather_A[weather_A.Cluster == 4].Temp, '+')
-plt.plot(weather_A[weather_A.Cluster == 5].Temp, '+')
-'''
+
 #plt.plot(weather_df.Temp)
 plt.xlabel('Hour')
 plt.ylabel('Temperature [°C]')
@@ -158,7 +175,6 @@ plt.plot(weather_A[weather_A.Cluster == 1].Irr, '+')
 plt.plot(weather_A[weather_A.Cluster == 2].Irr, '+')
 plt.plot(weather_A[weather_A.Cluster == 3].Irr, '+')
 plt.plot(weather_A[weather_A.Cluster == 4].Irr, '+')
-plt.plot(weather_A[weather_A.Cluster == 5].Irr, '+')
 #plt.plot(weather_df.Temp)
 plt.xlabel('Hour')
 plt.ylabel('Irradiance [W/m2]')
