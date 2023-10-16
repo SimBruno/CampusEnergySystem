@@ -243,9 +243,9 @@ plt.show()
 '''
 #Compute Qth for 8760hours
 
-Qth = #import Qth for AL file
+#Qth = #import Qth for AL file
 
-Qthbase = Qth.sum()
+#Qthbase = Qth.sum()
 
 #Function to compute the clustering error between the Qthbase and the Qth_cluster where Qthbase it the heat demand for the 8760 hours and Qth_cluster is the heat demand for the 8760 hours after clustering with n clusters
 
