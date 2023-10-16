@@ -239,4 +239,13 @@ plt.show()
 #weather_A = weather_A[(weather_A.Temp > mean_A - 2*std_A) & (weather_A.Temp < mean_A + 2*std_A)]
 
 '''
-    
+#Compute Qth for 8760hours
+
+Qth = #import Qth for AL file
+
+Qthbase = Qth.sum()
+
+#Function to compute the clustering error between the Qthbase and the Qth_cluster where Qthbase it the heat demand for the 8760 hours and Qth_cluster is the heat demand for the 8760 hours after clustering with n clusters
+
+def clustering_error(Qthbase, Qth_cluster):
+    return (Qth_cluster - Qthbase) / Qthbase
