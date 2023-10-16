@@ -86,7 +86,7 @@ def people_gains(office_profile,class_profile,cantine_profile):
     share_others=0.3
  
     q_people=heat_gain_off*share_off*office_profile + heat_gain_rest*share_rest*cantine_profile + heat_gain_class*share_class*class_profile
-    return q_people
+    return q_people #[W/m^2]
 
 
 
@@ -95,7 +95,7 @@ def people_gains(office_profile,class_profile,cantine_profile):
 #################################################################
 
 def elec_gains(building_id: str,elec_profile):
-    q_elec=elec_profile*buildings[buildings['Name']==building_id]['Elec'].to_numpy()/3654
+    q_elec=elec_profile*buildings[buildings['Name']==building_id]['Elec'].to_numpy()/3654*1000 #[W]
     return q_elec
 
 
@@ -111,18 +111,31 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_sun_guess):
     counter=0
 
     # Getting other parameters
-    A_th=buildings[buildings['Name']==building_id]['Ground'].values[0]
-    Q_year=buildings[buildings['Name']==building_id]['Heat'].values[0]*1000
-    temperature=weather.Temp.to_numpy()+273
-    irradiance=weather.Irr.to_numpy()
+    A_th=buildings[buildings['Name']==building_id]['Ground'].values[0] #[m^2]
+    Q_year=buildings[buildings['Name']==building_id]['Heat'].values[0]*1000 #[Wh]
+    temperature=weather.Temp.to_numpy()+273 #[K]
+    irradiance=weather.Irr.to_numpy() #[W/m^2]
    
     # Mean values calculation (for second part of the function)
+
+
+    ################# This is where we have an issue!!!!!##################
+
+    ## Works, but wrong hypothesis
     irr_mean=irradiance.mean()
     q_people_mean=q_people.mean()
     q_elec_mean=q_elec.mean()
-    #irr_mean=irradiance[(temperature>=T_th-1) & (temperature<=T_th+1) & (elec_profile==1)].mean()
-    #q_people_mean=q_people[(temperature>=T_th-1) & (temperature<=T_th+1) & (elec_profile==1)].mean()
-    #q_elec_mean=q_elec[(temperature>=T_th-1) & (temperature<=T_th+1) & (elec_profile==1)].mean()
+
+    ## Does not work but correct hypothesis (uncomment the 5 next lines if you want to try)
+
+    #T_th_1=T_th-1
+    #T_th_2=T_th+1
+    #irr_mean=irradiance[(temperature>=T_th_1) & (temperature<=T_th_2) & (elec_profile==1)].mean()
+    #q_people_mean=q_people[(temperature>=T_th_1) & (temperature<=T_th_2) & (elec_profile==1)].mean()
+    #q_elec_mean=q_elec[(temperature>=T_th_1) & (temperature<=T_th_2) & (elec_profile==1)].mean()
+
+
+    #########################################################################
     
     # Initialize guess values
     k_th=k_th_guess
@@ -207,30 +220,49 @@ if __name__ == '__main__':
     k_th_guess=5
   
     # Initialize array to record values for each building
-    k_th=[0]*len(buildings)
-    k_sun=[0]*len(buildings)
-    number_iteration=[0]*len(buildings)
-    error1=[0]*len(buildings)
-    error2=[0]*len(buildings)
-    spec_elec=[0]*len(buildings)
-    floor_area=[0]*len(buildings)
+    k_th=np.zeros(len(buildings))
+    k_sun=np.zeros(len(buildings))
+    number_iteration=np.zeros(len(buildings))
+    error1=np.zeros(len(buildings))
+    error2=np.zeros(len(buildings))
+    spec_elec=np.zeros(len(buildings))
+    floor_area=np.zeros(len(buildings))
+    specQ_people=np.ones(len(buildings))*q_people.mean()
+    
 
     # Loop to get values for each building
     count=0
+    Q_th=np.zeros([8760,len(buildings)])
     for building_id in buildings['Name']:
         q_elec=elec_gains(building_id, elec_profile)
         [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
         spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
         floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
+        Q_temp=floor_area[count]*(k_th[count]*(T_int-(weather.Temp.to_numpy()+273))-k_sun[count]*weather.Irr.to_numpy()-q_people)-f_el*q_elec
+        Q_temp[(Q_temp<=0) | ((weather.Temp.to_numpy()+273)>T_th) | (elec_profile!=1)]=0
+        Q_th[:,count]=Q_temp/1000
+        
         count=count+1
+
+    #Construct dataframe for Q_th(t) for each building
+
+    Heat=pd.DataFrame(Q_th, columns=buildings['Name'].to_numpy())
+
   
     #Storing everything in a pandas dataframe
-    data={'Name':buildings['Name'].to_numpy(), 'FloorArea':floor_area, 'specElec':spec_elec, 'k_th': k_th, 'k_sun':k_sun,'specQ_people':error1} #Note that there are 2 errors. This is because the function is bidimmensional
+    data={'Name':buildings['Name'].to_numpy(), 'FloorArea':floor_area, 'specElec':spec_elec, 'k_th': k_th/1000, 'k_sun':k_sun,'specQ_people':specQ_people/1000} #Note that there are 2 errors. This is because the function is bidimmensional
     Solution=pd.DataFrame(data)
 
-    #Saving dataframe in thermal_properties.csv
+    #Saving dataframes in thermal_properties.csv and heat.csv
     path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
     Solution.to_csv(os.path.join(path, "thermal_properties.csv"),index=False)
+    Heat.to_csv(os.path.join(path, "heat.csv"),index=False)
 
     #Printing solutions
-    print(Solution)
+    #print(Solution)
+    #print(Heat)
+
+    #Plot Q_th for some building
+    #ax=plt.plot(Q_th[:,4],'.')
+    #plt.yscale('log')
+    #plt.show()
