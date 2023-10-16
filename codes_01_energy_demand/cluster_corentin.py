@@ -12,6 +12,8 @@ def load_data_weather_buildings():
     weather = pd.read_csv(os.path.join(path, "Weather.csv"),header=0,encoding = 'unicode_escape')
     weather.columns = ['Temp', 'Irr']
 
+
+
     buildings = pd.read_csv(os.path.join(path, "Buildings.csv"),header=0,encoding = 'unicode_escape')
     buildings.columns = ['Name', 'Year', 'Ground', 'Heat', 'Elec']
 
