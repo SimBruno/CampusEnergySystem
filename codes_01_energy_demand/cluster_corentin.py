@@ -132,6 +132,13 @@ for c in cluster:
 
 print(cluster)
 
+# Convert the NumPy array to a Pandas DataFrame
+cluster_df = pd.DataFrame(cluster, columns=['Temp', 'Irr'])
+
+#create a cluster.csv file with the centroids of the clusters and the numbers of hours in each cluster
+path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
+cluster_df.to_csv(os.path.join(path, "clusters.csv"),index=False)
+
 #plot the centroids in red
 plt.scatter(cluster[:, 0], cluster[:, 1], c='red', s=200, alpha=0.5)
 plt.xlabel('Temperature [°C]')
@@ -243,13 +250,21 @@ plt.show()
 '''
 #Compute Qth for 8760hours
 
-#Qth = #import Qth for AL file
+#import Qth for each buildings from Heat.csv
+path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
+heat = pd.read_csv(os.path.join(path, "heat.csv"),header=0,encoding = 'unicode_escape')
 
-#Qthbase = Qth.sum()
+
+
+#compute Qth annualy for each buildings column(i.e sum of each column)
+Qth = heat.sum(axis=0)
+
+#Compute total annual Q demand for the entire EPFL
+Qtot = Qth.sum()
+print(Qtot)
 
 #Function to compute the clustering error between the Qthbase and the Qth_cluster where Qthbase it the heat demand for the 8760 hours and Qth_cluster is the heat demand for the 8760 hours after clustering with n clusters
 
 def clustering_error(Qthbase, Qth_cluster):
     return (Qth_cluster - Qthbase) / Qthbase
 
-#test
