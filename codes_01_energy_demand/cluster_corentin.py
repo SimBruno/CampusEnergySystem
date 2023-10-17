@@ -117,7 +117,7 @@ weather_A_norm = pd.DataFrame(weather_A_norm).transpose()
 weather_A_norm.columns = ['Temp', 'Irr']
 
 #cluster the data in 5 clusters
-kmeans_A = KMeans(n_clusters=5, random_state=0).fit(weather_A_norm)
+kmeans_A = KMeans(n_clusters=10, random_state=0).fit(weather_A_norm)
 #add the cluster column to the dataframe
 weather_A_norm['Cluster'] = kmeans_A.labels_
 weather_A['Cluster'] = kmeans_A.labels_
@@ -248,23 +248,6 @@ plt.show()
 #weather_A = weather_A[(weather_A.Temp > mean_A - 2*std_A) & (weather_A.Temp < mean_A + 2*std_A)]
 
 '''
-#Compute Qth for 8760hours
-
-#import Qth for each buildings from Heat.csv
-path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
-heat = pd.read_csv(os.path.join(path, "heat.csv"),header=0,encoding = 'unicode_escape')
 
 
-
-#compute Qth annualy for each buildings column(i.e sum of each column)
-Qth = heat.sum(axis=0)
-
-#Compute total annual Q demand for the entire EPFL
-Qtot = Qth.sum()
-print(Qtot)
-
-#Function to compute the clustering error between the Qthbase and the Qth_cluster where Qthbase it the heat demand for the 8760 hours and Qth_cluster is the heat demand for the 8760 hours after clustering with n clusters
-
-def clustering_error(Qthbase, Qth_cluster):
-    return (Qth_cluster - Qthbase) / Qthbase
 
