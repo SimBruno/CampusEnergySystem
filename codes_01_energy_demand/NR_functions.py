@@ -196,7 +196,24 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_sun_guess):
     
     return k,counter,error
 
+######################################################
+#### Function for clustering ####
+######################################################
 
+
+
+#Function to compute the clustering error between the Qthbase and the Qth_cluster where Qthbase it the heat demand for the 8760 hours and Qth_cluster is the heat demand for the 8760 hours after clustering with n clusters
+
+def clustering_error(Qth_base, Qth_cluster, heat, heatcluster):
+    #compute Qth_base and Qth_cluster annualy for each buildings column(i.e sum of each column)
+    Qth_base = heat.sum(axis=0)
+    Qth_cluster = heatcluster.sum(axis=0)
+
+    #Compute total annual Q demand for the entire EPFL
+    Qtot_base = Qth_base.sum() 
+    Qtot_cluster = Qth_cluster.sum()
+    error = (Qtot_base - Qtot_cluster) / Qtot_base
+    return error
 
 ###################################
 #### Getting all work together ####
@@ -266,3 +283,61 @@ if __name__ == '__main__':
     #ax=plt.plot(Q_th[:,4],'.')
     #plt.yscale('log')
     #plt.show()
+
+    ##### USE OF CLUSTERING POINTS TO GET QTH####
+
+
+    #import cluster with Irr and Text values for the cluster centers
+    path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
+    clusterdf = pd.read_csv(os.path.join(path, "clusters.csv"),header=0,encoding = 'unicode_escape')
+
+    count = 0
+    Qthcluster = np.zeros([len(clusterdf),len(buildings)])
+    delta_hr=1 #time step in hours
+
+    for building_id in buildings['Name']:
+        q_elec=elec_gains(building_id, elec_profile)
+        [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
+        spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
+        floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
+        #use the clustering points to compute Qthcluster
+        for i in range(len(clusterdf)):
+            Q_temp=clusterdf.hours[i]*floor_area[count]*(k_th[count]*(T_int-(clusterdf.Temp[i]+273))-k_sun[count]*clusterdf.Irr[i]-q_people[i])-f_el*spec_elec[count]
+            Qthcluster[i,count]=Q_temp/1000
+        count=count+1
+
+     
+
+    #Construct dataframe for Qthcluster(t) for each building
+    heatcluster=pd.DataFrame(Qthcluster, columns=buildings['Name'].to_numpy())
+
+    #Concate clusterdf and heatcluster dataframes
+    df_task1=pd.concat([clusterdf,heatcluster],axis=1)
+
+    #Saving dataframes in final_df_task1.csv (NB: index is present in the csv file)
+    path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
+    df_task1.to_csv(os.path.join(path, "final_df_task1.csv"),index=True)
+
+    #Saving another dataframe with only the buldings with Constrcution_year = 1 (i.e.medium Temp heating demand)
+    
+    # Filter the rows where 'Year' is equal to 1
+    filtered_buildings = buildings[buildings['Year'] == 1]
+
+    # Create a list of building names to keep
+    building_names_to_keep = filtered_buildings['Name'].tolist()
+
+    # Filter the columns in 'heatcluster' based on the list of building names to keep
+    df_task1_medium = heatcluster[building_names_to_keep]
+    ##Concate the new medium dataframe with clusterdf 
+    df_task1_medium = pd.concat([clusterdf,df_task1_medium],axis=1)
+    
+    #Saving dataframes in final_df_task1_reduced.csv (NB: index is present in the csv file)
+    path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
+    df_task1_medium.to_csv(os.path.join(path, "final_df_task1_medium.csv"),index=True)
+
+
+
+    #Computing the error between Qthbase and Qthcluster
+    error = clustering_error(Q_th, Qthcluster, heat, heatcluster)
+    print(error)
+
