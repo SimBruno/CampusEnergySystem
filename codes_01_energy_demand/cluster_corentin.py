@@ -117,23 +117,31 @@ weather_A_norm = pd.DataFrame(weather_A_norm).transpose()
 weather_A_norm.columns = ['Temp', 'Irr']
 
 #cluster the data in 5 clusters
-kmeans_A = KMeans(n_clusters=10, random_state=0).fit(weather_A_norm)
+kmeans_A = KMeans(n_clusters=6, random_state=0).fit(weather_A_norm)
 #add the cluster column to the dataframe
-weather_A_norm['Cluster'] = kmeans_A.labels_
-weather_A['Cluster'] = kmeans_A.labels_
+weather_A_norm['cluster'] = kmeans_A.labels_
+weather_A['cluster'] = kmeans_A.labels_
+#count the number of hours in each cluster
+hours_per_cluster = weather_A.groupby('cluster').count().iloc[:, 0]
+
 #plot the data
 plt.figure()
-plt.scatter(weather_A.Temp, weather_A.Irr, c=weather_A.Cluster)
+plt.scatter(weather_A.Temp, weather_A.Irr, c=weather_A.cluster)
 
 cluster = kmeans_A.cluster_centers_
 for c in cluster:
     c[0] = c[0]*weather_A.Temp.std() + weather_A.Temp.mean()
     c[1] = c[1]*weather_A.Irr.std() + weather_A.Irr.mean()
 
+
+
 print(cluster)
 
 # Convert the NumPy array to a Pandas DataFrame
 cluster_df = pd.DataFrame(cluster, columns=['Temp', 'Irr'])
+# Add the number of hours per cluster
+cluster_df['hours'] = hours_per_cluster.values
+
 
 #create a cluster.csv file with the centroids of the clusters and the numbers of hours in each cluster
 path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
@@ -162,11 +170,11 @@ weather_A.to_csv('weather_A.csv', index=False)
 
 #plot temperature and irradiation depending on the hour in 2 figures for type A in 4 different colors depending on the cluster
 plt.figure()
-plt.plot(weather_A[weather_A.Cluster == 0].Temp, '+')
-plt.plot(weather_A[weather_A.Cluster == 1].Temp, '+')
-plt.plot(weather_A[weather_A.Cluster == 2].Temp, '+')
-plt.plot(weather_A[weather_A.Cluster == 3].Temp, '+')
-plt.plot(weather_A[weather_A.Cluster == 4].Temp, '+')
+plt.plot(weather_A[weather_A.cluster == 0].Temp, '+')
+plt.plot(weather_A[weather_A.cluster == 1].Temp, '+')
+plt.plot(weather_A[weather_A.cluster == 2].Temp, '+')
+plt.plot(weather_A[weather_A.cluster == 3].Temp, '+')
+plt.plot(weather_A[weather_A.cluster == 4].Temp, '+')
 
 #plt.plot(weather_df.Temp)
 plt.xlabel('Hour')
@@ -177,11 +185,11 @@ plt.grid(True)
 
 
 plt.figure()
-plt.plot(weather_A[weather_A.Cluster == 0].Irr, '+')
-plt.plot(weather_A[weather_A.Cluster == 1].Irr, '+')
-plt.plot(weather_A[weather_A.Cluster == 2].Irr, '+')
-plt.plot(weather_A[weather_A.Cluster == 3].Irr, '+')
-plt.plot(weather_A[weather_A.Cluster == 4].Irr, '+')
+plt.plot(weather_A[weather_A.cluster == 0].Irr, '+')
+plt.plot(weather_A[weather_A.cluster == 1].Irr, '+')
+plt.plot(weather_A[weather_A.cluster == 2].Irr, '+')
+plt.plot(weather_A[weather_A.cluster == 3].Irr, '+')
+plt.plot(weather_A[weather_A.cluster == 4].Irr, '+')
 #plt.plot(weather_df.Temp)
 plt.xlabel('Hour')
 plt.ylabel('Irradiance [W/m2]')
@@ -251,3 +259,12 @@ plt.show()
 
 
 
+for building_id in buildings['Name']:
+        q_elec=elec_gains(building_id, elec_profile)
+        [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
+        spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
+        floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
+        Q_temp=delta_hr*floor_area[count]*(k_th[count]*(T_int-(clusterdf.Temp.to_numpy()+273))-k_sun[count]*clusterdf.Irr.to_numpy()-solution.specQ_people[count])-f_el*solution.specElec[count]
+        Qthcluster[:,count]=Q_temp/1000
+        
+        count=count+1
