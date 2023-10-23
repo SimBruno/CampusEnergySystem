@@ -168,34 +168,28 @@ print(kmeans_A.score(weather_A))
 
 weather_A.to_csv('weather_A.csv', index=False)
 
-#plot temperature and irradiation depending on the hour in 2 figures for type A in 4 different colors depending on the cluster
+#plot automatically temperature and irradiation depending on the hour in 2 figures for type A in different colors depending on the cluster
+#Temperature
 plt.figure()
-plt.plot(weather_A[weather_A.cluster == 0].Temp, '+')
-plt.plot(weather_A[weather_A.cluster == 1].Temp, '+')
-plt.plot(weather_A[weather_A.cluster == 2].Temp, '+')
-plt.plot(weather_A[weather_A.cluster == 3].Temp, '+')
-plt.plot(weather_A[weather_A.cluster == 4].Temp, '+')
-
-#plt.plot(weather_df.Temp)
+for i in range(0,len(weather_A.cluster)):
+    plt.plot(weather_A[weather_A.cluster == i].Temp, '+')
 plt.xlabel('Hour')
 plt.ylabel('Temperature [°C]')
 plt.title('Weather data')
 #grid on
 plt.grid(True)
 
-
+#Irradiation
 plt.figure()
-plt.plot(weather_A[weather_A.cluster == 0].Irr, '+')
-plt.plot(weather_A[weather_A.cluster == 1].Irr, '+')
-plt.plot(weather_A[weather_A.cluster == 2].Irr, '+')
-plt.plot(weather_A[weather_A.cluster == 3].Irr, '+')
-plt.plot(weather_A[weather_A.cluster == 4].Irr, '+')
-#plt.plot(weather_df.Temp)
+for i in range(0,len(weather_A.cluster)):
+    plt.plot(weather_A[weather_A.cluster == i].Irr, '+')
 plt.xlabel('Hour')
-plt.ylabel('Irradiance [W/m2]')
+plt.ylabel('Irradiation [W/m2]')
 plt.title('Weather data')
 #grid on
 plt.grid(True)
+
+
 plt.show()
 
 '''
@@ -257,14 +251,3 @@ plt.show()
 
 '''
 
-
-
-for building_id in buildings['Name']:
-        q_elec=elec_gains(building_id, elec_profile)
-        [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
-        spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
-        floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
-        Q_temp=delta_hr*floor_area[count]*(k_th[count]*(T_int-(clusterdf.Temp.to_numpy()+273))-k_sun[count]*clusterdf.Irr.to_numpy()-solution.specQ_people[count])-f_el*solution.specElec[count]
-        Qthcluster[:,count]=Q_temp/1000
-        
-        count=count+1
