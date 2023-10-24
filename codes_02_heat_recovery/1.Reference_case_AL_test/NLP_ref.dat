@@ -1,4 +1,4 @@
-set Time := 1 2 3;
+set Time := 1 2 3; #Opertaing time, should we add the constraints?
 
 param Qheating := # medium temperature heating demand (KW or KWh)
 1 1500000
