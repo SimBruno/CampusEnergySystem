@@ -123,6 +123,13 @@ weather_A_norm['cluster'] = kmeans_A.labels_
 weather_A['cluster'] = kmeans_A.labels_
 #count the number of hours in each cluster
 hours_per_cluster = weather_A.groupby('cluster').count().iloc[:, 0]
+#create a cluster disaggregated dataframe (i.e. all data are not grouped by cluster)
+cluster_disagg = weather_A
+
+#load the data in a csv file
+path = os.path.dirname(__file__)
+cluster_disagg.to_csv(os.path.join(path,'clusters_dissaggregated.csv'),index=True)
+
 
 #plot the data
 plt.figure()
