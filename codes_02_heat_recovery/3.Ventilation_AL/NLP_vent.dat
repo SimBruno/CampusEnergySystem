@@ -1,0 +1,30 @@
+set Time := 1 2 3 4 5 6;
+
+param irradiation :=													# irradiation at each typical period
+1     32.729687
+2    563.737805
+3     37.347573
+4     38.905192
+5    280.814696
+6    284.641176
+;
+
+param Text := 															# external temperature [C] at each typical period
+1     6.363281
+2    12.373171
+3    12.284854
+4     0.067946
+5     6.085942
+6    13.070000
+Name: Temp, dtype: float64
+;
+
+param top :=															# operating time of each typical period
+1    640
+2    164
+3    515
+4    444
+5    312
+6    340
+;
+

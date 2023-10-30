@@ -14,8 +14,8 @@ param EPFLMediumOut := 30; # temperature of return low temperature loop [degC]
 param CarnotEff 	:= 0.55; #assumption: carnot efficiency of heating heat pumps
 param Cel 			:= 0.20; #[CHF/kWh] operating cost for buying electricity from the grid
 
-param THPhighin 	:= 7; #[deg C] temperature of water coming from lake into the evaporator of the HP
-param THPhighout 	:= 3; #[deg C] temperature of water coming from lake into the evaporator of the HP
+param THPhighin 	:= 273+7; #[deg C] temperature of water coming from lake into the evaporator of the HP
+param THPhighout 	:= 273+3; #[deg C] temperature of water coming from lake into the evaporator of the HP
 
 #Can add these parameters, because we assume constant temperature within the haet pump, to change the heat load one will change the mass flow, constant Temp lead to constant COP
 #TLM of cond and evap, not of the hex 
@@ -88,8 +88,8 @@ subject to Electricity{t in Time}: #the electricity consumed in the HP (using pr
 
 
 #Do not need this equation, its the same as QCondensator?
-subject to QEPFLausanne{t in Time}: #the heat demand of EPFL should be supplied by the the HP.
-    Qcond[t] = Qheating[t];
+#subject to QEPFLausanne{t in Time}: #the heat demand of EPFL should be supplied by the the HP.
+ #   Qcond[t] = Qheating[t];
 
 subject to OPEXcost: #the operating cost can be computed using the electricity consumed in the HP;
     OPEX[t] = Cel * Qheating[t] * top[t]; #7 eq and 7 unkowns
