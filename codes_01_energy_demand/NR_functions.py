@@ -18,7 +18,7 @@ cp_air = 1152 # Air specific heat capacity [J/(m3.K)]
 T_int = 294 # Set point temperature [K]
 air_new = 2.5 # Air renewal [m3/(m2.h)]
 Vent = 0 # [...]
-f_el = 0.8 # Share of electricity demand which is converted to heat appliances
+f_el = 0.5 # Share of electricity demand which is converted to heat appliances
 
 
 
@@ -244,7 +244,7 @@ if __name__ == '__main__':
     error2=np.zeros(len(buildings))
     spec_elec=np.zeros(len(buildings))
     floor_area=np.zeros(len(buildings))
-    specQ_people=np.ones(len(buildings))*q_people.mean()
+    specQ_people=np.ones(len(buildings))*q_people[q_people!=0].mean()
     
 
     # Loop to get values for each building
@@ -253,8 +253,8 @@ if __name__ == '__main__':
     for building_id in buildings['Name']:
         q_elec=elec_gains(building_id, elec_profile)
         [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
-        spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
         floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
+        spec_elec[count]=q_elec[q_elec!=0].mean()/floor_area[count]
         Q_temp=floor_area[count]*(k_th[count]*(T_int-(weather.Temp.to_numpy()+273))-k_sun[count]*weather.Irr.to_numpy()-q_people)-f_el*q_elec
         Q_temp[(Q_temp<=0) | ((weather.Temp.to_numpy()+273)>T_th) | (elec_profile!=1)]=0
         Q_th[:,count]=Q_temp/1000
@@ -267,7 +267,7 @@ if __name__ == '__main__':
 
   
     #Storing everything in a pandas dataframe
-    data={'Name':buildings['Name'].to_numpy(), 'FloorArea':floor_area, 'specElec':spec_elec, 'k_th': k_th/1000, 'k_sun':k_sun,'specQ_people':specQ_people/1000} #Note that there are 2 errors. This is because the function is bidimmensional
+    data={'Name':buildings['Name'].to_numpy(), 'FloorArea':floor_area, 'specElec':spec_elec/1000, 'k_th': k_th/1000, 'k_sun':k_sun,'specQ_people':specQ_people/1000} #Note that there are 2 errors. This is because the function is bidimmensional
     solution=pd.DataFrame(data)
 
     #Saving dataframes in thermal_properties.csv and heat.csv
@@ -298,11 +298,13 @@ if __name__ == '__main__':
     for building_id in buildings['Name']:
         q_elec=elec_gains(building_id, elec_profile)
         [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
-        spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
+        #spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
         floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
         #use the clustering points to compute Qthcluster
         for i in range(len(clusterdf)):
-            Q_temp=clusterdf.hours[i]*floor_area[count]*(k_th[count]*(T_int-(clusterdf.Temp[i]+273))-k_sun[count]*clusterdf.Irr[i]-q_people[i])-f_el*spec_elec[count]
+            Q_temp=clusterdf.hours[i]*floor_area[count]*(k_th[count]*(T_int-(clusterdf.Temp[i]+273))-k_sun[count]*clusterdf.Irr[i]-specQ_people[0])-f_el*spec_elec[count]*floor_area[count]
+            if (Q_temp<=0) | (clusterdf.Temp[i]+273>T_th):
+                Q_temp=0
             Qthcluster[i,count]=Q_temp/1000
         count=count+1
 

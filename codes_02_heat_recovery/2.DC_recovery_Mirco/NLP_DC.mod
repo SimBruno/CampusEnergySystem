@@ -68,19 +68,19 @@ var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s degC)]
 ####### Direct Heat Exchanger;
 
 ## TEMPERATURE CONTROL CONSTRAINS exist to be sure the temperatures in the HEX do not cross, meaning to make sure there is a certain DTmin. (3 are recommended, but you can have more or less)
-#subject to Tcontrol1{t in Time}: 
-#	TRadin[t]<=EPFLMediumT;
+subject to Tcontrol1{t in Time}: 
+	TDCout[t]>=THPin[t];
 
-#subject to Tcontrol2 {t in Time}:
-#	THPin[t]>=THPhighin;
+subject to Tcontrol2 {t in Time}:
+	TDCin+0.01>=TRadin[t];
 
-#subject to Tcontrol3 {t in Time}:
-#	TDCout[t]<=TDCin;
+subject to Tcontrol3 {t in Time}:
+	EPFLMediumOut+0.01<=TDCout[t];
 	 
 	 
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
 subject to dTLMDataCenter {t in Time}: #the logarithmic mean temperature difference in the heat recovery HE can be computed
-	dTLMDC[t]=((TDCin-TRadin[t])-(TDCout[t]-EPFLMediumOut))/log((TDCin-TRadin[t])/(TDCout[t]-EPFLMediumOut));
+	dTLMDC[t]*log((TDCin-TRadin[t])/(TDCout[t]-EPFLMediumOut))=((TDCin-TRadin[t])-(TDCout[t]-EPFLMediumOut));
 subject to HeatBalance1{t in Time}: #Heat balance in DC HEX from DC side
 	Qrad[t]=MassDC*(TDCin-TDCout[t]);
 
@@ -95,7 +95,7 @@ subject to HeatBalance1{t in Time}: #Heat balance in DC HEX from DC side
 
 
 subject to AreaHEDC{t in Time}: #the area of the heat recovery HE can be computed using the heat extracted from DC, the heat transfer coefficient and the logarithmic mean temperature difference 
-	Qrad[t]=UDC*AHEDC*dTLMDC[t];
+	AHEDC>=Qrad[t]/(UDC*dTLMDC[t]);
 
 subject to balancemax{t in Time}: # the maximum heat extracted is for sure lower than the total heating demand; pay attention to the units!
 	Qrad[t] = MassEPFL[t]*(TRadin[t]-EPFLMediumOut);
@@ -103,13 +103,13 @@ subject to balancemax{t in Time}: # the maximum heat extracted is for sure lower
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
 
 subject to Freecooling1{t in Time}: #Free cooling from one side
-	Qfree[t]=Flow[t]*(THPin[t]-THPhighin);
+	Qfree[t]=Cpwater*Flow[t]*(THPin[t]-THPhighin);
 
 subject to Freecooling2{t in Time}: #Free cooling from the other side
 	Qfree[t]=MassDC*(TDCout[t]-Tret);
 
 subject to QEvaporator{t in Time}: #water side of evaporator that takes flow from Free cooling HEX
-	Qevap[t]=Flow[t]*(THPin[t]-THPhighout);
+	Qevap[t]=Cpwater*Flow[t]*(THPin[t]-THPhighout);
 
 subject to QCondensator{t in Time}: #EPFL side of condenser delivering heat to EFPL
 	Qcond[t]=MassEPFL[t]*(EPFLMediumT-TRadin[t]);
@@ -124,13 +124,15 @@ subject to Electricity{t in Time}: #the electricity consumed in the HP can be co
 	E[t] = Qcond[t]/COP[t];
 
 subject to COPerformance{t in Time}: #the COP can be computed using the carnot efficiency and the logarithmic mean temperatures in the condensor and in the evaporator
-	1/COP[t]=1 /CarnotEff * (1-TLMEvapHP[t]/TLMCond[t]);
+	COP[t]=CarnotEff * TLMCond[t]/(TLMCond[t]-TLMEvapHP[t]);
 
 subject to dTLMCondensor{t in Time}: #the logarithmic mean temperature on the condenser, using inlet and outlet temperatures. Note: should be in K
-	TLMCond[t]=(EPFLMediumT-TRadin[t])/log(EPFLMediumT/TRadin[t]);
+	TLMCond[t]=(TRadin[t]+EPFLMediumT)/2;
+	#TLMCond[t]=(EPFLMediumT-TRadin[t])/log(EPFLMediumT/TRadin[t]);
 
 subject to dTLMEvaporator{t in Time}: #the logarithmic mean temperature can be computed using the inlet and outlet temperatures, Note: should be in K
-	TLMEvapHP[t]=(THPin[t]-THPhighout)/log(THPin[t]/THPhighout);
+	TLMEvapHP[t]=(THPin[t]+THPhighout)/2;
+	#TLMEvapHP[t]=(THPin[t]-THPhighout)/log(THPin[t]/THPhighout);
 
 subject to QEPFLausanne{t in Time}: #the heat demand of EPFL should be the sum of the heat delivered by the 2 systems;	
 	Qcond[t]+Qrad[t]=Qheating[t]/top[t];
@@ -139,7 +141,7 @@ subject to OPEXcost: #the operating cost can be computed using the electricity c
 	OPEX=sum{t in Time} (Cel*E[t]*top[t]);
 
 subject to CAPEXcost: #the investment cost can be computed using the area of the heat recovery heat exchanger and annuity factor
-	CAPEX=aHE*AHEDC^bHE;
+	CAPEX=(i*(i+1)^n)/((i+1)^n-1)*(INew/IRef)*aHE*AHEDC^bHE;
 
 subject to TCost: #the total cost can be computed using the operating and investment cost
 	TC= OPEX+CAPEX;
