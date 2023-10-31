@@ -38,7 +38,7 @@ param Cpwater		:= 4.18; #[kJ/kgK]
 
 ##Variables
 
-#var MassDC			>= 0.001; # MCp of air in DC (Relaxed problem, see above)
+#var MassDC{Time}	>= 0.00001; # MCp of air in DC (Relaxed problem, see above)
 var TDCout{Time} 	>= 0.001; #[deg K] temperature of air coming from data center out of the heat recovery HE
 var AHEDC 			>= 0.001; #[m2] area of heat recovery heat exchanger
 var dTLMDC{Time} 	>= 0.001; #logarithmic mean temperature difference in the heat recovery heat exchanger
@@ -58,7 +58,7 @@ var TLMEvapHP{Time} >= 0.001; #[K] logarithmic mean temperature in the evaporato
 
 var Qrad{Time} 		>= 0.001; # DC heat recovered;
 
-var THPin{Time} 	>= 280.1;
+var THPin{Time} 	>= 280;
 var Qfree{Time} 	>= 0.001; #free cooling heat; makes sure DC air is cooled down.
 var Flow{Time} 		>= 0.001; #lake water entering free coling HEX
 var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s degC)]
@@ -67,15 +67,17 @@ var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s degC)]
 # Constraints
 ####### Direct Heat Exchanger;
 
-## TEMPERATURE CONTROL CONSTRAINS exist to be sure the temperatures in the HEX do not cross, meaning to make sure there is a certain DTmin. (3 are recommended, but you can have more or less)
+# TEMPERATURE CONTROL CONSTRAINS exist to be sure the temperatures in the HEX do not cross, meaning to make sure there is a certain DTmin. (3 are recommended, but you can have more or less)
 subject to Tcontrol1{t in Time}: 
-	TDCout[t]>=THPin[t];
+	TDCout[t] >=THPin[t] +0.01;
 
 subject to Tcontrol2 {t in Time}:
-	TDCin+0.01>=TRadin[t];
+	TDCin>=TRadin[t] +0.01;
 
 subject to Tcontrol3 {t in Time}:
 	EPFLMediumOut+0.01<=TDCout[t];
+
+
 	 
 	 
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
@@ -84,8 +86,10 @@ subject to dTLMDataCenter {t in Time}: #the logarithmic mean temperature differe
 subject to HeatBalance1{t in Time}: #Heat balance in DC HEX from DC side
 	Qrad[t]=MassDC*(TDCin-TDCout[t]);
 
-#subject to Flows1:
-#	MassDC = HeatDC/(TDCin-Tret);
+
+### Additional constraints
+# subject to Flows1{t in Time}:
+# 	MassDC <= HeatDC/(TDCin-Tret);
 
 #subject to Flows2{t in Time}:
 #	MassEPFL[t] = (Qheating[t]/top[t])/(EPFLMediumT-EPFLMediumOut);	
@@ -118,7 +122,7 @@ subject to HeatBalanceDC{t in Time}: #makes sure all HeatDC is removed;
 	Qfree[t]+Qrad[t]=HeatDC;
 		
 subject to Electricity1{t in Time}: #the electricity consumed in the HP can be computed using the heat delivered and the heat extracted
-	E[t] = -Qevap[t] + Qcond[t];
+	E[t] + Qevap[t] = Qcond[t];
 
 subject to Electricity{t in Time}: #the electricity consumed in the HP can be computed using the heat delivered and the COP
 	E[t] = Qcond[t]/COP[t];

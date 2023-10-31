@@ -151,6 +151,7 @@ def solving_NR(tolerance,max_iteration,building_id: str,k_sun_guess):
 
         # Determine Q(t), and sum all that respect the conditions
         Q_t=A_th*(k[0]*(T_int-temperature)-k[1]*irradiance-q_people)-f_el*q_elec
+
         Q_tot=Q_t[(temperature<=T_th) & (Q_t>=0) & (elec_profile==1)].sum()
         #Lastly, since the newton raphson model seeks solution for F(x)=0, we must substract the annual heating value to the first part of the function
         Q_tot=Q_tot-Q_year
@@ -246,19 +247,25 @@ if __name__ == '__main__':
     floor_area=np.zeros(len(buildings))
     specQ_people=np.ones(len(buildings))*q_people[q_people!=0].mean()
     
+    #import cluster with Irr and Text values for the cluster centers
+    path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
+    clusterdf = pd.read_csv(os.path.join(path, "clusters.csv"),header=0,encoding = 'unicode_escape')
+    cluster_disagg=pd.read_csv(os.path.join(path, "clusters_dissaggregated.csv"),header=0)
 
     # Loop to get values for each building
     count=0
     Q_th=np.zeros([8760,len(buildings)])
+    Q_th_cluster=np.zeros([len(clusterdf),len(buildings)])
     for building_id in buildings['Name']:
         q_elec=elec_gains(building_id, elec_profile)
         [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
         floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
-        spec_elec[count]=q_elec[q_elec!=0].mean()/floor_area[count]
+        spec_elec[count]=np.mean(q_elec[q_elec!=0])/floor_area[count]
         Q_temp=floor_area[count]*(k_th[count]*(T_int-(weather.Temp.to_numpy()+273))-k_sun[count]*weather.Irr.to_numpy()-q_people)-f_el*q_elec
-        Q_temp[(Q_temp<=0) | ((weather.Temp.to_numpy()+273)>T_th) | (elec_profile!=1)]=0
+        Q_temp[(Q_temp<=0) | (weather.Temp.to_numpy()+273>T_th) | (elec_profile!=1)]=0
         Q_th[:,count]=Q_temp/1000
-        
+        for i in range(len(clusterdf)):
+            Q_th_cluster[i,count]=np.sum(Q_temp[cluster_disagg[cluster_disagg['cluster']==i]['Unnamed: 0'].values])/1000
         count=count+1
 
     #Construct dataframe for Q_th(t) for each building
@@ -284,34 +291,41 @@ if __name__ == '__main__':
     #plt.yscale('log')
     #plt.show()
 
+    
     ##### USE OF CLUSTERING POINTS TO GET QTH####
+        #Done above
+
+    
+
+    
 
 
-    #import cluster with Irr and Text values for the cluster centers
-    path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
-    clusterdf = pd.read_csv(os.path.join(path, "clusters.csv"),header=0,encoding = 'unicode_escape')
 
-    count = 0
-    Qthcluster = np.zeros([len(clusterdf),len(buildings)])
-    delta_hr=1 #time step in hours
+#    count = 0
+#    Qthcluster = np.zeros([len(clusterdf),len(buildings)])
+#    delta_hr=1 #time step in hours
+#    q_people_cluster=np.zeros(len(clusterdf))
+#    q_elec_cluster=np.zeros(len(clusterdf))
 
-    for building_id in buildings['Name']:
-        q_elec=elec_gains(building_id, elec_profile)
-        [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
-        #spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
-        floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
-        #use the clustering points to compute Qthcluster
-        for i in range(len(clusterdf)):
-            Q_temp=clusterdf.hours[i]*floor_area[count]*(k_th[count]*(T_int-(clusterdf.Temp[i]+273))-k_sun[count]*clusterdf.Irr[i]-specQ_people[0])-f_el*spec_elec[count]*floor_area[count]
-            if (Q_temp<=0) | (clusterdf.Temp[i]+273>T_th):
-                Q_temp=0
-            Qthcluster[i,count]=Q_temp/1000
-        count=count+1
+#    for building_id in buildings['Name']:
+#        q_elec=elec_gains(building_id, elec_profile)
+#        [[k_th[count],k_sun[count]],number_iteration[count],error1[count]]=solving_NR(tolerance,max_iteration,building_id,k_th_guess)
+#        #spec_elec[count]=buildings[buildings['Name']==building_id]['Elec'].values[0]/3654/buildings[buildings['Name']==building_id]['Ground'].values[0]
+#        floor_area[count]=buildings[buildings['Name']==building_id]['Ground'].values[0]
+#        #use the clustering points to compute Qthcluster
+#        for i in range(len(clusterdf)):
+#            q_people_cluster[i]=np.mean(q_people[cluster_disagg[cluster_disagg['cluster']==i]['Unnamed: 0'].values])
+#            q_elec_cluster[i]=np.mean(q_elec[cluster_disagg[cluster_disagg['cluster']==i]['Unnamed: 0'].values])
+#            Q_temp=clusterdf.hours[i]*floor_area[count]*(k_th[count]*(T_int-(clusterdf.Temp[i]+273))-k_sun[count]*clusterdf.Irr[i]-q_people_cluster[i])-f_el*q_elec_cluster[i]
+#            if (Q_temp<=0) | (clusterdf.Temp[i]+273>T_th):
+#                Q_temp=0
+#            Qthcluster[i,count]=Q_temp/1000
+#        count=count+1
 
      
 
     #Construct dataframe for Qthcluster(t) for each building
-    heatcluster=pd.DataFrame(Qthcluster, columns=buildings['Name'].to_numpy())
+    heatcluster=pd.DataFrame(Q_th_cluster, columns=buildings['Name'].to_numpy())
 
     #Concate clusterdf and heatcluster dataframes
     df_task1=pd.concat([clusterdf,heatcluster],axis=1)
@@ -340,6 +354,6 @@ if __name__ == '__main__':
 
 
     #Computing the error between Qthbase and Qthcluster
-    error = clustering_error(Q_th, Qthcluster, heat, heatcluster)
+    error = clustering_error(Q_th, Q_th_cluster, heat, heatcluster)
     print(error)
 
