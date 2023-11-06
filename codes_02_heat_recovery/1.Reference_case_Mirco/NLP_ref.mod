@@ -21,8 +21,10 @@ param THPhighout 	:= 276; #[deg C] temperature of water coming from lake into th
 #TLM of cond and evap, not of the hex 
 
 param TLMCond := (EPFLMediumOut-EPFLMediumT)/(log(EPFLMediumOut/EPFLMediumT));
+#param TLMCond := (EPFLMediumOut+EPFLMediumT)/2;
 param TLMEvapHP = (THPhighin-THPhighout)/(log((THPhighin)/(THPhighout))); #Q:Counterflow for Evap, even if the scheme shows it differently
-param COP := CarnotEff/(1-TLMEvapHP/TLMCond);
+#param TLMEvapHP = (THPhighin+THPhighout)/2; #Q:Counterflow for Evap, even if the scheme shows it differently
+param COP := CarnotEff*TLMCond/(TLMCond-TLMEvapHP);
 
 
 ################################
@@ -70,7 +72,7 @@ subject to QCondensator{t in Time}: #EPFL side of condenser delivering heat to E
 
  #W = Electrictiy consumed
 subject to Electricity1{t in Time}: #the electricity consumed in the HP (using pre-heated lake water) can be computed using the heat delivered and the heat extracted
-    E[t] = -Qevap[t] + Qcond[t]; #4eq and 5 Unkowns
+    E[t] + Qevap[t] = Qcond[t]; #4eq and 5 Unkowns
 
 subject to Electricity{t in Time}: #the electricity consumed in the HP (using pre-heated lake water) can be computed using the heat delivered and the COP
     E[t] = Qcond[t] / COP; #5 eq and 5 Unkowns
