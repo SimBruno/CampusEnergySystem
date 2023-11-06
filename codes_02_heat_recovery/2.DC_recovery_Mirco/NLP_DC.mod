@@ -61,7 +61,7 @@ var Qrad{Time} 		>= 0.001; # DC heat recovered;
 var THPin{Time} 	>= 280;
 var Qfree{Time} 	>= 0.001; #free cooling heat; makes sure DC air is cooled down.
 var Flow{Time} 		>= 0.001; #lake water entering free coling HEX
-var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s degC)]
+var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s K)]
 
 ################################
 # Constraints
@@ -69,13 +69,13 @@ var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s degC)]
 
 # TEMPERATURE CONTROL CONSTRAINS exist to be sure the temperatures in the HEX do not cross, meaning to make sure there is a certain DTmin. (3 are recommended, but you can have more or less)
 subject to Tcontrol1{t in Time}: 
-	TDCout[t] >=THPin[t] +0.01;
+	TDCout[t] >=THPin[t] + 0.01;
 
 subject to Tcontrol2 {t in Time}:
-	TDCin>=TRadin[t] +0.01;
+	TDCin>=TRadin[t] + 0.01;
 
 subject to Tcontrol3 {t in Time}:
-	EPFLMediumOut+0.01<=TDCout[t];
+	EPFLMediumOut + 0.1 <=TDCout[t]; # Vary the delta_T to get minimum totex
 
 
 	 
@@ -99,7 +99,7 @@ subject to HeatBalance1{t in Time}: #Heat balance in DC HEX from DC side
 
 
 subject to AreaHEDC{t in Time}: #the area of the heat recovery HE can be computed using the heat extracted from DC, the heat transfer coefficient and the logarithmic mean temperature difference 
-	AHEDC>=Qrad[t]/(UDC*dTLMDC[t]);
+	AHEDC >= Qrad[t]/(UDC*dTLMDC[t]);
 
 subject to balancemax{t in Time}: # the maximum heat extracted is for sure lower than the total heating demand; pay attention to the units!
 	Qrad[t] = MassEPFL[t]*(TRadin[t]-EPFLMediumOut);
@@ -145,7 +145,7 @@ subject to OPEXcost: #the operating cost can be computed using the electricity c
 	OPEX=sum{t in Time} (Cel*E[t]*top[t]);
 
 subject to CAPEXcost: #the investment cost can be computed using the area of the heat recovery heat exchanger and annuity factor
-	CAPEX=(i*(i+1)^n)/((i+1)^n-1)*(INew/IRef)*aHE*AHEDC^bHE;
+	CAPEX=(i*(i+1)^n)/((i+1)^n-1)*(INew/IRef)*aHE*AHEDC^bHE*FBMHE;
 
 subject to TCost: #the total cost can be computed using the operating and investment cost
 	TC= OPEX+CAPEX;
