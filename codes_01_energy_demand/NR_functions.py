@@ -74,11 +74,6 @@ def people_gains(profile_class, profile_rest, profile_off):
 def elec_gains(building_id, profile_elec):
     #elec_build=buildings.Elec ###Wh
     cf = 1000/profile_elec.sum() # Conversion factor from Wh to W and capacity factor
-    #A_th=buildings['Ground'].loc[buildings.Name==building_id].values[0] # m2
-    #E_elec = buildings['Elec'].loc[buildings.Name==building_id].values[0] # W
-    #q_elec_hour = E_elec*cf/A_th # W/m2, for one hour when on -> uniform distribution assumption
-    #q_elec_hourly=np.zeros(len(profile_elec)) # create q_elec(t) over the year
-    #q_elec_hourly[profile_elec==1]=q_elec_hour # fill q_elec(t) with q_elec_hour when on
     return cf*profile_elec*buildings.loc[buildings.Name==building_id].apply(lambda x: x['Elec']/x['Ground'] , axis=1).to_numpy()[0] # W/m2 for each hour of the year
 
 def solving_NR(tolerance,max_iteration,building_id, k_th_guess, k_sun_guess):
@@ -150,6 +145,65 @@ def solving_NR(tolerance,max_iteration,building_id, k_th_guess, k_sun_guess):
 ######################################################
 #### Function for clustering ####
 ######################################################
+class WeatherClustering:
+    def __init__(self, weather, n_clusters, profile_elec):
+        self.weather = weather
+        self.n_clusters = n_clusters
+        self.profile_elec = profile_elec
+
+    def preprocess_data(self, zscore_threshold = 2.5, T_th=273+16):
+        z_scores = stats.zscore(self.weather['Temp'])
+        typeA = ((self.profile_elec > 0) & (self.weather.Temp + 273 <= T_th))
+        typeB = ((self.profile_elec == 0) | (self.weather.Temp + 273 > T_th))
+        typeO = (np.abs(z_scores) > zscore_threshold)
+
+        self.weather_norm = self.weather[['Temp','Irr']].apply(lambda x: (x - x.mean()) / x.std())
+        self.weather_norm.loc[typeA, 'Type'] = 'A'
+        self.weather_norm.loc[typeB, 'Type'] = 'B'
+        self.weather_norm.loc[typeO, 'Type'] = 'O'
+
+        self.weather.loc[typeA, 'Type'] = 'A'
+        self.weather.loc[typeB, 'Type'] = 'B'
+        self.weather.loc[typeO, 'Type'] = 'O'
+
+        self.data = self.weather_norm[['Temp', 'Irr']].loc[self.weather_norm.Type == 'A']
+
+    def clustering(self, method):
+        
+        # Fit the clustering algorithms
+        self.cluster = method.fit(self.data)
+
+        # Retrieve the cluster labels
+        self.labels = self.cluster.labels_
+
+        # Retrieve unormalized cluster centers
+        self.get_cluster_center(unormalized=True)
+
+        # Compute SSE
+        self.compute_sse()
+
+    def get_cluster_center(self,unormalized=True):
+        self.cluster_centers = np.zeros((self.n_clusters, self.data.shape[1]))
+
+        for cluster_label in range(self.n_clusters):
+            cluster_points = self.data[self.labels == cluster_label]
+            self.cluster_center = np.mean(cluster_points, axis=0)
+            self.cluster_centers[cluster_label] = self.cluster_center
+        if unormalized:
+            self.cluster_centers = self.cluster_centers*self.weather[['Temp','Irr']].std().values + self.weather[['Temp','Irr']].mean().values
+
+    def compute_sse(self):
+        self.sse = 0
+        for i in range(len(self.cluster_centers)):
+            cluster_points = self.data[self.labels == i]
+            if len(cluster_points) > 0:
+                squared_distances = np.sum((cluster_points - self.cluster_centers[i]) ** 2, axis=1)
+                self.sse += np.sum(squared_distances)
+
+    def plot_clusters(self):
+        sns.scatterplot(data=self.weather.loc[self.weather.Type == 'A'], x='Temp', y='Irr', hue=self.labels, palette='deep')
+        sns.scatterplot(x=self.cluster_centers[:, 0], y=self.cluster_centers[:, 1], marker='o', color='black', s=100)
+        plt.show()
 
 
 #Function to compute the clustering error between the Qthbase and the Qth_cluster where Qthbase it the heat demand for the 8760 hours and Qth_cluster is the heat demand for the 8760 hours after clustering with n clusters
