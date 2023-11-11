@@ -38,7 +38,7 @@ var Qcond{Time} 	>= 0.001; #[kW] heat delivered in the condensor of the heating 
 #var COP{Time} 		>= 0.001; #coefficient of performance of the heating HP (using pre-heated lake water)
 var OPEX 			>= 0.001; #[CHF/year] operating cost
 #var TLMEvapHP{Time} >= 0.001; #[K] logarithmic mean temperature in the evaporator of the heating HP
-var Flow{Time} 		>= 0.001; #lake water entering free coling HEX [kg/s]
+var Flow{Time} 		>= 0.001; #lake water entering free coling HEX [kg/s] -- We use it aas MCP
 var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s degC)]
 
 ###TESTS: Could be added as vairables

@@ -74,7 +74,7 @@ var TC 				>= 0.001; #[CHF/year] total cost
 
 
 var Heat_Vent{Time} >= 0; #[kW]
-var DTLNVent{Time} 	>= 273+0.001; #[degC]
+var DTLNVent{Time} 	>= 273+2; #[degC]
 var Area_Vent 		>= 0.001; #[m2]
 var DTminVent 		>= 2; #[degC]
 
@@ -169,7 +169,7 @@ subject to OPEXcost: #the operating cost can be computed using the electricity c
 
 #Q: how does CAPEX depend on Vent_area
 subject to CAPEXcost: #the investment cost can be computed using the area of the ventilation heat exchanegr
-	CAPEX = sum{t in Time}((FBMHE*(i*(i+1)^n)/((i+1)^n-1)*(INew/IRef)*aHE*Area_Vent^bHE));
+	CAPEX = ((FBMHE*(i*(i+1)^n)/((i+1)^n-1)*(INew/IRef)*aHE*Area_Vent^bHE));
 	
 subject to TCost: #the total cost can be computed using the operating and investment cost
 	TC = CAPEX+OPEX;
