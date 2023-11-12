@@ -44,10 +44,12 @@ This first section aims to first estimate the energy demand of the EPFL campus. 
 buildings.head(2)
 ```
 
+Where $Ground$ is the building surface area in $[m^2]$, $Heat$ is the building annual heating consumption in $[kWh]$, $Elec$ is the building annual electricity consumption in $[kWh]$ and $Year$ is the building group identifier.
+
 Furthermore, the hourly weather data during that year are also available, i.e external temperature and solar irradiation. Thanks to these data, it is possible to characterize the physical properties of the buildings. Performing an energy balance on a building yields the following equation:
 $$
 Q_\text{th} = A_\text{th} \cdot (k_\text{th} \cdot (T_\text{int} - T_\text{ext}(t)) - k_\text{sun} \cdot i(t) - q_\text{people}(t) - f_\text{el} \cdot q_\text{el}(t))
-$$ {#eq-building-balance}
+$${#eq-building-balance}
 
 where:
 
