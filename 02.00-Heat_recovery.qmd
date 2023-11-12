@@ -1,3 +1,36 @@
+
+# Heat recovery {#sec:heat recovery}
+In this section, EPFL heat supply is looked closer. Different heat supply cases are compared, to determine the economic potential of heat recovery for EPFL.
+
+## Reference case {#subsec:case-1}
+
+For the reference case, heat is only supplied by the heat pumps for buildings at $T_{EPFL,medium}=338$ [K]. Considering heat pumps are already installed, there is no CAPEX. The only operational costs are the electricity cost for running the heat pumps. EPFL heat pumps take as cold source lake geneva which is at $T_{HP,high-in}=280 [K]$. The fixed return temperature to the lake is at $T_{HP,high-in}=276 [K]$. The fixed return temperature from the buildings is at $T_{EPFL,medium-out}=303$ [K]. The heat-pump is assumed to have a second law (exergetic) efficiency of $\epsilon=55\%$. Finally, the electricity cost is considered fixed at $C_{el}=0.2$ $[\dfrac{CHF}{kWh}]$.
+
+Let's solve the following optimization problem, in order to obtain the less expansive solution:
+$$
+\begin{array}{l}
+
+\small \min OPEX\\
+\small s.t.\\
+\small OPEX=\sum_{t}  C_{el} \cdot E(t) \cdot t_{op}(t)\\
+\small Q_{evap}(t) = \dot{M}_{CP,Lake}(t) \cdot (T_{HP,high-in}-T_{HP,high-out})~\forall t\\
+\small Q_{cond}(t) = \dot{M}_{CP,EPFL}(t) \cdot (T_{EPFL,medium}-T_{EPFL,medium-out})~\forall t\\
+\small E(t) + Q_{evap}(t) = Q_{cond}(t) ~\forall t\\
+\small E(t) = \dfrac{Q_{cond}(t)}{COP}~\forall t\\
+\small \dot{M}_{CP,EPFL}(t)\cdot (T_{EPFL,medium}-T_{EPFL,medium-out}) = \dfrac{Q_{heating}(t)}{t_{op}(t)} ~\forall t\\
+\small T_{LM,cond}=\dfrac{T_{EPFL,medium}-T_{EPFL,medium-out}}{\ln{\left( \dfrac{T_{EPFL,medium}}{T_{EPFL,medium-out}}\right)}}\\
+\small T_{LM,evap}=\dfrac{T_{HP,high-in}-T_{HP,high-out}}{\ln{\left( \dfrac{T_{HP,high-in}}{T_{HP,high-out}}\right)}}\\
+\small COP=\epsilon \dfrac{T_{LM,cond}}{(T_{LM,cond}-T_{LM,evap})}\\
+\end{array}
+$$
+
+Where $\dot{M}_{CP,Lake}$ and $\dot{M}_{CP,EPFL}$ are the flow of the lake and the EPFL supply system respectively. Note that $E$ is the heat pump electricity in [kW], $Q_{cond}$ and $Q_{evap}$ are the heat power in [kW] flowing through the condenser and the evaporator respectively, $Q_{heating}(t)$ is the EPFL medium heat consumption. Data is clustered using the clusters produced before. $t_{op}$ is the operational time for each cluster. $T_{LM,cond}$, $T_{LM,evap}$ are the logariithmic mean temperatures at the condenser and the evaporator respectively.
+
+Using AMPL, the problem is solved and the OPEX is: ...
+
+##  Data Center heat recoveryn {#subsec:case-2}
+## Air ventilation heat recovery {#subsec:case-3}
+## Air ventilation with Heat pump integration {#subsec:case-4}
 # AMPL programming guidelines
 In part 2, you will be using AMPL to code and optimize your models. We prepared for you a virtual machine (VM ID: STI-FM-cours-2023) with all the tools needed (you need a lisence for ampl). Pay attention that all files you save locally on the VM will be deleted once you log out. Therefore, store your files on your personal disk.
 
