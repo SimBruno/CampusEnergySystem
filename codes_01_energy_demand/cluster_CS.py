@@ -142,15 +142,16 @@ for c in cluster:
     c[0] = c[0]*weather_A.Temp.std() + weather_A.Temp.mean()
     c[1] = c[1]*weather_A.Irr.std() + weather_A.Irr.mean()
 
-
-
-print(cluster)
+centroid_extreme = [weather_O.values[0][0], weather_O.values[0][1], 1]
+#add centroid_extreme to the cluster
 
 # Convert the NumPy array to a Pandas DataFrame
 cluster_df = pd.DataFrame(cluster, columns=['Temp', 'Irr'])
 # Add the number of hours per cluster
 cluster_df['hours'] = hours_per_cluster.values
 
+# Add the extreme centroid in cluster_df using pd.concat()
+cluster_df = pd.concat([cluster_df, pd.DataFrame([centroid_extreme], columns=['Temp', 'Irr', 'hours'])], ignore_index=True)
 
 #create a cluster.csv file with the centroids of the clusters and the numbers of hours in each cluster
 path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
