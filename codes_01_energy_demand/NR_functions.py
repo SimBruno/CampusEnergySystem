@@ -146,6 +146,8 @@ def solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec, 
 ######################################################
 #### Function for clustering ####
 ######################################################
+
+'''
 class WeatherClustering:
     def __init__(self, weather, n_clusters, profile_elec):
         self.weather = weather
@@ -205,7 +207,7 @@ class WeatherClustering:
         sns.scatterplot(data=self.weather.loc[self.weather.Type == 'A'], x='Temp', y='Irr', hue=self.labels, palette='deep')
         sns.scatterplot(x=self.cluster_centers[:, 0], y=self.cluster_centers[:, 1], marker='o', color='black', s=100)
         plt.show()
-
+'''
 
 #Function to compute the clustering error between the Qthbase and the Qth_cluster where Qthbase it the heat demand for the 8760 hours and Qth_cluster is the heat demand for the 8760 hours after clustering with n clusters
 
@@ -257,7 +259,7 @@ if __name__ == '__main__':
     for building_id in buildings['Name']:
         q_people = people_gains(profile_class, profile_rest, profile_off)
         q_elec = elec_gains(building_id, buildings, profile_elec)
-        [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean] = solving_NR(building_id, buildings, weather)
+        [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean] = solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
         solution.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean, 'k_th': k_th, 'k_sun': k_sun,'specQ_people': specQ_people})
         # Recompute hourly energy demands
         Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)
