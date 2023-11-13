@@ -2,7 +2,7 @@
 You can use this section as a title page, make your creativity shine here.
 
 <!--
-```{r setup venv, eval = F, echo=FALSE, message=FALSE, results="hide"}
+```{r setup venv, eval = T, echo=FALSE, message=FALSE, results="hide"}
 # To set up your virtual environment in python, input the following code in your terminal after running this chunk:
 # For mac
 # 'source venv/bin/activate'
