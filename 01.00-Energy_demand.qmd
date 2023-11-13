@@ -18,12 +18,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering
 import os
 
-weather, buildings = fct1.load_data_weather_buildings()
 ```
+
 ```{python, echo=F, results='hide', label='load parameters'}
+weather, buildings = fct1.load_data_weather_buildings()
 h = 8760  # Hours in a year
 T_th = 273 + 16 # Cut off temperature [K]
 cp_air = 1152 # Air specific heat capacity [J/(m3.K)] 
@@ -32,9 +33,6 @@ air_new = 2.5 # Air renewal [m3/(m2.h)]
 Vent = 0 # [...]
 f_el = 0.8 # Share of electricity demand which is converted to heat appliances
 ```
-
-
-# Energy Demands {#sec:energy-demands}
 
 ## Buildings Energy Balance {#subsec:building-energy-balance}
 
@@ -140,9 +138,10 @@ print(solution.head(3))
 
 ## Clustering {#subsec:clustering}
 
-Now that the buildings are physically characterized, it is possible to solve the energy demand equation @eq-buildings-balance. However, for a yearly optimization of this equation, this would mean optimizing for 8760 different demands. Reducing the data might help run a more efficient optimization. Clustering helps defining typical time periods that are representative enough of the heat loads. To do so, clustering of the weather data is performed and will be used to solve a reduced energy balance equation. 
+Now that the buildings are physically characterized, it is possible to solve the energy demand equation @eq-building-balance. However, for a yearly optimization of this equation, this would mean optimizing for 8760 different demands. Reducing the data might help run a more efficient optimization. Clustering helps defining typical time periods that are representative enough of the heat loads. To do so, clustering of the weather data is performed and will be used to solve a reduced energy balance equation. 
 
-```{python, echo=F, eval=F, results='show', label='kmeans clustering'}
+
+```{python, echo=F, eval=F, results='show', label='kmeans clustering 2'}
 
 n_clusters = 5
 
@@ -152,7 +151,7 @@ algos = {
     'agglo': AgglomerativeClustering(n_clusters=n_clusters)
 }
 
-for algo_name, algo_instance in algos.items()
+for algo_name, algo_instance in algos.items():
     algo_name = fct1.WeatherClustering(weather, n_clusters, profile_elec)
     algo_name.preprocess_data()
     algo_name.clustering(algo_instance)
@@ -160,26 +159,43 @@ for algo_name, algo_instance in algos.items()
 print(kmeans.sse)
 ```
 
-
 ### Method selection
 
-Clustering via Machine Learning is now widely spread and lot of tools allow for easy implementation. Using Sci-Kit, the weather data are clustered using unsepervised algorithm. Kmeans, Spectral clustering and agglomerate clustering are probed. A common metric used to asses of the relevancy of such clustering is the Sum of Squared Errore (SSE). 
+Clustering via Machine Learning is now widely spread and lot of tools allow for easy implementation. Using Sci-Kit, the weather data are clustered using unsepervised algorithm. Kmeans, Spectral clustering and agglomerate clustering are probed. A common metric used to asses of the relevancy of such clustering is the Sum of Squared Errore (SSE). The visualisation of the clustering for $k=10$ clusters is shown in the figure (@fig-clusteringComp). The SSE is summarized in the table (@tbl-clusteringSSE).
 
 _Note:_ the data has been normalized to perform the clustering, and reversed to plot
 
+![Clustering comparison](Figures/clusteringComparison.PNG){#fig-clusteringComp fig-align="center" width=100%}
+
+|     | Spectral | Kmeans | Agglo |
+|-----|----------|--------|-------|
+| SSE | 241      | 196    | 236   |
+
+The most promising method is thus the Kmeans algorithm, which will be selected to define typical operating conditions.
+
+### Hyperparameter $k$ selection 
+
+Choosing to work with Kmeans clustering still leave room to fiddle with the number of cluster to choose. A common way to choose this parameter is the use of the "Elbow method", which visually indicates where the errors starts to decrease less meaningfully as the number of cluster increases. Inspection of (@fig-clusteringElbow) allows to think that $k=6$ is a relatively good trade off.
 
 
 
-<!-- Generate clustering plots 
-
-```{python, eval=F, echo=F, results='show', label='plot clusters'}
-
-```
--->
-
-<!-- ---------------------------------------------------------- -->
+![Clustering comparison](Figures/clusteringElbow.PNG){#fig-clusteringElbow fig-align="center" width=100%}
 
 
+### Clustering results
+
+Assigning every timestamps to its cluster allows to decompose the heat demand as following: 
+
+|Type     |   Cluster  | $Q_\text{th}$ (kw/h)|
+|---------|------------|---------------|
+| A       | 0          |               |
+| A       | 1          |               |
+| A       | 2          |               |
+| A       | 3          |               |
+| A       | 4          |               |
+| A       | 5          |               |
+| B       | 6          |               |
+| Extreme | 7          |               |
 
 
 
