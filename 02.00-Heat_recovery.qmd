@@ -4,6 +4,11 @@ In this section, EPFL heat supply is looked closer. Different heat supply cases 
 
 ## Reference case {#subsec:case-1}
 
+```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='Reference case for heat supply'}
+#| label: fig-task-2-case-1
+knitr::include_graphics('Figures/task_2_case_1.png')
+```
+
 For the reference case, heat is only supplied by the heat pumps for buildings at $T_{EPFL,medium}=338$ [K]. Considering heat pumps are already installed, there is no CAPEX. The only operational costs are the electricity cost for running the heat pumps. EPFL heat pumps take as cold source lake geneva which is at $T_{HP,high-in}=280 [K]$. The fixed return temperature to the lake is at $T_{HP,high-in}=276 [K]$. The fixed return temperature from the buildings is at $T_{EPFL,medium-out}=303$ [K]. The heat-pump is assumed to have a second law (exergetic) efficiency of $\epsilon=55\%$. Finally, the electricity cost is considered fixed at $C_{el}=0.2$ $[\dfrac{CHF}{kWh}]$.
 
 Let's solve the following optimization problem, in order to obtain the less expansive solution:
@@ -11,7 +16,6 @@ Let's solve the following optimization problem, in order to obtain the less expa
 \min{OPEX} \\
 \text{ s.t.}\\
 \end{array}
-
 
 | Constraint type                            | Equation                                                                                                                   |
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
@@ -24,6 +28,9 @@ Let's solve the following optimization problem, in order to obtain the less expa
 | Log mean temperature in condenser for COP  | $T_{LM,cond}=\dfrac{T_{EPFL,medium}-T_{EPFL,medium-out}}{\ln{\left( \dfrac{T_{EPFL,medium}}{T_{EPFL,medium-out}}\right)}}$ |
 | log mean temperature in evaporator for COP | $T_{LM,evap}=\dfrac{T_{HP,high-in}-T_{HP,high-out}}{\ln{\left( \dfrac{T_{HP,high-in}}{T_{HP,high-out}}\right)}}$           |
 | Definition of COP                          | $COP=\epsilon \dfrac{T_{LM,cond}}{(T_{LM,cond}-T_{LM,evap})}$                                                              |
+<!-- \begin{array}{l}
+
+
 <!-- \begin{array}{l}
 
 \small \min OPEX\\
@@ -42,11 +49,72 @@ Let's solve the following optimization problem, in order to obtain the less expa
 
 Where $\dot{M}Cp_{Lake}$ and $\dot{M}Cp_{EPFL}$ are the flow of the lake and the EPFL supply system respectively. Note that $E$ is the heat pump electricity in [kW], $Q_{cond}$ and $Q_{evap}$ are the heat power in [kW] flowing through the condenser and the evaporator respectively, $Q_{heating}(t)$ is the EPFL medium heat consumption. Data is clustered using the clusters produced before. $t_{op}$ is the operational time for each cluster. $T_{LM,cond}$, $T_{LM,evap}$ are the logarithmic mean temperatures at the condenser and the evaporator respectively.
 
-Using AMPL, the problem is solved and the OPEX is 635641.3566 [CHF]
+Using AMPL, the problem is solved and the OPEX is 635641.3566 [CHF/y]
 
-##  Data Center heat recoveryn {#subsec:case-2}
+##  Data Center heat recovery {#subsec:case-2}
+
+```{r task-2-case-2, out.width='100%', fig.align='center', fig.cap='Case 2: Heat recovery from data center'}
+#| label: fig-task-2-case-2
+knitr::include_graphics('Figures/task_2_case_2.png')
+```
+
+In this scenario, heat recovery is applied using the data center. The data center produces 574 [kW] of heat, and must be cooled. Fluid enters at fixed temperature $T_{ret}=290$ [K] and leaves at fixed temperature $T_{DC,in}=333$ [K]. A heat exchanger is installed at the outlet of the data center, to recover heat for EPFL buildings. To ensure complete cooling of the data center and preheat lake water for the heat pump, a Free cooling heat exchanger is also installed. The goal of this scenario is to determine the size of the heat exchanger $A_{HE,DC}$ $[m^2]$ in order to lower the TOTEX of the heat supply system. The optimization problem is as follows:
+
+\begin{array}{l}
+\min{CAPEX + OPEX} \\
+\text{ s.t.}\\
+\end{array}
+
+| Constraint type                            | Equation                                                                                                                   |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| OPEX calculation                           | $OPEX=\sum_{t} C_{el} \cdot E(t) \cdot t_{op}(t)$                                                                          |
+| CAPEX calculation                           | $CAPEX=\dfrac{i(i+1)^n}{(i+1)^n-1}\cdot \dfrac{I_{New}}{I_{Ref}}\cdot a_{HE}\cdot A_{HE,DC}^{b_{HE}}\cdot F_{BM,HE}$                                                                          |
+| Heat transfer on lake side                 | $Q_{evap}(t) = \dot{M}(t)Cp_{water} \cdot (T_{HP,in}(t)-T_{HP,high-out})~\forall t$                                       |
+| Heat transfer on EPFL side                 | $Q_{cond}(t) = \dot{M}Cp_{EPFL}(t) \cdot (T_{EPFL,medium}-T_{Radin}(t))~\forall t$                                  |
+| Heat transfer at HEX, on DC side                | $Q_{rad}(t) = \dot{M}Cp_{DC}(t) \cdot (T_{DC,in}(t)-T_{DC,out})~\forall t$                                  |
+| Heat transfer at HEX, on EPFL side                 | $Q_{rad}(t) = \dot{M}Cp_{EPFL}(t) \cdot (T_{Radin}(t)-T_{EPFL,medium-out})~\forall t$                                  |
+| Energy balance of heat pump                | $E(t) + Q_{evap}(t) = Q_{cond}(t) ~\forall t$                                                                              |
+| First law efficiency of heat pump          | $E(t) = \dfrac{Q_{cond}(t)}{COP(t)}~\forall t$                                                                                |
+| Heat supply to EPFL                        | $Q_{cond}(t)+Q_{rad}(t)= \dfrac{Q_{heating}(t)}{t_{op}(t)} ~\forall t$            |
+| Log mean temperature in condenser for COP  | $T_{LM,cond}(t)=\dfrac{T_{EPFL,medium}-T_{Radin}(t)}{\ln{\left( \dfrac{T_{EPFL,medium}}{T_{Radin}(t)}\right)}}~\forall t$ |
+| log mean temperature in evaporator for COP | $T_{LM,evap}(t)=\dfrac{T_{HP,in}(t)-T_{HP,high-out}}{\ln{\left( \dfrac{T_{HP,in}(t)}{T_{HP,high-out}}\right)}}~\forall t$           |
+| Definition of COP                          | $COP(t)=\epsilon \dfrac{T_{LM,cond}(t)}{T_{LM,cond}(t)-T_{LM,evap}(t)}~\forall t$                                                              |
+| Free cooling from Data center side                          | $Q_{free}(t)=\dot{M}Cp_{DC}(t) \cdot (T_{DC,out}(t)-T_{Ret})~\forall t$                                                           |
+| Free cooling from lake side                          | $Q_{free}(t) = \dot{M}(t)Cp_{water} \cdot (T_{HP,in}(t)-T_{HP,high-in})~\forall t$                                                              |
+| Heat exchanger area                          | $A_{HEDC} \geqslant \dfrac{Q_{rad}(t)}{U_{DC}\cdot \Delta T_{LM,DC}(t)}~\forall t$                                                              |
+| Log-mean temperature difference of heat exchanger                          | $\Delta T_{LM,DC}(t)=\dfrac{(T_{DC,in}-T_{Radin}(t))-(T_{DC,out}(t)-T_{EPFL,medium-out})}{\ln{\left( \dfrac{T_{DC,in}-T_{Radin}(t)}{T_{DC,out}(t)-T_{EPFL,medium-out}}\right)}}~\forall t$                                                              |
+
+
+Where $Q_{free}(t)$ and $Q_{rad}(t)$ are the heat exchanges in the free cooling heat exchanger and the heat exchanger respectively. The lifetime considered is $n=20$ years and the interest is $i=5\%$.
+Note that for this scenario, the Heat pump COP is not constant, since inlet and outlet temperatures of the condenser and evaporator are not constant. The problem becomes highly non-linear. It is possible to reduce the complexity by linearizing the log-mean temperatures for the Heat pump into mean temperatures:
+
+| Constraint type                            | Equation                                                                                                                   |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Mean temperature in condenser for COP  | $T_{cond}(t)=\dfrac{T_{EPFL,medium}+T_{Radin}(t)}{2}~\forall t$ |
+| Mean temperature in evaporator for COP | $T_{evap}(t)=\dfrac{T_{HP,in}(t)+T_{HP,high-out}}{2}~\forall t$           |
+| Definition of COP                          | $COP(t)=\epsilon \dfrac{T_{cond}(t)}{T_{cond}(t)-T_{evap}(t)}~\forall t$                                                              |
+
+Finally, to ensure that heat exchange does not invert, let's put additional constraints on the temperatures:
+
+| Constraint type                            | Equation                                                                                                                   |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Temperatures in free cooling HEX  | $T_{HP,in}(t)\leqslant T_{DC,out}(t)~\forall t$ |
+| HEX entrance | $T_{DC,out}(t) \geqslant T_{EPFL,medium-out}+\Delta T~\forall t$           |
+| HEX outlet                         | $T_{DC,in} \geqslant T_{Radin}(t)~\forall t$  |
+
+Where $\Delta T$ is the temperature difference between flows in the HEX. As the increase in this $\Delta T$ reduces the OPEX, but increases the CAPEX, and inversely, there exists an optimal $\Delta T$.
+
+The resolution of this optimization problem returns:
+$$
+TOTEX=631756 \text{ [CHF/y], } A_{HE,DC}=188.07 \text{ [m$^2$] and } \Delta T=3.79 \text{ [K]}
+$$
+
+The cost reduction is really small: 3885 [CHF/y]. Therefore, this solution may not be the best one.
+
 ## Air ventilation heat recovery {#subsec:case-3}
+
 ## Air ventilation with Heat pump integration {#subsec:case-4}
+
 # AMPL programming guidelines
 In part 2, you will be using AMPL to code and optimize your models. We prepared for you a virtual machine (VM ID: STI-FM-cours-2023) with all the tools needed (you need a lisence for ampl). Pay attention that all files you save locally on the VM will be deleted once you log out. Therefore, store your files on your personal disk.
 
