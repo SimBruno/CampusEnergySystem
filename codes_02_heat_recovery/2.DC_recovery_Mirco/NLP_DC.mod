@@ -63,6 +63,8 @@ var Qfree{Time} 	>= 0.001; #free cooling heat; makes sure DC air is cooled down.
 var Flow{Time} 		>= 0.001; #lake water entering free coling HEX
 var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s K)]
 
+
+var delta_T			>= 0.001;
 ################################
 # Constraints
 ####### Direct Heat Exchanger;
@@ -75,7 +77,7 @@ subject to Tcontrol2 {t in Time}:
 	TDCin>=TRadin[t] + 0.01;
 
 subject to Tcontrol3 {t in Time}:
-	EPFLMediumOut + 0.1 <=TDCout[t]; # Vary the delta_T to get minimum totex
+	EPFLMediumOut + delta_T <=TDCout[t]; # Vary the delta_T to get minimum totex
 
 
 	 
