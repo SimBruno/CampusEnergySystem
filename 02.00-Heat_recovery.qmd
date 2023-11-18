@@ -113,7 +113,64 @@ The cost reduction is really small: 3885 [CHF/y]. Therefore, this solution may n
 
 ## Air ventilation heat recovery {#subsec:case-3}
 
+```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='Case 3: Air ventilation heat recovery'}
+#| label: fig-task-2-case-3
+knitr::include_graphics('Figures/task_2_case_3.png')
+```
+
+For this 2nd scenario, heat recovery is performed via air ventilation (HEX). This time the clustered weather data will be used(Temperature [°C] and Irradiation [$kW/m{^2}$]). 
+Recall that 6 cluster points were defined for the weather data. In addition to this, in order to ensure the heating system is still working in extreme cases, a 7th cluster point is added. This cluster point is defined as the coldest day of the year with an irradiation of 0 [$kW/m{^2}$].
+
+As mentioned the incoming air flow towards the EPFL ($T_{ext}$) can be preheated with the exiting flow from EPFL ($T_{int}=21°C$). Thus compared to reference case, $T_{ext,new}$ is hotter than $T_{ext,ref}$. 
+
+Thanks to the air-ventilation preheating, the heat demand will reduce according to the following equation:
+
+$$ Q(t)=A_{th}[U(T_{int}-T_{ext}(t))+m_{air}cp_{air}(T_{int}-T_{ext,new}(t))-k_{sun}Irr(t)-Q_{ppl}(t)]-Q_{el}(t) $$
+
+Contrary to the two previous cases, the heat demand is now varying with time.
+
+The optimization problem still search to minimize the TOTEX. The problem is as follows:
+
+\begin{array}{l}
+\min{CAPEX + OPEX} \\
+\text{ s.t.}\\
+\end{array}
+
+| Constraint type                            | Equation                                                                                                                   |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| OPEX calculation                           | $\text{OPEX}=\sum_{t} C_{el} \cdot E(t) \cdot t_{op}(t)$                                                                          |
+| CAPEX calculation                           | $\text{CAPEX}=\dfrac{i(i+1)^n}{(i+1)^n-1}\cdot \dfrac{I_{New}}{I_{Ref}}\cdot a_{vent}\cdot A_{vent}^{b_{vent}}\cdot F_{BM,vent}$                                                                          |
+| Convection losses                 | $U(b) = k_{th} - m_{air}\cdot Cp_{air}~\forall \text{buildings}$                                       |
+| Heat demand for all buildings                | $Q(t)= \sum_{n=b} A_{th}[U(T_{int}-T_{ext}(t))+m_{air}cp_{air}(T_{int}-T_{ext-new}(t))-k_{sun}Irr(t)-Q_{ppl}(t)]-Q_{el}(t) ~\forall t, \text{buildings}$                                  |
+| Heat transfer at HEX, Cooling side                | $Q_{vent}(t) = \sum_{n=b}A_{HEX}(b)m_{air}Cp_{air} \cdot (T_{ext,new}(t)-T_{ext}(t))~\forall t$                                  |
+| Heat transfer at HEX, on Hot side                 | $Q_{vent}(t) = \sum_{n=b}A_{HEX}(b)m_{air}Cp_{air} \cdot (T_{int}-T_{release}(t))~\forall t, \text{buildings}$                                  |                                            
+| Log-mean temperature difference of heat exchanger                          | $\Delta T_{LM,vent}(t)=\dfrac{(T_{int}-T_{ext,new}(t))-(T_{release}(t)-T_{ext}(t))}{\ln{\left( \dfrac{T_{int}-T_{ext,new}(t)}{T_{release}(t)-T_{ext}(t)}\right)}}~\forall t$                                                              |
+| Heat exchanger area                          | $A_{vent} \geqslant \dfrac{Q_{vent}(t)}{U_{vent}\cdot \Delta T_{LM,vent}(t)}~\forall t$                                                              |
+| HEX Entrance (to avoid reversal of HEX)                          | $T_{release}(t) \geqslant T_{ext}(t)+\Delta T_{min}~\forall t$                                                              |
+| HEX Entrance (to avoid reversal of HEX)                          | $T_{int}(t) \geqslant T_{ext,new}(t)+\Delta T_{min}~\forall t$                                                              |
+| Temperature check at cold side                          | $T_{ext,new}(t) \geqslant T_{ext}(t)~\forall t$                                                              |
+
+Where $\Delta T_{min}$ is the minimum temperature difference between hot and cold flows in the HEX. As the increase in $\Delta T$ reduces the OPEX, but increases the CAPEX (and vice-versa),$\Delta T_{min}$ is the optimal value to reach. Also in this scenario COP is constant. 
+
+All constraint equations from reference case are not repeated here but must also be considered as constraints.
+
+The resolution of this optimization problem returns:
+
+- $OPEX= TBD$ [CHF/y]
+- $CAPEX= TBD$ [CHF/y]
+- $TOTEX= TBD$ [CHF/y]
+- $A_{vent}= TBD$ [m$^2$]
+- $\Delta T_{min}= TBD$ [K]
+
+
 ## Air ventilation with Heat pump integration {#subsec:case-4}
+
+```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='Case 4: Air ventilation with Heat pump integration'}
+#| label: fig-task-2-case-4
+knitr::include_graphics('Figures/task_2_case_4.png')
+```
+
+
 
 # AMPL programming guidelines
 In part 2, you will be using AMPL to code and optimize your models. We prepared for you a virtual machine (VM ID: STI-FM-cours-2023) with all the tools needed (you need a lisence for ampl). Pay attention that all files you save locally on the VM will be deleted once you log out. Therefore, store your files on your personal disk.
