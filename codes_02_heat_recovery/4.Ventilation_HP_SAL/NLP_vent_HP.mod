@@ -176,13 +176,13 @@ subject to dTLMEvaporatorHP{t in Time}: #the logarithmic mean temperature can be
 ## Air Air HP
 
 subject to temperature_gap{t in Time}: #relation between Text and Text_new;
-
+	Text_new[t] >= Text[t];
 
 subject to temperature_gap2{t in Time}: #relation between Trelease and Trelease_2;
-
+	Trelease[t] >= Trelease_2[t];
 
 subject to temperature_gap3{t in Time}: # relation between Tair_in and Text_new;
-
+	Tair_in[t] >= Text_new[t];
 
 subject to QEvaporator_2{t in Time}: #Evaporator heat from air side
 	Qevap_2[t] = Flow[t] *Cpair/3600* (Trelease[t]-Trelease_2[t]);

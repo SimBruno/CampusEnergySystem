@@ -119,7 +119,7 @@ weather_A_norm = pd.DataFrame(weather_A_norm).transpose()
 weather_A_norm.columns = ['Temp', 'Irr']
 
 #cluster the data in 5 clusters
-kmeans_A = KMeans(n_clusters=6, random_state=0).fit(weather_A_norm)
+kmeans_A = KMeans(n_clusters=6, random_state=0, n_init=10).fit(weather_A_norm)
 #add the cluster column to the dataframe
 weather_A_norm['cluster'] = kmeans_A.labels_
 weather_A['cluster'] = kmeans_A.labels_
