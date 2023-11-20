@@ -159,16 +159,16 @@ for algo_name, algo_instance in algos.items():
 print(kmeans.sse)
 ```
 
-```{python getdata, echo=T}
+```{python, echo=T, eval=T, results='show', label='test clustering'}
 import matplotlib
 matplotlib.use('Agg')
-
 import numpy as np; from numpy import matlib
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.cluster import KMeans
 import os
+import plotly.express as px
 
 #path = os.path.dirname("report-group-3\codes_01_energy_demand\_") # the path to codes_01_energy_demand.py
 weather = pd.read_csv("codes_01_energy_demand\Weather.csv",header=0,encoding = 'unicode_escape')
@@ -177,20 +177,18 @@ buildings = pd.read_csv("codes_01_energy_demand\Buildings.csv",header=0,encoding
 buildings.columns = ['Name', 'Year', 'Ground', 'Heat', 'Elec']
 
 #plot weather in 2 figures one for temperature and one for irradiation
-plt.figure()
-plt.plot(weather.Temp, '+')
-plt.xlabel('Hour')
-plt.ylabel('Temperature [°C]')
-plt.title('Weather data')
+# Plot temperature
+fig_temp = px.scatter(x=weather.index, y=weather['Temp'], labels={'y': 'Temperature [°C]'},
+                      title='Weather data - Temperature')
+fig_temp.update_xaxes(title='Hour')
 
-plt.figure()
-plt.plot(weather.Irr, '+')
-plt.xlabel('Hour')
-plt.ylabel('Irradiation [W/m2]')
-plt.title('Weather data')
-#plt.show()
+# Plot irradiation
+fig_irr = px.scatter(x=weather.index, y=weather['Irr'], labels={'y': 'Irradiation [W/m2]'},
+                     title='Weather data - Irradiation')
+fig_irr.update_xaxes(title='Hour')
+```
 
-
+```{python, echo=T, eval=T, results='show', label='test clustering 2'}
 #cluster with sklearn using kmeans algorithm using 2 types: Type A) timesteps were the buildings are used (Monday to Friday 7am to 9pm) and the external temperature is below the cut off temperature of 16 °C.• Type B) the exact opposite of type A leaving the timesteps when the buildings are not used (night,weekend) and the external temperature is greater than 16 °C
 #intialize the weather_df with columns names index, temperature, irradiation and type
 weather_df = []
@@ -215,6 +213,7 @@ weather_df.loc[weather_df.Temp == weather_df.Temp.min(), 'Type'] = 'O'
 #save weather_df in a new csv file
 weather_df.to_csv('weather_df.csv', index=False)
 
+'''
 #plot weather in 2 figures one for temperature and one for irradiation and 2 colours depending on type A or type B
 plt.figure()
 plt.plot(weather_df[weather_df.Type == 'A'].Temp, '+')
@@ -232,7 +231,36 @@ plt.axhline(y=16, color='r', linestyle='-')
 plt.text(0, 17, '16°C', color='r')
 #legend for the 3 types
 plt.legend(['Type A', 'Type B', 'Outliers'], loc='upper right')
+'''
 
+```
+
+```{python, echo=T, eval=T, results='show', label='test clustering 3'}
+import plotly.express as px
+import plotly.graph_objects as go
+
+# Assuming weather_df is your DataFrame
+
+# Create the initial figure
+fig_weather = px.scatter(weather_df, x='Hours', y='Temp', color='Type', title='Weather data',
+                         labels={'Temp': 'Temperature [°C]', 'Hours': 'Hour'})
+
+# Use a context manager to delay the display
+with fig_weather.batch_update():
+
+    fig_weather.update_xaxes(title='Hour')
+
+    # Add horizontal line at 16°C
+    fig_weather.add_shape(type='line', x0=0, x1=len(weather_df), y0=16, y1=16, line=dict(color='red'))
+
+    # Write "16°C" next to the line
+    fig_weather.add_annotation(text='16°C', xref='paper', yref='y', x=0, y=17, showarrow=False, font=dict(color='red'))
+
+    # Show the legend
+    fig_weather.update_layout(legend_title_text='Type')
+```
+
+```{python, echo=T, eval=T, results='show', label='test clustering 4'}
 
 plt.figure()
 plt.plot(weather_df[weather_df.Type == 'A'].Irr, '+')
@@ -358,64 +386,94 @@ plt.grid(True)
 
 #plt.show()
 
-'''
-#Type A
-#select the data for the buildings that are used and the temperature is below the cut off temperature
-weather_A_ = weather[(weather.Temp < 16) & (weather.Irr > 0)]
-#plot the data
-plt.figure()
-plt.plot(weather_A_.Temp)
-plt.xlabel('Hour')
-plt.ylabel('Temperature [°C]')
-plt.title('Weather data type A')
+```
 
-#Type B
-#select the data for the buildings that are not used and the temperature is above the cut off temperature
-weather_B_ = weather[(weather.Temp > 16) & (weather.Irr > 0)]
-#plot the data
-plt.figure()
-plt.plot(weather_B_.Temp)
-plt.xlabel('Hour')
-plt.ylabel('Temperature [°C]')
-plt.title('Weather data type B')
-#plt.show()
 
-#separate the outliers from the data
-#Type A
-#calculate the mean and the standard deviation
-mean_A = weather_A.Temp.mean()
-std_A = weather_A.Temp.std()
-#select the data that are outlier
-outliers_A = weather_A[(weather_A.Temp < mean_A - 2*std_A) | (weather_A.Temp > mean_A + 2*std_A)]
-#select the data that are not outlier
-weather_A = weather_A[(weather_A.Temp > mean_A - 2*std_A) & (weather_A.Temp < mean_A + 2*std_A)]
-#plot the data on the same figure with 2 colors
-plt.figure()
-plt.plot(weather_A.Temp)
-plt.plot(outliers_A.Temp)
-plt.xlabel('Hour')
-plt.ylabel('Temperature [°C]')
-#plt.show()
+```{python, echo=F, eval=F, results='show', label='clustering'}
+import matplotlib
+matplotlib.use('Agg')
+import pandas as pd
+import plotly.express as px
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
 
-#Type B
-#calculate the mean and the standard deviation
-mean_B = weather_B.Temp.mean()
-std_B = weather_B.Temp.std()
-#select the data that are outlier
-outliers_B = weather_B[(weather_B.Temp < mean_B - 2*std_B) | (weather_B.Temp > mean_B + 2*std_B)]
-#select the data that are not outlier
-weather_B = weather_B[(weather_B.Temp > mean_B - 2*std_B) & (weather_B.Temp < mean_B + 2*std_B)]
-#plot the data on the same figure with 2 colors
-plt.plot(weather_B.Temp)
-plt.plot(outliers_B.Temp)
-plt.xlabel('Hour')
-plt.ylabel('Temperature [°C]')
-plt.title('Weather data')
-plt.show()
+# Read the data
+weather = pd.read_csv("codes_01_energy_demand/Weather.csv", header=0, encoding='unicode_escape')
+weather.columns = ['Temp', 'Irr']
+buildings = pd.read_csv("codes_01_energy_demand/Buildings.csv", header=0, encoding='unicode_escape')
+buildings.columns = ['Name', 'Year', 'Ground', 'Heat', 'Elec']
 
-#weather_A = weather_A[(weather_A.Temp > mean_A - 2*std_A) & (weather_A.Temp < mean_A + 2*std_A)]
+# Plot temperature
+fig_temp = px.scatter(x=weather.index, y=weather['Temp'], labels={'y': 'Temperature [°C]'},
+                      title='Weather data - Temperature')
+fig_temp.update_xaxes(title='Hour')
 
-'''
+# Save the plot
+fig_temp.write_html('fig_temp.html')
+
+# Plot irradiation
+fig_irr = px.scatter(x=weather.index, y=weather['Irr'], labels={'y': 'Irradiation [W/m2]'},
+                     title='Weather data - Irradiation')
+fig_irr.update_xaxes(title='Hour')
+
+# Save the plot
+fig_irr.write_html('fig_irr.html')
+
+# Cluster type A in 4 clusters
+weather_df = []
+
+for k in range(0, len(weather.Temp) - 1):
+    if (k % 24 >= 7 and k % 24 <= 21) and weather.Temp[k] < 16 and (k % 168 <= 120):
+        weather_df.append([k, weather.Temp[k], weather.Irr[k], 'A'])
+    else:
+        weather_df.append([k, weather.Temp[k], weather.Irr[k], 'B'])
+
+weather_df = pd.DataFrame(weather_df, columns=['Hours', 'Temp', 'Irr', 'Type'])
+
+# Add outliers type
+mean_w = weather_df.Temp.mean()
+std_w = weather_df.Temp.std()
+weather_df.loc[weather_df.Temp == weather_df.Temp.min(), 'Type'] = 'O'
+
+# Save weather_df to a new csv file
+weather_df.to_csv('weather_df.csv', index=False)
+
+# Plot weather in 2 figures for temperature and irradiation and 2 colors depending on type A or type B
+fig_weather = px.scatter(weather_df, x='Hours', y='Temp', color='Type', title='Weather data',
+                         labels={'Temp': 'Temperature [°C]', 'Hours': 'Hour'})
+fig_weather.update_xaxes(title='Hour')
+
+# Add horizontal line at 16°C
+fig_weather.add_shape(type='line', x0=0, x1=len(weather_df), y0=16, y1=16, line=dict(color='red'))
+
+# Write "16°C" next to the line
+fig_weather.add_annotation(text='16°C', xref='paper', yref='y', x=0, y=17, showarrow=False, font=dict(color='red'))
+
+# Show the legend
+fig_weather.update_layout(legend_title_text='Type')
+
+# Save the final version of the plot
+fig_weather.write_html('fig_weather.html')
+
+# Cluster type A in 6 clusters
+weather_A = weather_df[weather_df.Type == 'A']
+weather_A = weather_A[['Temp', 'Irr']]
+
+weather_A_norm = (weather_A - weather_A.mean()) / weather_A.std()
+
+# Cluster the data in 6 clusters
+kmeans_A = KMeans(n_clusters=6, random_state=0, n_init=10).fit(weather_A_norm)
+weather_A_norm['cluster'] = kmeans_A.labels_
+weather_A['cluster'] = kmeans_A.labels_
+
+# Plot the data
+fig_cluster = px.scatter(weather_A, x='Temp', y='Irr', color='cluster', title='Weather data type A',
+                         labels={'Temp': 'Temperature [°C]', 'Irr': 'Irradiation [W/m2]'})
+fig_cluster.update_layout(showlegend=True)
+
+# Save the final version of the plot
+fig_cluster.write_html('fig_cluster.html')
+
 ```
 
 ### Method selection
