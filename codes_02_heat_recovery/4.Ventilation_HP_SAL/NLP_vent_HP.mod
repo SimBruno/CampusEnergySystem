@@ -101,7 +101,7 @@ param FloorArea{Buildings} default 1000; #area [m2]
 param k_th{Buildings} default 0.006; # thermal losses and ventilation coefficient in (kW/m2/K)
 param k_sun{Buildings} default 0.10;# solar radiation coefficient [−]
 param share_q_e default 0.8; # share of internal gains from electricity [-]
-param specQ_people{Buildings} default 0.007;# specific average internal gains from people [kW/m2]
+param specQ_people{Buildings} default 0.00225247;# specific average internal gains from people [kW/m2]
 
 ################################
 # Constraints
@@ -113,20 +113,19 @@ subject to overallHeatTransfer{b in MediumTempBuildings}: # Uenv calculation for
 	Uenv[b] = k_th[b]-mair*Cpair/3600;#k_th = total losses, MCp = Conduction losses, Unev = convection losses
 
 subject to VariableHeatdemand {t in Time} : #Heat demand calculated as the sum of all buildings -> medium temperature
-	Qheating[t] = sum{b in MediumTempBuildings} max(FloorArea[b]*(Uenv[b]*(Tint-Text[t])+mair*Cpair/3600*(Tint-Tair_in[t])-k_sun[b]*irradiation[t]-specQ_people[b]-share_q_e*specElec[b]),0);
+	Qheating[t] >= sum{b in MediumTempBuildings} max(FloorArea[b]*(Uenv[b]*(Tint-Text[t]+0.001)+mair*Cpair/3600*(Tint-Tair_in[t]+0.001)-k_sun[b]*irradiation[t]-specQ_people[b]-share_q_e*specElec[b]),0);
 
 subject to Heat_Vent1 {t in Time}: #HEX heat load from one side;
 	Heat_Vent[t] = sum{b in MediumTempBuildings}(FloorArea[b]*(Text_new[t]-Text[t])*mair*Cpair/3600); #>0
 
-
 subject to Heat_Vent2 {t in Time}: #HEX heat load from the other side;
-	Heat_Vent[t] = sum{b in MediumTempBuildings}(FloorArea[b]*0.8*(Tint-Trelease[t])*mair*Cpair/3600); #>0
+	Heat_Vent[t] = sum{b in MediumTempBuildings}(FloorArea[b]*(Tint-Trelease[t])*mair*Cpair/3600); #>0
 
 subject to DTLNVent1 {t in Time}: #DTLN ventilation -> pay attention to this value: why is it special?
-	DTLNVent[t]*log((Tint-Text_new[t])/(Trelease[t]-Text[t])) = ((Tint-Text_new[t])-(Trelease[t]-Text[t]));
+	DTLNVent[t]*log((Tint-Text_new[t]+0.001)/(Trelease[t]-Text[t]+0.001)) = ((Tint-Text_new[t]+0.001)-(Trelease[t]-Text[t]+0.001));
 
 subject to Area_Vent1 {t in Time}: #Area of ventilation HEX
-	Area_Vent  >= Heat_Vent[t]/(Uvent*DTLNVent[t]);
+	Area_Vent*(Uvent*DTLNVent[t])  >= Heat_Vent[t];
 
 subject to DTminVent1 {t in Time}: #DTmin needed on one side of HEX
 	#DTminVent = min((Text_new[t]-Text[t])/log(Text_new[t]/Text[t]),0);
@@ -167,34 +166,34 @@ subject to COPerformance{t in Time}: #the COP can be computed using the carnot e
 	COP[t] = CarnotEff *TLMCond/(TLMCond-TLMEvapHP);
 
 subject to dTLMCondensor{t in Time}: #the logarithmic mean temperature on the condenser, using inlet and outlet temperatures. Note: should be in K (Reference case)
-	TLMCond = ((EPFLMediumOut-EPFLMediumT))/(log((273+EPFLMediumOut)/(273+EPFLMediumT)));
+	TLMCond*(log((273+EPFLMediumOut)/(273+EPFLMediumT))) = ((EPFLMediumOut-EPFLMediumT));
 
 subject to dTLMEvaporatorHP{t in Time}: #the logarithmic mean temperature can be computed using the inlet and outlet temperatures, Note: should be in K (Reference case)
-	TLMEvap = ((EPFLMediumOut-EPFLMediumT))/(log((EPFLMediumOut/EPFLMediumT))); ###Do we use it since not use in 2.3??
+	TLMEvapHP*(log((THPhighin+273/THPhighout+273))) = ((THPhighin-THPhighout)); ###Do we use it since not use in 2.3??
 
 
 ## Air Air HP
 
 subject to temperature_gap{t in Time}: #relation between Text and Text_new;
-	Text_new[t] >= Text[t];
+	Text_new[t] >= Text[t]+0.001;
 
 subject to temperature_gap2{t in Time}: #relation between Trelease and Trelease_2;
-	Trelease[t] >= Trelease_2[t];
+	Trelease[t] >= Trelease_2[t]+0.001;
 
 subject to temperature_gap3{t in Time}: # relation between Tair_in and Text_new;
-	Tair_in[t] >= Text_new[t];
+	Tair_in[t] >= Text_new[t]+0.001;
 
 subject to QEvaporator_2{t in Time}: #Evaporator heat from air side
-	Qevap_2[t] = Flow[t] *Cpair/3600* (Trelease[t]-Trelease_2[t]);
+	Qevap_2[t] = 0.8*sum{b in MediumTempBuildings}(FloorArea[b]*(mair/3600)*Cpair*(Trelease[t]-Trelease_2[t]));
 
 subject to QCondensator_2{t in Time}: #Condeser heat from air side
-	Qcond_2[t] = Flow[t] *Cpair/3600* (Tair_in[t]-Text_new[t]);
+	Qcond_2[t] = sum{b in MediumTempBuildings}(FloorArea[b]*(mair/3600)*Cpair*(Tair_in[t]-Text_new[t]));
 
 subject to Electricity_2{t in Time}: #the electricity consumed in the new HP can be computed using the heat delivered and the heat extracted
 	E_2[t]= Qcond_2[t] - Qevap_2[t];
 
 subject to Electricity_3{t in Time}: #the electricity consumed in the new HP can be computed using the heat delivered and the COP
-	E_2[t] = Qcond_2[t]/COP_2[t];
+	E_2[t]*COP_2[t] = Qcond_2[t];
 
 subject to COPerformance_extra{t in Time}: #COP cannot exceed 7; for convergence issues 
 	COP_2[t] <= 7;
@@ -202,34 +201,31 @@ subject to COPerformance_extra{t in Time}: #COP cannot exceed 7; for convergence
 subject to COPerformance_extra_2{t in Time}: #Assume that COP has to be higher than 3
 	COP_2[t] >= 3;		
 subject to COPerformance_2{t in Time}: #the COP can be computed using the carnot efficiency and the logarithmic mean temperatures in the condensor and in the evaporator
-	COP_2[t] = CarnotEff *TLMCond_2[t]/(TLMCond_2[t]-TLMEvapHP_2[t]);
+	COP_2[t]*(TLMCond_2[t]-TLMEvapHP_2[t]) = CarnotEff *TLMCond_2[t];
 
 subject to dTLMCondensor_2{t in Time}: #the logarithmic mean temperature in the new condenser. Note: should be in K
-	TLMCond_2[t] = (Tair_in[t]-Text_new[t])/log((273+Tair_in[t])/(273+Text_new[t])); 
+	TLMCond_2[t]*log((273+Tair_in[t])/(273+Text_new[t])) = (Tair_in[t]-Text_new[t]); 
 
 subject to dTLMEvaporatorHP_2{t in Time}: #the logarithmic mean temperature in the new Evaporator, Note: should be in K
 	
-	TLMEvapHP_2[t] = (Trelease[t]-Trelease_2[t])/log((273+Trelease[t])/(273+Trelease_2[t]));
+	TLMEvapHP_2[t]*log((273+Trelease[t])/(273+Trelease_2[t])) = (Trelease[t]-Trelease_2[t]);
 
 
 ## IF SOME PROBLEMS OF COP and TEMPERATURE ARRIVE -> Remember that the log mean is always smaller than the aritmetic mean, but larger than the geometric mean. 
-subject to dTLMCondensor_rule{t in Time}: # One of inequalities for Condenser
-	TLMCond_2[t] <= (Tair_in[t]+Text_new[t])/2;
-
-subject to dTLMCondensor_rule2{t in Time}: # The other inequality for Condenser
-	TLMCond_2[t] >= (Tair_in[t]*Text_new[t])^(1/2);
-
-subject to dTLMEvaporatorHP_rule{t in Time}: # One of inequalities for Evaporator
-	TLMEvapHP_2[t] <= (Trelease[t]+Trelease_2[t])/2;
-
-subject to dTLMEvaporatorHP_rule2{t in Time}: # The other inequality for Evaporator
-	TLMEvapHP_2[t] >= (Trelease[t]*Trelease_2[t])^(1/2);
+#subject to dTLMCondensor_rule2{t in Time}: # One of inequalities for Condenser
+#	TLMCond_2[t] <= (Tair_in[t]+Text_new[t])/2+273;
+#subject to dTLMCondensor_rule2{t in Time}: # The other inequality for Condenser
+#	TLMCond_2[t] >= (Tair_in[t]+273)*(Text_new[t]+273)^(1/2);
+#subject to dTLMEvaporatorHP_rule2{t in Time}: # One of inequalities for Evaporator
+#	TLMEvapHP_2[t] <= (Trelease[t]+Trelease_2[t])/2+273;
+#subject to dTLMEvaporatorHP_rule2{t in Time}: # The other inequality for Evaporator
+#	TLMEvapHP_2[t] >= (Trelease[t]+273)*(273+Trelease_2[t])^(1/2);
 
 
 ## COST CONSIDERATIONS
 
 subject to Costs_HP {t in Time}: # new HP cost
-	
+	Cost_HP >= Cref_hp*(E_2[t]**(beta_hp))*(MS2017/MS2000)*BM_hp;
 
 subject to QEPFLausanne{t in Time}: #the heat demand of EPFL should be met;
 	Qheating[t] = Qcond[t];
@@ -241,7 +237,7 @@ subject to OPEXcost: #the operating cost can be computed using the electricity c
 #### HINT: to reduce the number of non-linear equations, it is better to pass the CAPEX formulation of the HEX in the objective function ####
 
 subject to TCost: #the total cost can be computed using the operating and investment cost
-	TC = CAPEX+OPEX;
+	TC = OPEX + (i*(i+1)^n)/((i+1)^n-1)*(Cost_HP+FBMHE*(INew/IRef)*aHE*Area_Vent^bHE);
 
 ################################
-minimize obj : OPEX;
+minimize obj : TC;
