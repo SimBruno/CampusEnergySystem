@@ -91,7 +91,7 @@ param FloorArea{Buildings} default 1000; #area [m2]
 param k_th{Buildings} default 0.006; # thermal losses and ventilation coefficient in (kW/m2/K)
 param k_sun{Buildings} default 0.10;# solar radiation coefficient [−]
 param share_q_e default 0.8; # share of internal gains from electricity [-]
-param specQ_people{Buildings} default 0.007;# specific average internal gains from people [kW/m2]
+param specQ_people{Buildings} default 0.002262475;# specific average internal gains from people [kW/m2]
 
 ################################
 # Constraints
@@ -167,7 +167,6 @@ subject to QEPFLausanne{t in Time}: #the heat demand of EPFL should be supplied 
 subject to OPEXcost: #the operating cost can be computed using the electricity consumed in the HP.
 	OPEX = sum{t in Time}(E[t]*Cel*top[t]);
 
-#Q: how does CAPEX depend on Vent_area
 subject to CAPEXcost: #the investment cost can be computed using the area of the ventilation heat exchanegr
 	CAPEX = ((FBMHE*(i*(i+1)^n)/((i+1)^n-1)*(INew/IRef)*aHE*Area_Vent^bHE));
 	
