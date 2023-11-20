@@ -156,11 +156,10 @@ All constraint equations from reference case are not repeated here but must also
 
 The resolution of this optimization problem returns:
 
-- $OPEX= TBD$ [CHF/y]
-- $CAPEX= TBD$ [CHF/y]
-- $TOTEX= TBD$ [CHF/y]
-- $A_{vent}= TBD$ [m$^2$]
-- $\Delta T_{min}= TBD$ [K]
+- $OPEX=680761$ [CHF/y]
+- $CAPEX=15844.7 $ [CHF/y]
+- $TOTEX=696606$ [CHF/y]
+- $A_{vent}=157.176$ [m$^2$]
 
 
 ## Air ventilation with Heat pump integration {#subsec:case-4}
