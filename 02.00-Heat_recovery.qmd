@@ -1,10 +1,21 @@
 
 # Heat recovery {#sec:heat recovery}
-In this section, EPFL heat supply is looked closer. Different heat supply cases are compared, to determine the economic potential of heat recovery for EPFL.
+In this section, EPFL heat supply is investigated. At first, the reference case is presented where heat is provided to EPFL at $T=65°C$. In this reference, all the heat is provided by a HP which heats up the lake water thanks to EPFL exiting heat flow.
+Then in order to improve this system 3 scenarios are assessed:
+
+- The use of the adjacent DataCenter to recover heat from the data center and preheat the lake water for the HP (while cooling the datacenter itself). 
+
+- The use of an air ventilation system to preheat the air entering the EPFL heating system thanks to exiting EPFL heat flow (still in adition to the HP used in the reference case).
+
+- The combination of the ventilation system and an external Air-Air HP to preheat the flow before reaching the HP of the reference case.
+
+To summarize we can say each scenario is just a different way to preheat the water before reaching the HP of the reference case which itself is used to provide the heat flow at 65°C to the EPFL. 
+
+The goal will be to compute costs (OPEX, CAPEX and TOTEX) in each scenario to asssess the most relevant one for EPFL.
 
 ## Reference case {#subsec:case-1}
 
-```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='Reference case for heat supply'}
+```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='Reference case for heat supply', echo=F, fig.show='hold'}
 #| label: fig-task-2-case-1
 knitr::include_graphics('Figures/task_2_case_1.png')
 ```
@@ -19,15 +30,19 @@ Let's solve the following optimization problem, in order to obtain the less expa
 
 | Constraint type                            | Equation                                                                                                                   |
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| COST CONSTRAINTS                 |                                        |
 | OPEX calculation                           | $OPEX=\sum_{t} C_{el} \cdot E(t) \cdot t_{op}(t)$                                                                          |
-| Heat transfer on lake side                 | $Q_{evap}(t) = \dot{M}Cp_{Lake}(t) \cdot (T_{HP,high-in}-T_{HP,high-out})~\forall t$                                       |
-| Heat transfer on EPFL side                 | $Q_{cond}(t) = \dot{M}Cp_{EPFL}(t) \cdot (T_{EPFL,medium}-T_{EPFL,medium-out})~\forall t$                                  |
-| Energy balance of heat pump                | $E(t) + Q_{evap}(t) = Q_{cond}(t) ~\forall t$                                                                              |
-| First law efficiency of heat pump          | $E(t) = \dfrac{Q_{cond}(t)}{COP}~\forall t$                                                                                |
+| MASS BALANCE                     |                                    |
 | Heat supply to EPFL                        | $\dot{M}Cp_{EPFL}(t)\cdot (T_{EPFL,medium}-T_{EPFL,medium-out}) = \dfrac{Q_{heating}(t)}{t_{op}(t)} ~\forall t$            |
-| Log mean temperature in condenser for COP  | $T_{LM,cond}=\dfrac{T_{EPFL,medium}-T_{EPFL,medium-out}}{\ln{\left( \dfrac{T_{EPFL,medium}}{T_{EPFL,medium-out}}\right)}}$ |
-| log mean temperature in evaporator for COP | $T_{LM,evap}=\dfrac{T_{HP,high-in}-T_{HP,high-out}}{\ln{\left( \dfrac{T_{HP,high-in}}{T_{HP,high-out}}\right)}}$           |
-| Definition of COP                          | $COP=\epsilon \dfrac{T_{LM,cond}}{(T_{LM,cond}-T_{LM,evap})}$                                                              |
+| MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION                 |                                        |
+| Heat transfer on lake side                 | $Q_{evap,ref}(t) = \dot{M}Cp_{Lake}(t) \cdot (T_{HP,high-in}-T_{HP,high-out})~\forall t$                                       |
+| Heat transfer on EPFL side                 | $Q_{cond,ref}(t) = \dot{M}Cp_{EPFL}(t) \cdot (T_{EPFL,medium}-T_{EPFL,medium-out})~\forall t$                                  |
+| Energy balance of heat pump                | $E(t) + Q_{evap,ref}(t) = Q_{cond,ref}(t) ~\forall t$                                                                              |
+| First law efficiency of heat pump          | $E(t) = \dfrac{Q_{cond,ref}(t)}{COP}~\forall t$                                                                                |
+| Heat supply to EPFL                        | $\dot{M}Cp_{EPFL}(t)\cdot (T_{EPFL,medium}-T_{EPFL,medium-out}) = \dfrac{Q_{heating}(t)}{t_{op}(t)} ~\forall t$            |
+| Log mean temperature in condenser for COP  | $T_{LM,cond,ref}=\dfrac{T_{EPFL,medium}-T_{EPFL,medium-out}}{\ln{\left( \dfrac{T_{EPFL,medium}}{T_{EPFL,medium-out}}\right)}}$ |
+| log mean temperature in evaporator for COP | $T_{LM,evap,ref}=\dfrac{T_{HP,high-in}-T_{HP,high-out}}{\ln{\left( \dfrac{T_{HP,high-in}}{T_{HP,high-out}}\right)}}$           |
+| Definition of COP                          | $COP=\epsilon \dfrac{T_{LM,cond,ref}}{(T_{LM,cond,ref}-T_{LM,evap,ref})}$                                                              |
 <!-- \begin{array}{l}
 
 
@@ -47,13 +62,13 @@ Let's solve the following optimization problem, in order to obtain the less expa
 \end{array} -->
 
 
-Where $\dot{M}Cp_{Lake}$ and $\dot{M}Cp_{EPFL}$ are the flow of the lake and the EPFL supply system respectively. Note that $E$ is the heat pump electricity in [kW], $Q_{cond}$ and $Q_{evap}$ are the heat power in [kW] flowing through the condenser and the evaporator respectively, $Q_{heating}(t)$ is the EPFL medium heat consumption. Data is clustered using the clusters produced before. $t_{op}$ is the operational time for each cluster. $T_{LM,cond}$, $T_{LM,evap}$ are the logarithmic mean temperatures at the condenser and the evaporator respectively.
+Where $\dot{M}Cp_{Lake}$ and $\dot{M}Cp_{EPFL}$ are the flow of the lake and the EPFL supply system respectively. Note that $E$ is the heat pump electricity in [kW], $Q_{cond,ref}$ and $Q_{evap,ref}$ are the heat power in [kW] flowing through the condenser and the evaporator respectively, $Q_{heating}(t)$ is the EPFL medium heat consumption. Data is clustered using the clusters produced before. $t_{op}$ is the operational time for each cluster. $T_{LM,cond,ref}$, $T_{LM,evap,ref}$ are the logarithmic mean temperatures at the condenser and the evaporator respectively. Finally, $\epsilon$ is the Carnot efficiency of the heat pump.
 
 Using AMPL, the problem is solved and the OPEX is 635641.3566 [CHF/y]
 
 ##  Data Center heat recovery {#subsec:case-2}
 
-```{r task-2-case-2, out.width='100%', fig.align='center', fig.cap='Case 2: Heat recovery from data center'}
+```{r task-2-case-2, out.width='100%', fig.align='center', fig.cap='Case 2: Heat recovery from data center', echo=F, fig.show='hold'}
 #| label: fig-task-2-case-2
 knitr::include_graphics('Figures/task_2_case_2.png')
 ```
@@ -67,8 +82,10 @@ In this scenario, heat recovery is applied using the data center. The data cente
 
 | Constraint type                            | Equation                                                                                                                   |
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| COST CONSTRAINTS                 |                                        |
 | OPEX calculation                           | $OPEX=\sum_{t} C_{el} \cdot E(t) \cdot t_{op}(t)$                                                                          |
 | CAPEX calculation                           | $CAPEX=\dfrac{i(i+1)^n}{(i+1)^n-1}\cdot \dfrac{I_{New}}{I_{Ref}}\cdot a_{HE}\cdot A_{HE,DC}^{b_{HE}}\cdot F_{BM,HE}$                                                                          |
+| MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION                 |                                        |
 | Heat transfer on lake side                 | $Q_{evap}(t) = \dot{M}(t)Cp_{water} \cdot (T_{HP,in}(t)-T_{HP,high-out})~\forall t$                                       |
 | Heat transfer on EPFL side                 | $Q_{cond}(t) = \dot{M}Cp_{EPFL}(t) \cdot (T_{EPFL,medium}-T_{Radin}(t))~\forall t$                                  |
 | Heat transfer at HEX, on DC side                | $Q_{rad}(t) = \dot{M}Cp_{DC}(t) \cdot (T_{DC,in}(t)-T_{DC,out})~\forall t$                                  |
@@ -113,17 +130,17 @@ The cost reduction is really small: 3885 [CHF/y]. Therefore, this solution may n
 
 ## Air ventilation heat recovery {#subsec:case-3}
 
-```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='Case 3: Air ventilation heat recovery'}
+```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='Case 3: Air ventilation heat recovery', echo=F, fig.show='hold'}
 #| label: fig-task-2-case-3
 knitr::include_graphics('Figures/task_2_case_3.png')
 ```
 
-For this 2nd scenario, heat recovery is performed via air ventilation (HEX). This time the clustered weather data will be used(Temperature [°C] and Irradiation [$kW/m{^2}$]). 
-Recall that 6 cluster points were defined for the weather data. In addition to this, in order to ensure the heating system is still working in extreme cases, a 7th cluster point is added. This cluster point is defined as the coldest day of the year with an irradiation of 0 [$kW/m{^2}$].
+For this 2nd scenario, heat recovery (also named here as ventilation) is performed via air ventilation (HEX). This time the clustered weather data will be used (Temperature [°C] and Irradiation [$kW/m{^2}$]). 
+Recall that 6 cluster points were defined for the weather data. In addition to this, in order to ensure the heating system is still working in extreme cases, a 7th cluster point is added. This cluster point is defined as the coldest day of the year with an irradiation of 0 [$kW/m{^2}$]. Data concerning the building $k_{th}$, $k_{sun}$, Floor Area, electricity demand and internal heat gains from people are added for each building of the heating system.
 
 As mentioned the incoming air flow towards the EPFL ($T_{ext}$) can be preheated with the exiting flow from EPFL ($T_{int}=21°C$). Thus compared to reference case, $T_{ext,new}$ is hotter than $T_{ext,ref}$. 
 
-Thanks to the air-ventilation preheating, the heat demand will reduce according to the following equation:
+Thanks to this air-ventilation preheating, the heat demand will reduce according to the following equation:
 
 $$ Q(t)=A_{th}[U(T_{int}-T_{ext}(t))+m_{air}cp_{air}(T_{int}-T_{ext,new}(t))-k_{sun}Irr(t)-Q_{ppl}(t)]-Q_{el}(t) $$
 
@@ -138,10 +155,12 @@ The optimization problem still search to minimize the TOTEX. The problem is as f
 
 | Constraint type                            | Equation                                                                                                                   |
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| COST CONSTRAINTS                 |                                        |
 | OPEX calculation                           | $\text{OPEX}=\sum_{t} C_{el} \cdot E(t) \cdot t_{op}(t)$                                                                          |
 | CAPEX calculation                           | $\text{CAPEX}=\dfrac{i(i+1)^n}{(i+1)^n-1}\cdot \dfrac{I_{New}}{I_{Ref}}\cdot a_{vent}\cdot A_{vent}^{b_{vent}}\cdot F_{BM,vent}$                                                                          |
+| VENTILATION CONSTRAINTS                |                                        |
 | Convection losses                 | $U(b) = k_{th} - m_{air}\cdot Cp_{air}~\forall \text{buildings}$                                       |
-| Heat demand for all buildings                | $Q(t)= \sum_{n=b} A_{th}[U(T_{int}-T_{ext}(t))+m_{air}cp_{air}(T_{int}-T_{ext-new}(t))-k_{sun}Irr(t)-Q_{ppl}(t)]-Q_{el}(t) ~\forall t, \text{buildings}$                                  |
+| Heat demand for all buildings                | $Q(t)= \sum_{n=b} A_{th}[U(T_{int}-T_{ext}(t))+m_{air}cp_{air}(T_{int}-T_{ext,new}(t))-k_{sun}Irr(t)-Q_{ppl}(t)]-Q_{el}(t) ~\forall t, \text{buildings}$                                  |
 | Heat transfer at HEX, Cooling side                | $Q_{vent}(t) = \sum_{n=b}A_{HEX}(b)m_{air}Cp_{air} \cdot (T_{ext,new}(t)-T_{ext}(t))~\forall t$                                  |
 | Heat transfer at HEX, on Hot side                 | $Q_{vent}(t) = \sum_{n=b}A_{HEX}(b)m_{air}Cp_{air} \cdot (T_{int}-T_{release}(t))~\forall t, \text{buildings}$                                  |                                            
 | Log-mean temperature difference of heat exchanger                          | $\Delta T_{LM,vent}(t)=\dfrac{(T_{int}-T_{ext,new}(t))-(T_{release}(t)-T_{ext}(t))}{\ln{\left( \dfrac{T_{int}-T_{ext,new}(t)}{T_{release}(t)-T_{ext}(t)}\right)}}~\forall t$                                                              |
@@ -152,7 +171,7 @@ The optimization problem still search to minimize the TOTEX. The problem is as f
 
 Where $\Delta T_{min}$ is the minimum temperature difference between hot and cold flows in the HEX. As the increase in $\Delta T$ reduces the OPEX, but increases the CAPEX (and vice-versa),$\Delta T_{min}$ is the optimal value to reach. Also in this scenario COP is constant. 
 
-All constraint equations from reference case are not repeated here but must also be considered as constraints.
+All constraint equations from reference case (MASS BALANCE and MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION) are not repeated here but must also be considered as constraints.
 
 The resolution of this optimization problem returns:
 
@@ -164,20 +183,70 @@ The resolution of this optimization problem returns:
 
 ## Air ventilation with Heat pump integration {#subsec:case-4}
 
-```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='Case 4: Air ventilation with Heat pump integration'}
+```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='Case 4: Air ventilation with Heat pump integration', echo=F, fig.show='hold'}
 #| label: fig-task-2-case-4
 knitr::include_graphics('Figures/task_2_case_4.png')
 ```
 
-In this final scenario, 
+In this final scenario, in addition to the Heat Recovery added in the previous scenario, a Heat Pump is installed to further increase the temperature entering the EPFL heating system. In that case the Heat Recovery is used to preheat the flow entering the newly installed HP, instead of direclty preheat the entering flow of the EPFL heating system. Data imported for this scenario are the same as the ones used in scenario 2. Also due to the new HP, new flows are present and must be considered: T_{ext,new}, T_{air,in} and T_{release,2}. T_{int} will again be fixed at 21°C. The optimization problem is as follows (altough VENTILATION constraints are similar to the previous scenario, they were re-written due to the change in the concerned heat flows they are applied to):
+
+\begin{array}{l}
+\min{CAPEX + OPEX} \\
+\text{ s.t.}\\
+\end{array}
+
+| Constraint type                            | Equation                                                                                                                   |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| COST CONSTRAINTS                 |                                        |
+| OPEX calculation                           | $\text{OPEX} =\sum_{t} C_{el} \cdot (E_{vent}(t)+E_{HP}(t)) \cdot t_{op}(t)$                                                                          |
+| Cost HP                           | $\text{Cost HP} \geqslant C_{ref,HP} \cdot E_{HP}^{\beta_{HP}}(t) \dfrac{I_{New}}{I_{Ref}} \cdot F_{BM,HP}$                                                                          |
+| CAPEX calculation                           | $\text{CAPEX}=\dfrac{i(i+1)^n}{(i+1)^n-1}\cdot (\dfrac{I_{New}}{I_{Ref}}\cdot a_{vent}\cdot A_{vent}^{b_{vent}}\cdot F_{BM,vent}+ Cost HP)$                                                                          |
+| VENTILATION CONSTRAINTS             |                                        |
+| Convection losses                 | $U(b) = k_{th} - m_{air}\cdot Cp_{air}~\forall \text{buildings}$                                       |
+| Heat demand for all buildings                | $Q(t)= \sum_{n=b} A_{th} \cdot [U \cdot (T_{int}-T_{ext}(t))+m_{air}cp_{air}(T_{int}-T_{air,in}(t))-k_{sun}Irr(t)-Q_{ppl}(t)]-Q_{el}(t) ~\forall t, \text{buildings}$                                  |
+| Heat transfer at HEX, Cooling side                | $Q_{vent}(t) = \sum_{n=b}A_{HEX}(b)m_{air}Cp_{air} \cdot (T_{ext,new}(t)-T_{ext}(t))~\forall t$                                  |
+| Heat transfer at HEX, on Hot side                 | $Q_{vent}(t) = \sum_{n=b}A_{HEX}(b)m_{air}Cp_{air} \cdot (T_{int}-T_{release}(t))~\forall t, \text{buildings}$                                  |                                            
+| Log-mean temperature difference of heat exchanger                          | $\Delta T_{LM,vent}(t)=\dfrac{(T_{int}-T_{ext,new}(t))-(T_{release}(t)-T_{ext}(t))}{\ln{\left( \dfrac{T_{int}-T_{ext,new}(t)}{T_{release}(t)-T_{ext}(t)}\right)}}~\forall t$                                                              |
+| Heat exchanger area                          | $A_{vent} \geqslant \dfrac{Q_{vent}(t)}{U_{vent}\cdot \Delta T_{LM,vent}(t)}~\forall t$                                                              |
+| HEX Entrance (to avoid reversal of HEX)                          | $T_{release}(t) \geqslant T_{ext}(t)+\Delta T_{min}~\forall t$                                                              |
+| HEX Entrance (to avoid reversal of HEX)                          | $T_{int}(t) \geqslant T_{ext,new}(t)+\Delta T_{min}~\forall t$                                                              |
+| Temperature check at cold side of heat recovery                         | $T_{ext,new}(t) \geqslant T_{ext}(t)~\forall t$                                                              |
+Where $\Delta T_{min}$ is the minimum temperature difference between hot and cold flows in the HEX. As the increase in $\Delta T$ reduces the OPEX, but increases the CAPEX (and vice-versa),$\Delta T_{min}$ is the optimal value to reach. Also in this scenario COP is constant. 
+
+But the optimization problem is also following new constraints specific to the added Air-Air HP:
+
+| Constraint type                            | Equation                                                                                                                   |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Temperature check at hot side HP evaporator                        | $T_{release}(t) \geqslant T_{release,2}(t)~\forall t$                                                              |
+| Temperature check at cold side HP condenser                        | $T_{air,in}(t) \geqslant T_{ext,new}(t)~\forall t$                                                              |
+| Heat transfer at HP, Condenser side                | $Q_{HP,evap}(t) = 0.8 \cdot \sum_{n=b}A_{th}(b)m_{air}Cp_{air} \cdot (T_{release}(t)-T_{release,2}(t))~\forall t$                                  |
+| Heat transfer at HP, Evaporator side                | $Q_{HP,cond}(t) =  \cdot \sum_{n=b}A_{th}(b)m_{air}Cp_{air} \cdot (T_{air_in}(t)-T_{ext,new}(t))~\forall t$                                  |
+| Electricity consummed by HP                | $E_{HP}(t) = Q_{HP,cond}(t) - Q_{HP,evap}(t) ~\forall t$                                  |
+| Electricity consummed by HP                | $E_{HP}(t) = Q_{HP,cond}(t)/COP_{HP} ~\forall t$                                  |
+| $COP_{HP}$                | $3 \le COP_{HP} \le 7$                                  |
+| $COP_{HP}$                | $COP_{HP} = \epsilon \dfrac{T_{LM,HP,cond}(t)}{T_{LM,HP,cond}(t)-T_{LM,HP,evap}(t)}~\forall t$                                  |
+| Mean temperature in HP condenser   | $T_{LM,HP,cond}(t)=\dfrac{T_{air,in}-T_{ext,new}(t)}{log(\dfrac{T_{air,in}}{T_{ext,new}})}~\forall t$ |
+| Mean temperature in HP evaporator  | $T_{LM,HP,evap}(t)=\dfrac{T_{release}-T_{release,2}(t)}{log(\dfrac{T_{release}}{T_{release,2}})}~\forall t$           |
+
+
+
+All constraint equations from reference case (Mass Balance and EPFL Heat/Elec Demand) are not repeated here but must also be considered as constraints.
+
+The resolution of this optimization problem returns:
+
+- $OPEX=.........$ [CHF/y]
+- $CAPEX=.........$ [CHF/y]
+- $TOTEX=.........$ [CHF/y]
+- $A_{vent}=.......$ [m$^2$]
+
 
 ## Conclusion: which scenario enables a higher cost savings?
 
 
+TBCompleted when we have data from the last scenario but we have a tiny error in our code which prevent from having a relevant result. We are working on it.
 
 
-
-
+<!-- 
 # AMPL programming guidelines
 In part 2, you will be using AMPL to code and optimize your models. We prepared for you a virtual machine (VM ID: STI-FM-cours-2023) with all the tools needed (you need a lisence for ampl). Pay attention that all files you save locally on the VM will be deleted once you log out. Therefore, store your files on your personal disk.
 
@@ -208,10 +277,9 @@ knitr::include_graphics('Figures/ampl_include_file.png')
 
 In a first step, make sure your models are running by working only in the ampl file (.mod, .run, .dat). 
 
-Then in a second step, you will substitute the default parameters with your own data calculated in the first part of the project. It only concerns the options 3.Ventilation and 4.Ventilation_HP where you have to give the values of specElec, FloorArea, k_th, k_sun and specQ_people for each building of EPFL. In the file `codes_02_heat_recovery/heat_recovery_optimization.qmd` you will find more information on this step.
+Then in a second step, you will substitute the default parameters with your own data calculated in the first part of the project. It only concerns the options 3.Ventilation and 4.Ventilation_HP where you have to give the values of specElec, FloorArea, k_th, k_sun and specQ_people for each building of EPFL. 
 
 
 # Reporting
 You will report in this file what you have done for part 2. Compare options and evaluate which one is the most relevant for your case study. Pay attention to characterize each stream of the 4 flowsheets (we wish at least the mass flows, temperatures and heat loads).
-
-
+-->
