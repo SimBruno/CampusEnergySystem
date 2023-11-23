@@ -169,6 +169,13 @@ The resolution of this optimization problem returns:
 knitr::include_graphics('Figures/task_2_case_4.png')
 ```
 
+In this final scenario, 
+
+## Conclusion: which scenario enables a higher cost savings?
+
+
+
+
 
 
 # AMPL programming guidelines

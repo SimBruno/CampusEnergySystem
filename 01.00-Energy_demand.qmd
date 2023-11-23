@@ -183,9 +183,9 @@ import plotly.graph_objects as go
 from IPython.display import display, HTML
 
 #path = os.path.dirname("report-group-3\codes_01_energy_demand\_") # the path to codes_01_energy_demand.py
-weather = pd.read_csv("codes_01_energy_demand\Weather.csv",header=0,encoding = 'unicode_escape')
+weather = pd.read_csv("codes_01_energy_demand/Weather.csv",header=0,encoding = 'unicode_escape')
 weather.columns = ['Temp', 'Irr']
-buildings = pd.read_csv("codes_01_energy_demand\Buildings.csv",header=0,encoding = 'unicode_escape')
+buildings = pd.read_csv("codes_01_energy_demand/Buildings.csv",header=0,encoding = 'unicode_escape')
 buildings.columns = ['Name', 'Year', 'Ground', 'Heat', 'Elec']
 
 # Plot temperature
