@@ -18,6 +18,150 @@ Activate the tags and make sure the model is running properly.
 
 **Result**
 
+## Introduction
+
+In order to perform a DOF analysis, the needed ingredients are necessary: 
+
+- The state variables of the flows
+- The balance equations, often being energy balance (EB), mass balance (MB), pressure drop (P) 
+- The model/performances equations, describing how the unit act on an engineering perspective.
+
+The state variables of the flows are characterized by a minimum number of state variables given by the Gibbs phase rule, i.e. for a stream of N compounds, N+2 variables are sufficient to fully characterize it, with at least one extensive variable. From that, all other properties can be derived, provided the right constitutive equations.
+
+For this analysis, we'll consider the steady-state operation of the system.
+
+## Unit models
+
+### Compressor
+Stating the unit model for a single compressor with one inlet stream and one outlet stream yields:
+
+| Type  | Variables                                      | #        |
+|-------|------------------------------------------------|----------|
+| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 6        |
+| $n_p$ | $\Delta P$                                     | 2        |
+|       | $\dot{W}_{in}$                                 |          |
+| $n_t$ | $\eta_{is}$                                    | 1        |
+| $n_v$ |                                                | 9        |
+
+| Type  | Equations                                      | #        |
+|-------|------------------------------------------------|----------|
+| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                 | 1        |
+| (EB)  | $\dot{W}_{in}= \dot{m}_{in}c_p(T_{out}-T_{in})$| 1        |
+| (P)   | $\Delta P=cst$                                 | 1        |
+| (M)   | $\dot{W}_{in} =\eta_{is}\dot{W}_{in,is}$       | 1        |
+| $n_e$ |                                                | 4        |
+
+And thus $n_s = n_v-n_e= 5$, meaning we need 5 specifications to characterize a compressor
+
+### Evaporator
+For the evaporator, we proceed the same way. We model the heat exchange of the lake as a constant heat transfer, allowing to simplify the equation statement since only our main flow has to be considered. In the general case, the fluid enters the evaporator with a vapor quality $x_{in}<1$, but based on the assumption that the entering flow is purely gaseous allows to further simplify the modelisation. 
+
+| Type  | Variables                                      | #        |
+|-------|------------------------------------------------|----------|
+| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 6        |
+| $n_p$ | $\Delta P$                                     | 1        |
+|       | $\dot{Q}_{in}$                                 | 1        |
+| $n_t$ | $\eta_{is}$                                    | 1        |
+| $n_v$ |                                                | 9        |
+
+| Type  | Equations                                        | #        |
+|-------|--------------------------------------------------|----------|
+| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 1        |
+| (EB)  | $\dot{Q}_{in}= \dot{m}_{in}c_p(T_{evap}-T_{in})$ | 1        |
+| (P)   | $\Delta P=0$                                     | 1        |
+| (M)   | $\dot{Q}_{in}= UA\cdot \text{LMTD}$              | 1        |
+| $n_e$ |                                                  | 4        |
+
+### Condensor
+The VALI model suggest to model the condensor in two part: one taking care of the change of temperature (sensible), the second one modelling the phase change (latent). Using the same logic as the evaporator, only the main flow is considered and the other flows are modeled as heat transfer. The unit model equation will be the same for both condensor, and only the heat transfer model will vary. The base variables are the following:
+
+| Type  | Variables                                      | #        |
+|-------|------------------------------------------------|----------|
+| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 6        |
+| $n_p$ | $\Delta P$                                     | 1        |
+|       | $\dot{Q}$                                      | 1        |
+| $n_t$ |                                                | 0        |
+| $n_v$ |                                                | 8        |
+
+#### Sensible condensor
+The model equation for the sensible condensor is to assume a constant pressure during the heat transfer:
+
+| Type  | Equations                                        | #        |
+|-------|--------------------------------------------------|----------|
+| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 1        |
+| (EB)  | $\dot{Q}_{in}= \dot{m}_{in}c_p(T_{out}-T_{in})$  | 1        |
+| (P)   | $\Delta P=0$                                     | 1        |
+| (M)   | $\dot{Q}_{in}= UA\cdot \text{LMTD}$              | 1        |
+| $n_e$ |                                                  | 4        |
+
+For the sensible condensor, $n_s = n_v-n_e = 4$.
+
+#### Latent condensor
+The model equation for the latent condensor is to assume a constant temperature during the heat transfer:
+
+| Type  | Equations                                        | #        |
+|-------|--------------------------------------------------|----------|
+| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 1        |
+| (EB)  | $\dot{Q}_{in}= \dot{m}_{in}\cdot L$              | 1        |
+| (P)   | $\Delta P=0$                                     | 1        |
+| (M)   | $\dot{Q}_{in}= UA\cdot \text{LMTD}$              | 1        |
+| $n_e$ |                                                  | 4        |
+
+For the latent condensor, $n_s = n_v-n_e = 4$.
+
+### Expansion valve
+
+Assuming the expansion valves are not going through a phase change allows to ignore the vapor quality for both valves. The model implies an isenthalpic pressure drop.
+
+| Type  | Variables                                      | #        |
+|-------|------------------------------------------------|----------|
+| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 6        |
+| $n_p$ | $\Delta P$                                     | 1        |
+| $n_t$ | -                                              | 0        |
+| $n_v$ |                                                | 7        |
+
+| Type  | Equations                                        | #        |
+|-------|--------------------------------------------------|----------|
+| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 1        |
+| (EB)  | $0 = \dot{m}_{in}c_p(T_{out}-T_{in})$            | 1        |
+| (P)   | $\Delta P = cst$                                 | 1        |
+| (M)   | $h_{in}=h_{out}$                                 | 1        |
+| $n_e$ |                                                  | 4        |
+
+
+And thus $n_s = n_v-n_e= 3$, meaning we need 3 specifications to characterize a pressure valve.
+
+
+### Flash tank
+
+The flash tank involves a little bit more of complexity due to the multiple flows mixing. 
+
+| Type  | Variables                                      | #        |
+|-------|------------------------------------------------|----------|
+| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 12       |
+| $n_p$ | $\Delta P_1$                                   | 2        |
+| $n_p$ | $\Delta P_2$                                   |          |
+| $n_t$ | -                                              | 0        |
+| $n_v$ |                                                | 14       |
+
+| Type  | Equations                                        | #        |
+|-------|--------------------------------------------------|----------|
+| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 2        |
+| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   |          |
+| (EB)  | $0 = \dot{m}_{in}c_p(T_{out}-T_{in})$            | 1        |
+| (P)   | $\Delta P_1 = 0$                                 | 2        |
+| (P)   | $\Delta P_2 = 0$                                 |          |
+| (M)   |                                                  |          |
+| $n_e$ |                                                  | 5        |
+
+
+## VALI Tags selection
+Now that all the types of unit models are characterized, it should be possible to determine the minimum number of measurement needed to make the system fully determined. An extensive way to do it from scratch would require to define incidence matrix and manipulate them to avoid redundancy. For this exercise, we're instead provided with 5 sets of possible tag arrangement. To goal is to determine which one of those is possible based on the DOF analysis. Summing $n_s$ for each unit processs and substracting the link between them should allow to determine to total number of DOF of the system. Since all tag arrangement provide a different number of set points, the solution should be given by the arrangement with matching number of DOF.
+
+|       | Option 1 | Option 2 | Option 3 | Option 4 | Option 5 |
+|-------|----------|----------|----------|----------|----------|
+|DOF    | 14       | 18       | 19       | 16       | 13       |
+
 Working model of the 2-stage HP for the working fluid R290.
 
 ### Model adjustment to a second working fluid (Optional)

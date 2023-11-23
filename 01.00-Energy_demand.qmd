@@ -51,15 +51,15 @@ $${#eq-building-balance}
 
 where:
 
-- $A_\text{th}$: reference heated surface (m^2)
-- $k_\text{th}$: thermal losses and ventilation coefficient in (W/m^2/K)
+- $A_\text{th}$: reference heated surface (m<sup>2</sup>)
+- $k_\text{th}$: thermal losses and ventilation coefficient in (W/m<sup>2</sup>/K)
 - $T_\text{int}$: internal set point temperature equal to 21°C
 - $T_\text{ext}(t)$: external ambient temperature (°C)
 - $k_\text{sun}$: solar radiation coefficient [-]
 - $i(t)$: solar global radiation per area (W/m^2), given in the project appendice
-- $q_\text{people}(t)$: heat gain due to the presence of people per unit area (W/m^2)
+- $q_\text{people}(t)$: heat gain due to the presence of people per unit area (W/m<sup>2</sup>)
 - $f_\text{el}$: share of electricity demand converted to heat appliances [-]
-- $q_\text{el}(t)$: Electricity demand (W/m^2)
+- $q_\text{el}(t)$: Electricity demand (W/m<sup>2</sup>)
 - $Q_\text{th}(t)$: Heat load (heating demand when positive, cooling when negative)
 
 The unknowns are $q_\text{people}(t)$, $q_\text{el}(t)$, $k_\text{th}$, and $k_\text{sun}$. In a first step, using the occupancy profile of the buildings, the heat generation from people and the electricity demand will be derived, using the known annual demand.
@@ -183,10 +183,10 @@ import plotly.graph_objects as go
 from IPython.display import display, HTML
 
 #path = os.path.dirname("report-group-3\codes_01_energy_demand\_") # the path to codes_01_energy_demand.py
-weather = pd.read_csv("codes_01_energy_demand\Weather.csv",header=0,encoding = 'unicode_escape')
-weather.columns = ['Temp', 'Irr']
-buildings = pd.read_csv("codes_01_energy_demand\Buildings.csv",header=0,encoding = 'unicode_escape')
-buildings.columns = ['Name', 'Year', 'Ground', 'Heat', 'Elec']
+#weather = pd.read_csv("codes_01_energy_demand\Weather.csv",header=0,encoding = 'unicode_escape')
+#weather.columns = ['Temp', 'Irr']
+#buildings = pd.read_csv("codes_01_energy_demand\Buildings.csv",header=0,encoding = 'unicode_escape')
+#buildings.columns = ['Name', 'Year', 'Ground', 'Heat', 'Elec']
 
 # Plot temperature
 fig_temp = px.scatter(x=weather.index, y=weather['Temp'], labels={'y': 'Temperature [°C]', 'x': 'Hour'},
@@ -259,6 +259,7 @@ _Note:_ the data has been normalized to perform the clustering, and reversed to 
 |     | Spectral | Kmeans | Agglo |
 |-----|----------|--------|-------|
 | SSE | 241      | 196    | 236   |
+{#tbl-clusteringSSE}
 
 The most promising method is thus the Kmeans algorithm, which will be selected to define typical operating conditions.
 
