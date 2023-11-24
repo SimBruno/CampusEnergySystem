@@ -3,8 +3,8 @@
 In light of the MOES course at EPFL, the following project models a new energy infrastructure at EPFL for heating supply. In fact, the current heating system being close to its end of lifetime, it has to be replaced improving its performance. To do so, the current heating demands are classified first. Then, different scenarios for the heating supply are analyzed, such as introducing heat pumps, using waste heat or preheating the air provided by the ventilation system. Thereby, the possibility to recover waste heat is considered, more precisely by collecting the heat produced by the data center. Each option is evaluated based on their energetic efficiency, and economic viability considering investment and operating cost. At the end, the optimized scenario for the renewed heat supply system will be presented as solution.
 
 
-```{r task-2-case-1, out.width='100%', fig.align='center', fig.cap='EPFL Campus', echo=F, fig.show='hold'}
-#| label: fig-task-2-case-1
+```{r Campus EPFL, out.width='100%', fig.align='center', fig.cap='EPFL Campus', echo=F, fig.show='hold'}
+#| label: fig-Campus-EPFL
 knitr::include_graphics('Figures/Campus.png')
 ```
 ```{r setup venv, eval = T, echo=FALSE, message=FALSE, results="hide"}
