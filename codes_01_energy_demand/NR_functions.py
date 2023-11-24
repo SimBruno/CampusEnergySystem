@@ -147,7 +147,6 @@ def solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec, 
 #### Function for clustering ####
 ######################################################
 
-'''
 class WeatherClustering:
     def __init__(self, weather, n_clusters, profile_elec):
         self.weather = weather
@@ -203,11 +202,22 @@ class WeatherClustering:
                 squared_distances = np.sum((cluster_points - self.cluster_centers[i]) ** 2, axis=1)
                 self.sse += np.sum(squared_distances)
 
-    def plot_clusters(self):
-        sns.scatterplot(data=self.weather.loc[self.weather.Type == 'A'], x='Temp', y='Irr', hue=self.labels, palette='deep')
-        sns.scatterplot(x=self.cluster_centers[:, 0], y=self.cluster_centers[:, 1], marker='o', color='black', s=100)
-        plt.show()
-'''
+    def plot_clusters(self,axs):
+        sns.scatterplot(data=self.weather.loc[self.weather.Type == 'A'], x='Temp', y='Irr', hue=self.labels, palette='deep',ax=axs)
+        sns.scatterplot(x=self.cluster_centers[:, 0], y=self.cluster_centers[:, 1], marker='o', color='black', s=100,ax=axs)
+
+
+def elbow_method(data, max_clusters):
+    # Elbow method
+    inertias = []
+    for k in range(1, max_clusters+1):
+        cluster = KMeans(n_clusters=k, random_state=0, n_init = 'auto').fit(data)
+        inertias.append(cluster.inertia_)
+    plt.plot(range(1, max_clusters+1), inertias, marker='o')
+    plt.title('Elbow method for Kmeans')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('Inertia')
+    plt.show()
 
 #Function to compute the clustering error between the Qthbase and the Qth_cluster where Qthbase it the heat demand for the 8760 hours and Qth_cluster is the heat demand for the 8760 hours after clustering with n clusters
 
