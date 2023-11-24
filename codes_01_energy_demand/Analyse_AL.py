@@ -87,6 +87,7 @@ def Q_th(prop_id):
     Q_th_25=np.zeros(8760)
     Q_th_50=np.zeros(8760)
     Q_th_75=np.zeros(8760)
+    Q_diff=np.zeros(8760)
     Q_elec=elec_profile*buildings[buildings['Name']==prop_id]['Elec'].to_numpy()/3654
     Q_people=people_gains(office_profile,class_profile,cantine_profile)###.to_numpy()
     k_th=prop[prop['Name']==prop_id]['k_th'].to_numpy()[0]
@@ -97,30 +98,39 @@ def Q_th(prop_id):
     for i in range(8760):
         if T_ext[i]+273<=T_cut:
            Q_th[i]=elec_profile[i]*area*(k_th*(T_int-T_ext[i])-k_sun*Irr[i]*(1/1000)-Q_people[i])-Q_elec[i]*0.8 ###kWh
-           Q_th_25[i]=elec_profile[i]*area*(k_th*(T_int-T_ext[i])-k_sun*0.25*Irr[i]*(1/1000)-Q_people[i])-Q_elec[i]*0.8 ###kWh
-           Q_th_50[i]=elec_profile[i]*area*(k_th*(T_int-T_ext[i])-k_sun*0.50*Irr[i]*(1/1000)-Q_people[i])-Q_elec[i]*0.8 ###kWh
-           Q_th_75[i]=elec_profile[i]*area*(k_th*(T_int-T_ext[i])-k_sun*0.75*Irr[i]*(1/1000)-Q_people[i])-Q_elec[i]*0.8 ###kWh
+           Q_th_25[i]=elec_profile[i]*area*(k_th*(T_int-T_ext[i])-k_sun*1.25*Irr[i]*(1/1000)-Q_people[i])-Q_elec[i]*0.8 ###kWh
+           Q_th_50[i]=elec_profile[i]*area*(k_th*(T_int-T_ext[i])-k_sun*1.50*Irr[i]*(1/1000)-Q_people[i])-Q_elec[i]*0.8 ###kWh
+           Q_th_75[i]=elec_profile[i]*area*(k_th*(T_int-T_ext[i])-k_sun*1.75*Irr[i]*(1/1000)-Q_people[i])-Q_elec[i]*0.8 ###kWh
+           Q_diff[i] = abs(Q_th[i] - Q_th_75[i]) 
         else:
            Q_th[i]=0
            Q_th_25[i]=0
            Q_th_50[i]=0
            Q_th_75[i]=0
+           Q_diff[i] = 0
 
-    return [Q_th,Q_th_25, Q_th_50,Q_th_75]
+    return [Q_th,Q_th_25, Q_th_50,Q_th_75,Q_diff]
 
 h=np.zeros(8760)
 for i in range(8760):
-    h[i]=i   
+    h[i]=i
+    
 
 
 Q=Q_th('BI') #### POUR Q_TH FAIRE Q[0]
 
 #print(Q_th('BI'))
 plt.figure()
-#plt.yscale("log")
+plt.yscale("log")
 plt.plot(h,Q[0],'b+')
 plt.plot(h,Q[1],'g.')
-#plt.plot(h,Q[2],'r+')
-#plt.plot(h,Q[3],'y+')
+plt.plot(h,Q[2],'r+')
+plt.plot(h,Q[3],'y+')
+plt.xlabel('hours')
+plt.ylabel('Qheating [kW]')
+plt.title('Influence of ksun on Qheating')
+plt.figure()
+plt.yscale("log")
+plt.plot(h,Q[4],'b+')
 plt.show()
 #Test
