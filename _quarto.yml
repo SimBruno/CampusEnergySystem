@@ -3,11 +3,11 @@ project:
 
 book:
   title: "Modeling and optimization of energy systems"
-  author: "Student 1, student 2, ..."
+  author: "Atten Louis Joseph, Bruno Simon, Jaire Corentin, Maj Jamil, Pesenti Mirco, Saint-Georges Alexandre"
   date: "today"
   chapters:
     - index.qmd
-    - 00.00-qmd_tutorial.qmd
+    #- 00.00-qmd_tutorial.qmd
     - 01.00-Energy_demand.qmd
     - 02.00-Heat_recovery.qmd
     - 03.00-HP_modeling.qmd

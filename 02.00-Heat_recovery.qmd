@@ -176,7 +176,7 @@ All constraint equations from reference case (MASS BALANCE and MEETING HEATING D
 The resolution of this optimization problem returns:
 
 - $OPEX=680761$ [CHF/y]
-- $CAPEX=15844.7 $ [CHF/y]
+- $CAPEX=15844.7$ [CHF/y]
 - $TOTEX=696606$ [CHF/y]
 - $A_{vent}=157.176$ [m$^2$]
 
@@ -243,7 +243,7 @@ The resolution of this optimization problem returns:
 ## Conclusion: which scenario enables a higher cost savings?
 
 
-TBCompleted when we have data from the last scenario but we have a tiny error in our code which prevent from having a relevant result. We are working on it.
+TBCompleted when we have data from the last scenario but we have a tiny error in our code which prevents from having a relevant result. We are working on it.
 
 
 <!-- 
