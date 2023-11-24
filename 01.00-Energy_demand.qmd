@@ -145,25 +145,6 @@ print(solution.head(3))
 
 Now that the buildings are physically characterized, it is possible to solve the energy demand equation @eq-building-balance. However, for a yearly optimization of this equation, this would mean optimizing for 8760 different demands. Reducing the data might help run a more efficient optimization. Clustering helps defining typical time periods that are representative enough of the heat loads. To do so, clustering of the weather data is performed and will be used to solve a reduced energy balance equation. 
 
-
-```{python, echo=F, eval=F, results='show', label='kmeans clustering 2'}
-
-n_clusters = 5
-
-algos = {
-    'kmeans': KMeans(n_clusters=n_clusters, random_state=0, n_init = 'auto'),
-    'spectral': SpectralClustering(assign_labels='discretize', n_clusters=n_clusters, random_state=0),
-    'agglo': AgglomerativeClustering(n_clusters=n_clusters)
-}
-
-for algo_name, algo_instance in algos.items():
-    algo_name = fct1.WeatherClustering(weather, n_clusters, profile_elec)
-    algo_name.preprocess_data()
-    algo_name.clustering(algo_instance)
-
-print(kmeans.sse)
-```
-
 ### Weather Data processing
 
 Before starting the clustering, the temperature and irradiance data are split in three groups:
@@ -300,6 +281,7 @@ Choosing to work with Kmeans clustering still leaves room to fiddle with the num
 ```{python, echo = F, eval=T, label = 'elbowMethod'}
 fct1.elbow_method(weather_clustering.data,15)
 
+plt.tight_layout()
 plt.show()
 ```
 
