@@ -43,5 +43,4 @@ display E;
 
 display OPEX;
 display CAPEX;
-display delta_T;
 
