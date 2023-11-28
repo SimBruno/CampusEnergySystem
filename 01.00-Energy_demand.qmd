@@ -11,7 +11,7 @@ library(reticulate)
 use_virtualenv('./venv', required=FALSE)
 ```
 
-```{python package, echo=F, results='hide', label='load data'}
+```{python, echo=F, results='hide', label='load data'}
 import matplotlib
 matplotlib.use('Agg')
 import codes_01_energy_demand.NR_functions as fct1
@@ -43,9 +43,23 @@ f_el = 0.8 # Share of electricity demand which is converted to heat appliances
 
 This first section aims to estimate the energy demand of the EPFL campus. For this purpose, the annual energy consumption of the buildings is given, in the following format:
 
-```{python, echo=F, results='show', label='df preview'}
+```{python, echo=F, eval=F, results='show'}
+#| label: df preview
 buildings.head(2)
 ```
+
+```{r , echo=F, eval=T}
+#| label: fig-buildings
+#| fig-cap: Buildings data
+
+buildings <- read.csv("codes_01_energy_demand\\Buildings.csv")
+
+library(DT)
+
+datatable(buildings, options = list(pageLength = 5,scrollX = TRUE)            
+)
+```
+
 
 Where $Ground$ is the building surface area in $[m^2]$, $Heat$ is the building annual heating consumption in $[kWh]$, $Elec$ is the building annual electricity consumption in $[kWh]$ and $Year$ is the building group identifier.
 
@@ -75,12 +89,13 @@ The electricity profile demand is assumed to be constant when turned on. Electri
 
 
 <!-- Generate elec profile -->
-```{python, echo=F, results='show', label='generate profiles'}
+```{python, echo=F, results='show'}
+#| label: generate profiles
 profile_off, profile_class, profile_rest, profile_elec = fct1.occupancy_profile()
 ```
 
 
-```{python, eval =T, echo=F, results='show', label='plot profiles'}
+```{python, eval =T, echo=F, results='show', label='plot profiles', fig.cap='Occupancy profiles'}
 fig, axs = plt.subplots(1, 4, figsize=(14, 3))
 axs[0].plot(profile_off[72:96])
 axs[0].set_title('Office occupancy')
@@ -127,7 +142,7 @@ Combining equations @eq-heat-demand and @eq-switch-off allows constructing a sys
 <!--Generate k_th and k_th -->
 ```{python, echo=F, results='show', label='generate kth and ksun'}
 #Run the NR algorithm to produce the k_th and k_sun for every building
-solution  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_sun', 'specQ_people'])
+thermal_properties  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_sun', 'specQ_people'])
 Q_th = pd.DataFrame(columns=buildings['Name']) 
 T_ext = weather.Temp + 273 # K
 irr = weather.Irr # W/m2
@@ -135,10 +150,24 @@ for building_id in buildings['Name']:
         q_people = fct1.people_gains(profile_class, profile_rest, profile_off)
         q_elec = fct1.elec_gains(building_id, buildings, profile_elec)
         [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean] = fct1.solving_NR(building_id, buildings, weather,q_elec,q_people,profile_elec)
-        solution.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean, 'k_th': k_th, 'k_sun': k_sun,'specQ_people': specQ_people})
+        thermal_properties.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean, 'k_th': k_th, 'k_sun': k_sun,'specQ_people': specQ_people})
         # Recompute hourly energy demands
         Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)
-print(solution.head(3))
+
+# save the table 
+PATH = os.path.dirname(os.getcwd()) # the path to codes_01_energy_demand.py
+thermal_properties.to_csv(os.path.join(PATH, "thermal_properties.csv"),index=False)
+```
+
+```{r table-widget, echo=F, eval=T, fig.cap= 'Thermal properties of the buildings'}
+#| label: fig-thermalProp
+
+thermal_properties <- read.csv("codes_01_energy_demand\\thermal_properties.csv")
+
+library(DT)
+
+datatable(thermal_properties, options = list(pageLength = 5, scrollX=TRUE)            
+)
 ```
 
 ## Impact of renovation and indoor temperature {#subsec:ksun}
@@ -249,11 +278,14 @@ fig_weather.show()
 
 ### Method selection
 
-Clustering via Machine Learning is now widely spread and lot of tools allow for easy implementation. Using Sci-Kit, the weather data are clustered using unsepervised algorithm. Kmeans, Spectral clustering and agglomerate clustering are probed. A common metric used to asses of the relevancy of such clustering is the Sum of Squared Errore (SSE). The visualisation of the clustering for $k=10$ clusters is shown in the figure below. The SSE is summarized in the table (@tbl-clusteringSSE).
+Clustering via Machine Learning is now widely spread and lot of tools allow for easy implementation. Using Sci-Kit, the weather data are clustered using unsepervised algorithm. Kmeans, Spectral clustering and agglomerate clustering are probed. A common metric used to asses of the relevancy of such clustering is the Sum of Squared Errore (SSE). The visualisation of the clustering for $k=10$ clusters is shown in the figure (@fig-clusteringComp). The SSE is summarized in the table (@tbl-clusteringSSE).
 
 _Note:_ the data has been normalized to perform the clustering, and reversed to plot
 
-```{python, echo = F, eval=T, label = 'clusteringComp', fig.cap='Clustering results'}
+```{python, echo = F, eval=T}
+#| label: fig-clusteringComp
+#| fig-cap: Different clustering method results
+
 n_clusters = 10
 kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init='auto')
 spectral = SpectralClustering(assign_labels='discretize', n_clusters=n_clusters, random_state=0)
@@ -276,29 +308,27 @@ for i, method in enumerate([spectral, agglo, kmeans]):
 plt.show()
 ```
 
-{#tbl-clusteringSSE}
-
 |     | Spectral | Agglo | Kmeans |
 |-----|----------|-------|--------|
 | SSE | 241      |  236  |  196   |
+: Clustering SSE {#tbl-clusteringSSE}
 
 
 The most promising method is thus the Kmeans algorithm, which will be selected to define typical operating conditions.
 
 ### Hyperparameter $k$ selection 
 
-Choosing to work with Kmeans clustering still leaves room to fiddle with the number of cluster to choose. A common way to choose this parameter is the use of the "Elbow method", which allows to select the right number of clusters doing a compromise between the precision and the number of clusters. Inspection of (@fig-clusteringElbow) allows to think that $k=6$ is a relatively good trade off.
+Choosing to work with Kmeans clustering still leaves room to fiddle with the number of cluster to choose. A common way to choose this parameter is the use of the "Elbow method", which allows to select the right number of clusters doing a compromise between the precision and the number of clusters. Inspection of (@fig-elbowMethod) allows to think that $k=6$ is a relatively good trade off.
 
-```{python, echo = F, eval=T, label = 'elbowMethod'}
+```{python, echo = F, eval=T, label = 'fig-elbowMethod', fig.cap='Elbow method'}
 fct1.elbow_method(weather_clustering.data,15)
-
-plt.tight_layout()
-plt.show()
 ```
 
 ### Clustering results
+The result of the clustering are shown below. 
 
-```{python, echo=F, eval=T, label='clustering centroids'}
+```{python, echo=F, eval=T}
+#| label: clustering centroids
 
 #select the data for type A
 weather_A = weather_df[weather_df.Type == 'A']
