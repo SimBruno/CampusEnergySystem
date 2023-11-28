@@ -141,7 +141,7 @@ def solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec, 
         if (e_th < tolerance) and (e_sun < tolerance) and (abs(k_th - k_th_old) < tolerance*(1+ abs(k_th_old))) and (abs(k_sun - k_sun_old) < tolerance*(1+ abs(k_sun_old))):
             break  # Converged, exit the loop
         iteration += 1        
-    return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, q_elec.mean() 
+    return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, q_elec.mean(),heating_indicator 
 
 ######################################################
 #### Function for clustering ####
@@ -259,27 +259,48 @@ if __name__ == '__main__':
     k_sun_guess=1
 
     # Initialize array to record values for each building
-    solution  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_sun', 'specQ_people'])
+    solution  = pd.DataFrame(columns=['FloorArea m^2', 'specElec kWh/m^2', 'k_th kWh/m^2/K', 'k_sun', 'specQ_people kWh/m^2'])
     Q_th = pd.DataFrame(columns=buildings['Name']) 
     #Q_th_cluster = pd.DataFrame(columns=model.get_feature_names_out())
 
     T_ext = weather.Temp + 273 # K
     irr = weather.Irr # W/m2
-    
+
+    PATH = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
+    cluster_df=pd.read_csv(os.path.join(PATH,'clusters_dissaggregated.csv')).rename(columns={'Unnamed: 0':'Time'})
+
+    Q_extreme=[]
     for building_id in buildings['Name']:
         q_people = people_gains(profile_class, profile_rest, profile_off)
         q_elec = elec_gains(building_id, buildings, profile_elec)
-        [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean] = solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
-        solution.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean, 'k_th': k_th, 'k_sun': k_sun,'specQ_people': specQ_people})
+        [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean, heating_indic] = solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
+        solution.loc[building_id] = pd.Series({'FloorArea m^2': A_th, 'specElec kWh/m^2': q_elec_mean/1000, 'k_th kWh/m^2/K': k_th/1000, 'k_sun': k_sun,'specQ_people kWh/m^2': specQ_people/1000})
         # Recompute hourly energy demands
-        Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)
+        Q_temp= A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000
+        Q_extreme.append(A_th*(k_th*(T_int-(273-9.2)) - specQ_people - q_elec_mean*f_el)/1000)
+        Q_temp[heating_indic==False]=0
+        Q_th[building_id]=Q_temp
+        #for i in cluster_df['cluster'].unique():
+    
+    # Concatenate into clusters
+    Q_th_cluster=pd.concat([pd.DataFrame(data=Q_th.iloc[cluster_df['Time']].assign(cluster=cluster_df['cluster'].astype(int)).groupby('cluster').apply(lambda x: x.sum(axis=0)).values, columns=buildings['Name'].tolist()+['cluster']).drop('cluster',axis=1),pd.DataFrame(data=np.reshape(np.array(Q_extreme),(1,len(buildings))),columns=buildings['Name'].tolist())],ignore_index=True)
+   
 
-    heating_indicator = (((Q_th >= 0).all(axis=1)) & (T_ext <= T_th) & (profile_elec > 0)) # filter heat demands only
-    Q_th = Q_th[heating_indicator]/1000 # convert to kWh
+    # Save The DFs in csv
+    Q_th_cluster.drop(columns=buildings.query('Year==2')['Name'].values).to_csv(os.path.join(PATH, "Q_cluster_medium.csv"),index=True)
+    solution.to_csv(os.path.join(PATH, "thermal_properties_final.csv"),index=False)
+
+    
+
+
+
+    
+    #heating_indicator = (((Q_th >= 0).all(axis=1)) & (T_ext <= T_th) & (profile_elec > 0)) # filter heat demands only
+    #Q_th = Q_th[heating_indicator]/1000 # convert to kWh
     #Q_th_cluster = Q_th.groupby(weather['Cluster'].loc[weather['Cluster']< n_clusters]).sum() # sum heat demands for each cluster
     
     #Saving dataframe in thermal_properties.csv
-    PATH = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
+    
     
     #Q_typical.sum(axis=1).to_csv(os.path.join(PATH, "Q_typical.csv"),index=False)
     
@@ -287,5 +308,12 @@ if __name__ == '__main__':
 
     #Printing solutions
     print('Solution = \n', solution)
+    
     print('Q_th = \n', Q_th)
+    
+
+    
+    
+
+
     #print('Q_th_cluster = \n', Q_th_cluster)
