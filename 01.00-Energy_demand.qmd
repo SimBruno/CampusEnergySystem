@@ -97,14 +97,12 @@ profile_off, profile_class, profile_rest, profile_elec = fct1.occupancy_profile(
 
 ```{python, eval =T, echo=F, results='show', label='plot profiles', fig.cap='Occupancy profiles'}
 fig, axs = plt.subplots(1, 4, figsize=(14, 3))
-axs[0].plot(profile_off[72:96])
-axs[0].set_title('Office occupancy')
-axs[1].plot(profile_class[72:96])
-axs[1].set_title('Class occupancy')
-axs[2].plot(profile_rest[72:96])
-axs[2].set_title('Restaurant occupancy')
-axs[3].plot(profile_elec[72:96])
-axs[3].set_title('Electricity profile')
+
+profiles = [profile_off, profile_class, profile_rest, profile_elec]
+titles = ['Office occupancy', 'Class occupancy', 'Restaurant occupancy', 'Electricity profile']
+for i, profile in enumerate(profiles):
+    axs[i].plot(profile[72:96])
+    axs[i].set_title(titles[i])
 fig.tight_layout()
 plt.show()
 ```
@@ -146,8 +144,9 @@ thermal_properties  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_
 Q_th = pd.DataFrame(columns=buildings['Name']) 
 T_ext = weather.Temp + 273 # K
 irr = weather.Irr # W/m2
+q_people = fct1.people_gains(profile_class, profile_rest, profile_off)
+
 for building_id in buildings['Name']:
-        q_people = fct1.people_gains(profile_class, profile_rest, profile_off)
         q_elec = fct1.elec_gains(building_id, buildings, profile_elec)
         [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean] = fct1.solving_NR(building_id, buildings, weather,q_elec,q_people,profile_elec)
         thermal_properties.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean, 'k_th': k_th, 'k_sun': k_sun,'specQ_people': specQ_people})
@@ -185,7 +184,7 @@ The figure shows, that during seasons when the irradiation is low (winter and fa
 
 Now that the buildings are physically characterized, it is possible to solve the energy demand equation @eq-building-balance. However, for a yearly optimization of this equation, this would mean optimizing for 8760 different demands. Reducing the data might help run a more efficient optimization. Clustering helps defining typical time periods that are representative enough of the heat loads. To do so, clustering of the weather data is performed and will be used to solve a reduced energy balance equation. 
 
-### Weather Data processing
+### Weather Data preprocessing
 
 Before starting the clustering, the temperature and irradiance data are split in three groups:
 
@@ -195,25 +194,8 @@ temperature is below the cut off temperature of 16 °C.
 weekend) and the external temperature is greater than 16 °C.
 - Type O: the coldest hour of the year as extreme timestep.
 
-```{python, echo=F, eval=T, label='clustering processing'}
-#import matplotlib
-#matplotlib.use('Agg')
-#import numpy as np; from numpy import matlib
-#import pandas as pd
-#import matplotlib.pyplot as plt
-#import seaborn as sns
-#from sklearn.cluster import KMeans
-#import os
-#import plotly.express as px
-#import plotly.graph_objects as go
-#from IPython.display import display, HTML
-
-#path = os.path.dirname("report-group-3\codes_01_energy_demand\_") # the path to codes_01_energy_demand.py
-#weather = pd.read_csv("codes_01_energy_demand/Weather.csv",header=0,encoding = 'unicode_escape')
-#weather.columns = ['Temp', 'Irr']
-#buildings = pd.read_csv("codes_01_energy_demand/Buildings.csv",header=0,encoding = 'unicode_escape')
-#buildings.columns = ['Name', 'Year', 'Ground', 'Heat', 'Elec']
-
+```{python, echo=F, eval=T}
+#| label: clustering preprocessing
 # Plot temperature
 fig_temp = px.scatter(x=weather.index, y=weather['Temp'], labels={'y': 'Temperature [°C]', 'x': 'Hour'},
                       title='Weather data - Temperature')
@@ -224,34 +206,27 @@ fig_irr = px.scatter(x=weather.index, y=weather['Irr'], labels={'y': 'Irradiatio
                      title='Weather data - Irradiation')
 #fig_irr.show()
 
-#cluster with sklearn using kmeans algorithm using 2 types: Type A) timesteps were the buildings are used (Monday to Friday 7am to 9pm) and the external temperature is below the cut off temperature of 16 °C.• Type B) the exact opposite of type A leaving the timesteps when the buildings are not used (night,weekend) and the external temperature is greater than 16 °C
-#intialize the weather_df with columns names index, temperature, irradiation and type
-weather_df = []
+#intialize the weather_cluster 
+weather_cluster = weather.copy()
 
 for k in range(0, len(weather.Temp)-1):
     if (k % 24 >= 7 and k % 24 <= 21) and weather.Temp[k] < 16 and (k % 168 <= 120):
-            weather_df.append([k, weather.Temp[k], weather.Irr[k], 'A'])
+            weather_cluster['Type']= 'A'
     else:
-        weather_df.append([k, weather.Temp[k], weather.Irr[k], 'B'])
+            weather_cluster['Type']= 'B'
 
-weather_df = pd.DataFrame(weather_df, columns=['Hours', 'Temp', 'Irr', 'Type'])
-
-# Add outliers type
-mean_w = weather_df.Temp.mean()
-std_w = weather_df.Temp.std()
-# Z-score = 3
-#ZSCORE = 2.5
-#weather_df.loc[(weather_df.Temp < mean_w - ZSCORE*std_w) | (weather_df.Temp > mean_w + ZSCORE*std_w), 'Type'] = 'O'
 #set the minimum temperature value of weather_df to state O. There is only one value
-weather_df.loc[weather_df.Temp == weather_df.Temp.min(), 'Type'] = 'O'
+weather_cluster.loc[weather_cluster.Temp == weather_cluster.Temp.min(), 'Type'] = 'O'
 
 #save weather_df in a new csv file
-weather_df.to_csv('weather_df.csv', index=False)
+#weather_cluster.to_csv('weather_df.csv', index=False)
+```
 
-# Assuming weather_df is your DataFrame
+```{python, echo=F, eval=T}
+#| label: weather cluster plotting
 
 # Create the initial figure
-fig_weather = px.scatter(weather_df, x='Hours', y='Temp', color='Type', title='Weather data - Temperature (processed)',
+fig_weather = px.scatter(weather_cluster, x='Hours', y='Temp', color='Type', title='Weather data - Temperature (processed)',
                          labels={'Temp': 'Temperature [°C]', 'Hours': 'Hour'})
 
 # Use a context manager to delay the display
@@ -270,10 +245,8 @@ with fig_weather.batch_update():
 
 fig_weather = px.scatter(weather_df, x='Hours', y='Irr', color='Type', title='Weather data - Irradiation (processed)',
                          labels={'Irr': 'Irradiation [W/m2]', 'Hours': 'Hour'})
-
                          
 fig_weather.show()
-
 ```
 
 ### Method selection
@@ -290,20 +263,20 @@ n_clusters = 10
 kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init='auto')
 spectral = SpectralClustering(assign_labels='discretize', n_clusters=n_clusters, random_state=0)
 agglo = AgglomerativeClustering(n_clusters=n_clusters)
+
 weather_clustering = WeatherClustering(weather, n_clusters, profile_elec)
 weather_clustering.preprocess_data()
 
 fig, axs = plt.subplots(1, 3, figsize=(15, 5))
 
-axs[0].set_title('Spectral Clustering')
-axs[1].set_title('Agglomerative Clustering')
-axs[2].set_title('KMeans Clustering')
+titles = ['Spectral Clustering','Agglomerative Clustering','KMeans Clustering']
 
 fig.suptitle(f'Clustering comparison, {n_clusters} clusters')
 
 for i, method in enumerate([spectral, agglo, kmeans]):
     weather_clustering.clustering(method)
     weather_clustering.plot_clusters(axs[i])
+    axs[i].set_title(titles[i])
 
 plt.show()
 ```
@@ -320,14 +293,23 @@ The most promising method is thus the Kmeans algorithm, which will be selected t
 
 Choosing to work with Kmeans clustering still leaves room to fiddle with the number of cluster to choose. A common way to choose this parameter is the use of the "Elbow method", which allows to select the right number of clusters doing a compromise between the precision and the number of clusters. Inspection of (@fig-elbowMethod) allows to think that $k=6$ is a relatively good trade off.
 
-```{python, echo = F, eval=T, label = 'fig-elbowMethod', fig.cap='Elbow method'}
+```{python, echo = F, eval=T}
+#| label: fig-elbowMethod
+#| fig-cap: Elbow method
 fct1.elbow_method(weather_clustering.data,15)
 ```
 
 ### Clustering results
 The result of the clustering are shown below. 
 
-```{python, echo=F, eval=T}
+
+```{python, echo=F,eval=T}
+#| label: create cluster
+clusters= fct1.clusteringCorentin(weather_cluster)
+
+```
+
+```{python, echo=F, eval=F}
 #| label: clustering centroids
 
 #select the data for type A
@@ -455,7 +437,7 @@ Load the data:
 
 Overview of the Buildings dataframe
 
-```{python table plot, echo=F}
+```{python table plot, echo=F, eval = F}
 import plotly.graph_objects as go
 
 fig = go.Figure(data=[go.Table(
@@ -481,7 +463,7 @@ Then find the values of kth and ksun for every building. Finally, store all your
 
 ### Internal gains - People
 
-```{python, echo=T, results='hide'}
+```{python, echo=T, results='hide', eval = F}
 # Generate the yearly occupancy profile of the buildings
 occ_profile = fct1.occupancy_profile()
 ```
