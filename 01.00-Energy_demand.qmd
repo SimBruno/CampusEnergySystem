@@ -147,12 +147,14 @@ irr = weather.Irr # W/m2
 q_people = fct1.people_gains(profile_class, profile_rest, profile_off)
 
 for building_id in buildings['Name']:
-        q_elec = fct1.elec_gains(building_id, buildings, profile_elec)
-        [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean] = fct1.solving_NR(building_id, buildings, weather,q_elec,q_people,profile_elec)
-        thermal_properties.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean, 'k_th': k_th, 'k_sun': k_sun,'specQ_people': specQ_people})
-        # Recompute hourly energy demands
-        Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)
+    q_elec = fct1.elec_gains(building_id, buildings, profile_elec)
+    [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean,heating_indicator] = fct1.solving_NR(building_id, buildings, weather,q_elec,q_people,profile_elec)
+    thermal_properties.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean/1000, 'k_th': k_th/1000, 'k_sun': k_sun,'specQ_people': specQ_people})
+    # Recompute hourly energy demands
+    Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000
+    Q_th[heating_indicator==False] = 0
 
+#Q_th = Q_th[heating_indicator]/1000 #kWh conversion
 # save the table 
 PATH = os.path.dirname(os.getcwd()) # the path to codes_01_energy_demand.py
 thermal_properties.to_csv(os.path.join(PATH, "thermal_properties.csv"),index=False)
@@ -194,39 +196,15 @@ temperature is below the cut off temperature of 16 °C.
 weekend) and the external temperature is greater than 16 °C.
 - Type O: the coldest hour of the year as extreme timestep.
 
-```{python, echo=F, eval=T}
-#| label: clustering preprocessing
-# Plot temperature
-fig_temp = px.scatter(x=weather.index, y=weather['Temp'], labels={'y': 'Temperature [°C]', 'x': 'Hour'},
-                      title='Weather data - Temperature')
-#fig_temp.show()
-
-# Plot irradiation
-fig_irr = px.scatter(x=weather.index, y=weather['Irr'], labels={'y': 'Irradiation [W/m2]', 'x': 'Hour'},
-                     title='Weather data - Irradiation')
-#fig_irr.show()
-
-#intialize the weather_cluster 
-weather_cluster = weather.copy()
-
-for k in range(0, len(weather.Temp)-1):
-    if (k % 24 >= 7 and k % 24 <= 21) and weather.Temp[k] < 16 and (k % 168 <= 120):
-            weather_cluster['Type']= 'A'
-    else:
-            weather_cluster['Type']= 'B'
-
-#set the minimum temperature value of weather_df to state O. There is only one value
-weather_cluster.loc[weather_cluster.Temp == weather_cluster.Temp.min(), 'Type'] = 'O'
-
-#save weather_df in a new csv file
-#weather_cluster.to_csv('weather_df.csv', index=False)
-```
 
 ```{python, echo=F, eval=T}
 #| label: weather cluster plotting
 
+#Add 'Type' column
+weather = fct1.preprocess_data(weather, profile_elec)
+
 # Create the initial figure
-fig_weather = px.scatter(weather_cluster, x='Hours', y='Temp', color='Type', title='Weather data - Temperature (processed)',
+fig_weather = px.scatter(weather, x=weather.index, y='Temp', color='Type', title='Weather data - Temperature (processed)',
                          labels={'Temp': 'Temperature [°C]', 'Hours': 'Hour'})
 
 # Use a context manager to delay the display
@@ -235,7 +213,7 @@ with fig_weather.batch_update():
     fig_weather.update_xaxes(title='Hour')
 
     # Add horizontal line at 16°C
-    fig_weather.add_shape(type='line', x0=0, x1=len(weather_df), y0=16, y1=16, line=dict(color='red'))
+    fig_weather.add_shape(type='line', x0=0, x1=len(weather), y0=16, y1=16, line=dict(color='red'))
 
     # Write "16°C" next to the line
     fig_weather.add_annotation(text='16°C', xref='paper', yref='y', x=0, y=17, showarrow=False, font=dict(color='red'))
@@ -243,7 +221,7 @@ with fig_weather.batch_update():
     # Show the legend
     fig_weather.update_layout(legend_title_text='Type')
 
-fig_weather = px.scatter(weather_df, x='Hours', y='Irr', color='Type', title='Weather data - Irradiation (processed)',
+fig_weather = px.scatter(weather, x=weather.index, y='Irr', color='Type', title='Weather data - Irradiation (processed)',
                          labels={'Irr': 'Irradiation [W/m2]', 'Hours': 'Hour'})
                          
 fig_weather.show()
@@ -293,98 +271,54 @@ The most promising method is thus the Kmeans algorithm, which will be selected t
 
 Choosing to work with Kmeans clustering still leaves room to fiddle with the number of cluster to choose. A common way to choose this parameter is the use of the "Elbow method", which allows to select the right number of clusters doing a compromise between the precision and the number of clusters. Inspection of (@fig-elbowMethod) allows to think that $k=6$ is a relatively good trade off.
 
-```{python, echo = F, eval=T}
+```{python, echo = F, eval=T, label = 'fig-elbowMethod', fig.cap='Elbow method'}
 #| label: fig-elbowMethod
-#| fig-cap: Elbow method
+#| 
 fct1.elbow_method(weather_clustering.data,15)
 ```
 
 ### Clustering results
 The result of the clustering are shown below. 
 
+```{python, echo=F, eval=T}
+#| label: perform clustering
 
-```{python, echo=F,eval=T}
-#| label: create cluster
-clusters= fct1.clusteringCorentin(weather_cluster)
+weather, cluster = fct1.clusteringCorentin(weather,n_clusters=6)
 
+# Compute Q_th_cluster
+Q_th_cluster = pd.Series(Q_th[buildings['Name'].loc[buildings.Year == 1]].groupby(weather['Cluster']).sum().sum(axis=1))
+# rebuild as a dataframe
+cluster['Q_th'] = Q_th_cluster
+A_th = thermal_properties['FloorArea']
+k_th = thermal_properties['k_th']
+k_sun = thermal_properties['k_sun']
+specQ_people = thermal_properties['specQ_people']
+specElec = thermal_properties['specElec']
+# recompute extreme heat demand Q_extreme and assign to extreme cluster
+T_extreme, irr_extreme = cluster[['Temp','Irr']].iloc[-1]
+cluster['Q_th'].iloc[-1] = (A_th*(k_th*(T_int-(273+T_extreme))- k_sun*irr_extreme - specElec*f_el- specQ_people)).sum(axis=None)/1000
 ```
-
-```{python, echo=F, eval=F}
-#| label: clustering centroids
-
-#select the data for type A
-weather_A = weather_df[weather_df.Type == 'A']
-weather_A = weather_A[['Temp', 'Irr']]
-#select the data for type B
-weather_B = weather_df[weather_df.Type == 'B']
-weather_B = weather_B[['Temp', 'Irr']]
-#select the data for outliers
-weather_O = weather_df[weather_df.Type == 'O']
-weather_O = weather_O[['Temp', 'Irr']]
-
-weather_A_norm = []
-#normalize weather_A data for each column with gaussian normalization
-for i in range(0, len(weather_A.columns)):
-    weather_A_norm.append((weather_A.iloc[:, i] - weather_A.iloc[:, i].mean())/weather_A.iloc[:, i].std())
-
-weather_A_norm = pd.DataFrame(weather_A_norm).transpose()
-#rename the columns
-weather_A_norm.columns = ['Temp', 'Irr']
-
-#cluster the data in 5 clusters
-kmeans_A = KMeans(n_clusters=6, random_state=0, n_init=10).fit(weather_A_norm)
-#add the cluster column to the dataframe
-weather_A_norm['cluster'] = kmeans_A.labels_
-weather_A['cluster'] = kmeans_A.labels_
-#count the number of hours in each cluster
-hours_per_cluster = weather_A.groupby('cluster').count().iloc[:, 0]
-#create a cluster disaggregated dataframe (i.e. all data are not grouped by cluster)
-cluster_disagg = weather_A
-
-#load the data in a csv file
-#path = os.path.dirname(__file__)
-#cluster_disagg.to_csv(os.path.join(path,'clusters_dissaggregated.csv'),index=True)
-
-cluster = kmeans_A.cluster_centers_
-for c in cluster:
-    c[0] = c[0]*weather_A.Temp.std() + weather_A.Temp.mean()
-    c[1] = c[1]*weather_A.Irr.std() + weather_A.Irr.mean()
-
-centroid_extreme = [weather_O.values[0][0], weather_O.values[0][1], 1]
-#add centroid_extreme to the cluster
-
-# Convert the NumPy array to a Pandas DataFrame
-cluster_df = pd.DataFrame(cluster, columns=['Temp', 'Irr'])
-# Add the number of hours per cluster
-cluster_df['hours'] = hours_per_cluster.values
-
-# Add the extreme centroid in cluster_df using pd.concat()
-cluster_df = pd.concat([cluster_df, pd.DataFrame([centroid_extreme], columns=['Temp', 'Irr', 'hours'])], ignore_index=True)
-
-#create a cluster.csv file with the centroids of the clusters and the numbers of hours in each cluster
-#path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
-#cluster_df.to_csv(os.path.join(path, "clusters.csv"),index=False)
-
+```{python, echo=F, eval = T}
+#| label: plot clustering 
 # Scatter plot for weather data type A
-fig = px.scatter(weather_A, x='Temp', y='Irr', color="cluster", 
+fig = px.scatter(weather.loc[weather['Type']=='A'], x='Temp', y='Irr', color="Cluster", 
                  title='Weather data type A', labels={'Temp': 'Temperature [°C]', 'Irr': 'Irradiation [W/m2]'})
 cluster_trace = go.Scatter(
-    x=cluster[:, 0],
-    y=cluster[:, 1],
+    x=cluster.iloc[:, 0],
+    y=cluster.iloc[:, 1],
     mode='markers',
     marker=dict(color='red', size=20, opacity=0.8),
     name='Cluster Centroids'
 )
 fig.add_trace(cluster_trace)
 
-#cluster_df = cluster_df.set_index('Point')
-cluster_df.rename(columns={
+cluster.rename(columns={
     'Temp': 'Temperature [°C]',
     'Irr': 'Irradiance [W/m2]',
     'hours': 'Operating time [h]'
 }, inplace=True)
-cluster_df = cluster_df.round(2)
-html_table = cluster_df.to_html()
+cluster = cluster.round(2)
+html_table = cluster.to_html()
 title_html = '<h2 style="text-align:center;">Cluster Centroids</h2>'
 final_html = title_html + html_table
 HTML(final_html)
@@ -437,7 +371,7 @@ Load the data:
 
 Overview of the Buildings dataframe
 
-```{python table plot, echo=F, eval = F}
+```{python table plot, echo=F}
 import plotly.graph_objects as go
 
 fig = go.Figure(data=[go.Table(
@@ -463,7 +397,7 @@ Then find the values of kth and ksun for every building. Finally, store all your
 
 ### Internal gains - People
 
-```{python, echo=T, results='hide', eval = F}
+```{python, echo=T, results='hide'}
 # Generate the yearly occupancy profile of the buildings
 occ_profile = fct1.occupancy_profile()
 ```

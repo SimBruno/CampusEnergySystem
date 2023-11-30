@@ -141,11 +141,22 @@ def solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec, 
         if (e_th < tolerance) and (e_sun < tolerance) and (abs(k_th - k_th_old) < tolerance*(1+ abs(k_th_old))) and (abs(k_sun - k_sun_old) < tolerance*(1+ abs(k_sun_old))):
             break  # Converged, exit the loop
         iteration += 1        
-    return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, q_elec.mean(),heating_indicator 
+    return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, q_elec.mean(), heating_indicator 
 
 ######################################################
 #### Function for clustering ####
 ######################################################
+
+def preprocess_data(weather, profile_elec, T_th=273+16):
+    typeA = ((profile_elec > 0) & (weather.Temp + 273 <= T_th))
+    typeB = ((profile_elec == 0) | (weather.Temp + 273 > T_th))
+    typeO = (weather.Temp ==weather.Temp.min())
+
+    weather.loc[typeA, 'Type'] = 'A'
+    weather.loc[typeB, 'Type'] = 'B'
+    weather.loc[typeO, 'Type'] = 'O'
+
+    return weather
 
 class WeatherClustering:
     def __init__(self, weather, n_clusters, profile_elec):
@@ -153,11 +164,10 @@ class WeatherClustering:
         self.n_clusters = n_clusters
         self.profile_elec = profile_elec
 
-    def preprocess_data(self, zscore_threshold = 2.5, T_th=273+16):
-        z_scores = stats.zscore(self.weather['Temp'])
+    def preprocess_data(self, T_th=273+16):
         typeA = ((self.profile_elec > 0) & (self.weather.Temp + 273 <= T_th))
         typeB = ((self.profile_elec == 0) | (self.weather.Temp + 273 > T_th))
-        typeO = (np.abs(z_scores) > zscore_threshold)
+        typeO = (self.weather.Temp ==self.weather.Temp.min())
 
         self.weather_norm = self.weather[['Temp','Irr']].apply(lambda x: (x - x.mean()) / x.std())
         self.weather_norm.loc[typeA, 'Type'] = 'A'
@@ -206,6 +216,34 @@ class WeatherClustering:
         sns.scatterplot(data=self.weather.loc[self.weather.Type == 'A'], x='Temp', y='Irr', hue=self.labels, palette='deep',ax=axs)
         sns.scatterplot(x=self.cluster_centers[:, 0], y=self.cluster_centers[:, 1], marker='o', color='black', s=100,ax=axs)
 
+def clusteringCorentin(weather, n_clusters):
+
+    # Input : weather dataframe with Temp, Irr and Type columns
+    #         number of clusters
+    # Output : weather dataframe with Temp, Irr, Type and Cluster columns
+    #          cluster dataframe with cluster centers and number of hours per cluster
+
+    #normalize weather data for each column with gaussian normalization
+    weatherNorm = weather[['Temp','Irr']].apply(lambda x: (x - x.mean()) / x.std())
+    
+    # select only type A data to be clustered
+    weatherNorm= weatherNorm.loc[weather.Type == 'A']
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0, n_init=10).fit(weatherNorm)
+
+    #add cluster labels to the data
+    weatherNorm['Cluster'] = kmeans.labels_
+    weather['Cluster'] = weatherNorm['Cluster']
+    weather['Cluster'].loc[weather.Type == 'O'] = n_clusters # add cluster label for outlier
+    
+    # retrieve cluster centers and unormalize them
+    cluster = pd.DataFrame(kmeans.cluster_centers_,columns=['Temp','Irr'])
+    cluster[['Temp','Irr']] = cluster[['Temp','Irr']]*weather[['Temp','Irr']].std() + weather[['Temp','Irr']].mean()
+    # add extreme cluster center
+    cluster.loc[n_clusters] = weather[['Temp','Irr']].min()
+    # get operating hours per cluster
+    cluster['Hours'] = weather['Cluster'].value_counts()
+    
+    return weather, cluster
 
 def elbow_method(data, max_clusters):
     # Elbow method
