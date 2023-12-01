@@ -85,7 +85,7 @@ The unknowns are $q_\text{people}(t)$, $q_\text{el}(t)$, $k_\text{th}$, and $k_\
 
 ## Hourly Profiles {#subsec:hourly-profiles}
 
-The electricity profile demand is assumed to be constant when turned on. Electritcity is used on weekdays from 7 AM to 9 PM. The values of the uniform electrictiy profile are calculated by dividing the specific electricity consumption of the buildings by the number of operating hours, i.e. 3654 hours per year.
+The electricity profile demand is assumed to be constant when turned on. Electricity is used on weekdays from 7 AM to 9 PM. The values of the uniform electrictiy profile are calculated by dividing the specific electricity consumption of the buildings by the number of operating hours, i.e. 3654 hours per year.
 
 
 <!-- Generate elec profile -->
@@ -101,7 +101,10 @@ fig, axs = plt.subplots(1, 4, figsize=(14, 3))
 profiles = [profile_off, profile_class, profile_rest, profile_elec]
 titles = ['Office occupancy', 'Class occupancy', 'Restaurant occupancy', 'Electricity profile']
 for i, profile in enumerate(profiles):
-    axs[i].plot(profile[72:96])
+    #axs[i].plot(profile[72:96])
+    axs[i].bar(range(0, 24), profile[72:96])
+    axs[i].set_xticks(np.arange(1, 24, 2))
+    axs[i].set_xticklabels(np.arange(1, 24, 2))
     axs[i].set_title(titles[i])
 fig.tight_layout()
 plt.show()
