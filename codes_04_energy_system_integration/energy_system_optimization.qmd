@@ -4,7 +4,8 @@ In part 4, we will follow the same methodology than in part 2. First, build your
 
 
 ```{r}
-path <- file.path('../venv/Scripts/python.exe')
+#path <- file.path('../venv/Scripts/python.exe')
+path <- file.path('C:/Users/coren/AppData/Local/Programs/Python/Python310/python.exe')
 library(reticulate)
 use_python(path)
 ```
@@ -14,7 +15,7 @@ Load your .mod and .dat files, set solving options.
 from amplpy import AMPL, Environment
 ampl = AMPL()
 
-ampl.cd("ampl_files") # select the right folder
+ampl.cd("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/ampl_files") # select the right folder
 
 ampl.read("moes.mod")
 ampl.readData("moes.dat")
@@ -37,7 +38,7 @@ Load the data from part 1:
 import pandas as pd
 import os
 
-data=pd.read_csv("../codes_01_energy_demand/data_MOES.csv")
+data=pd.read_csv("./codes_01_energy_demand/data_MOES.csv")
 data.index = ["Building" + str(i) for i in range(1,len(data)+1)] # the index of the dataframe has to match the values of the set "Buildings" in ampl
 
 # send parameters to ampl
@@ -52,6 +53,7 @@ Solve:
 
 ```{python solve ampl, echo=F, results='hide'}
 # Solve
+ampl.setOption('solver', 'gurobi')
 ampl.solve()
 ```
 
@@ -59,6 +61,9 @@ ampl.solve()
 Save your data:
 
 ```{python}
+import sys
+sys.path.append('C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/')
+
 from functions import save_ampl_results
 save_ampl_results(ampl, pkl_name="scenario1")
 ```
@@ -67,7 +72,7 @@ Use your data:
 
 ```{python}
 import pandas as pd
-myData = pd.read_pickle("results//scenario1.pkl")
+myData = pd.read_pickle("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/results/scenario1.pkl")
 myData["Totalcost"]
 ```
 

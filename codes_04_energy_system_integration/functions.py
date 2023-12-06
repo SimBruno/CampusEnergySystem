@@ -1,26 +1,24 @@
 import pickle
 
-def save_ampl_results(ampl, pkl_name="results"):
-  
+def save_ampl_results(ampl, pkl_name="results"): 
+
   results = {}
-  
+
   for o in ampl.getObjectives():
     values = o[1].getValues().toList()[0]
     results[o[1].name()] = values
-  
-  
+
   for v in ampl.getVariables():
     values = ampl.getData(v[1].name()).toPandas()
     results[v[1].name()] = values
-  
-  
+
   for p in ampl.getParameters():
     values = ampl.getData(p[1].name()).toPandas()
     results[p[1].name()] = values
-  
-  
+
   # save data
-  result_file_path = "results//"+ pkl_name+ ".pkl"
+  #result_file_path = "./codes_04_energy_system_integration/results/"+ pkl_name + ".pkl"
+  result_file_path = "C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/results/scenario1.pkl"
   f = open(result_file_path, 'wb')
   pickle.dump(results, f)
   f.close()
