@@ -297,7 +297,7 @@ if __name__ == '__main__':
     k_sun_guess=1
 
     # Initialize array to record values for each building
-    solution  = pd.DataFrame(columns=['FloorArea m^2', 'specElec kWh/m^2', 'k_th kWh/m^2/K', 'k_sun', 'specQ_people kWh/m^2'])
+    solution  = pd.DataFrame(columns=['K_sun', 'K_th', 'Spec Q_people', 'Spec Elec', 'Floor Area'])
     Q_th = pd.DataFrame(columns=buildings['Name']) 
     #Q_th_cluster = pd.DataFrame(columns=model.get_feature_names_out())
 
@@ -312,7 +312,7 @@ if __name__ == '__main__':
         q_people = people_gains(profile_class, profile_rest, profile_off)
         q_elec = elec_gains(building_id, buildings, profile_elec)
         [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean, heating_indic] = solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
-        solution.loc[building_id] = pd.Series({'FloorArea m^2': A_th, 'specElec kWh/m^2': q_elec_mean/1000, 'k_th kWh/m^2/K': k_th/1000, 'k_sun': k_sun,'specQ_people kWh/m^2': specQ_people/1000})
+        solution.loc[building_id] = pd.Series({'K_sun': k_sun, 'K_th': k_th/1000, 'Spec Q_people': specQ_people/1000, 'Spec Elec': q_elec_mean/1000, 'Floor Area': A_th})
         # Recompute hourly energy demands
         Q_temp= A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000
         Q_extreme.append(A_th*(k_th*(T_int-(273-9.2)) - specQ_people - q_elec_mean*f_el)/1000)
@@ -326,13 +326,8 @@ if __name__ == '__main__':
 
     # Save The DFs in csv
     Q_th_cluster.drop(columns=buildings.query('Year==2')['Name'].values).to_csv(os.path.join(PATH, "Q_cluster_medium.csv"),index=True)
-    solution.to_csv(os.path.join(PATH, "thermal_properties_final.csv"),index=False)
+    solution.to_csv(os.path.join(PATH, "data_MOES.csv"),index=False)
 
-    
-
-
-
-    
     #heating_indicator = (((Q_th >= 0).all(axis=1)) & (T_ext <= T_th) & (profile_elec > 0)) # filter heat demands only
     #Q_th = Q_th[heating_indicator]/1000 # convert to kWh
     #Q_th_cluster = Q_th.groupby(weather['Cluster'].loc[weather['Cluster']< n_clusters]).sum() # sum heat demands for each cluster
@@ -348,10 +343,5 @@ if __name__ == '__main__':
     print('Solution = \n', solution)
     
     print('Q_th = \n', Q_th)
-    
-
-    
-    
-
 
     #print('Q_th_cluster = \n', Q_th_cluster)
