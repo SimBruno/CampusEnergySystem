@@ -48,6 +48,8 @@ for j in fluid:
     data_ampl=pd.DataFrame(data=data_ampl.values,columns=query_ampl)
     data_ampl['Time']=range(1,len(files)+1)
     data_ampl.set_index('Time',inplace=True)
+    print(data_ampl[data_ampl['Q_cond']==data_ampl['Q_cond'].max()].index.values[0])
+    
 
     # Getting values for ambient temperature
     ambiant_df=pd.read_csv(os.path.join(os.path.dirname( __file__ ),"Text.csv"))
@@ -58,7 +60,9 @@ for j in fluid:
     ampl.read(os.path.join(os.path.dirname( __file__ ),"moes2021_P4_py.mod"))
     ampl.set_option("solver",'snopt')
     ampl.set_data(data_ampl,"Time")
+    ampl.get_parameter('max_demand_index').set(data_ampl.index[data_ampl['Q_cond']==data_ampl['Q_cond'].max()].values[0]);
     ampl.solve()
+
 
     # Retrieving results
     a=ampl.get_variable("a").get_values().to_list()[0]
