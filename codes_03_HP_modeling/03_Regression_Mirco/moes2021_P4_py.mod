@@ -45,7 +45,7 @@ param U_air_ref         := 0.049; #air-refrigerant global heat transfer coeffici
 #Extreme values
 #################
 # !!!!! Fill here: : take temporal index from maximal heat demand
-param max_demand_index	:=1;
+param max_demand_index;
 #################
 param T_cond_max := T_cond[max_demand_index];
 param Q_cond_max := Q_cond[max_demand_index];
