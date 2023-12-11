@@ -93,8 +93,9 @@ subject to CarnotFactor1{t in Time}:  #caculates the carnot factor for all time 
 	W_hp[t] >0 ==> c_factor1[t] = Q_cond[t]/ W_hp[t] / (TlnCond[t]+273.15)*(TlnCond[t]-T_evap[t]) else c_factor1[t] =0.001 ;
 	
 subject to CarnotFactor2{t in Time}:  #caculates the carnot factor for all time steps with fitting function (2nd degree polynomial)
-	W_hp[t] > 0 ==> c_factor2[t] = a * (T_ext[t])**2 + b *T_ext[t] + c  else c_factor2[t] =0.001;
-
+	W_hp[t] > 0 ==> c_factor2[t] = a * (T_ext[t])**2 - b *T_ext[t] + c  else c_factor2[t] =0.001;
+	#a * (T_ext[t])**2 - b *T_ext[t] + c  else c_factor2[t] =0.001;
+#a+b*log((c*T_ext[t]))
 #################
 # !!!!! Fill here: temperature difference over condenser
 #################
