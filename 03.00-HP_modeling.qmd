@@ -1,258 +1,1038 @@
-# Modelling of a heat pump and data reconciliation
-
-## Degrees of Freedom (DOF) analysis
-
-**Given:**
-
-The VALI model of the 2-stage heat pump with tags set to OFF (the default working fluid is R290, you should not change it) – *R-290.bls*. 
-
-A csv file with 5 combinations of sets, only one of which is correct.
-
-**Task**
-
-Perform a DOF analysis to identify which tags must be set to CST and which ones must remain OFF.
-
-Activate the tags and make sure the model is running properly.
-
-*Hint*: For each component, identify how many measurements are needed for mass and energy balances, how many measurements are set as parameters and how many are calculated by the model. 
-
-**Result**
-
-## Introduction
-
-In order to perform a DOF analysis, the needed ingredients are necessary: 
-
-- The state variables of the flows
-- The balance equations, often being energy balance (EB), mass balance (MB), pressure drop (P) 
-- The model/performances equations, describing how the unit act on an engineering perspective.
-
-The state variables of the flows are characterized by a minimum number of state variables given by the Gibbs phase rule, i.e. for a stream of N compounds, N+2 variables are sufficient to fully characterize it, with at least one extensive variable. From that, all other properties can be derived, provided the right constitutive equations.
-
-For this analysis, we'll consider the steady-state operation of the system.
-
-## System DOF analysis
-
-A simple preliminary analysis allows to determine the overall minimum DOF of the system, giving a lower bound of measurements necessary to make it solvable. Representing the system as a flowsheet allows to retrieve the number of variables and equations. The variables consists of all the material flows, the electricity flows and the heat flows, assuming that each material flows bring 3 variables. The equations are one mass balance and one energy balance per unit in the system, the isentropic efficiencies for both compressor as well as the isenthalpic expansions in the valves. Finally, having 9 flows, all of them having 1 phase, and 8 units yields:
-
-$ n_s = n_v - n_e =  (27+4+2)- (8+8+2+2) = 13$
-
-And thus $n_s = 13$, meaning that we need at least 13 specifications to characterize the whole system. 
-
-### VALI tags propositions
-For this exercise, we're provided with 5 sets of possible tag arrangement. To goal is to determine which one of those is possible based on the DOF analysis. As we can see in (@tbl-DOFprop), all arrangement meet the minimum measurement requirements. However, we're not certain that the local DOF is respected. Summing $n_s$ for each unit processs and substracting the link between them should allow to determine to total number of DOF of the system taking local DOF into account. Since all tag arrangement provide a different number of set points, the solution should be given by the arrangement with matching number of DOF.
-
-|       | Option 1 | Option 2 | Option 3 | Option 4 | Option 5 |
-|-------|----------|----------|----------|----------|----------|
-|DOF    | 14       | 18       | 19       | 16       | 13       |
-: Measurements of the possible arrangement {#tbl-DOFprop}
-
-## Unit models
-
-### Compressor
-Stating the unit model for a single compressor with one inlet stream and one outlet stream yields:
-
-| Type  | Variables                                      | #        |
-|-------|------------------------------------------------|----------|
-| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 6        |
-| $n_p$ | $\Delta P$                                     | 2        |
-|       | $\dot{W}_{in}$                                 |          |
-| $n_t$ | $\eta_{is}$                                    | 1        |
-| $n_v$ |                                                | 9        |
-
-| Type  | Equations                                      | #        |
-|-------|------------------------------------------------|----------|
-| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                 | 1        |
-| (EB)  | $\dot{W}_{in}= \dot{m}_{in}c_p(T_{out}-T_{in})$| 1        |
-| (P)   | $\Delta P=cst$                                 | 1        |
-| (M)   | $\dot{W}_{in} =\eta_{is}\dot{W}_{in,is}$       | 1        |
-| $n_e$ |                                                | 4        |
-
-And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a compressor.
-
-### Evaporator
-For the evaporator, we proceed the same way. We model the heat exchange of the lake as a constant heat transfer, allowing to simplify the equation statement since only our main flow has to be considered. In the general case, the fluid enters the evaporator with a vapor quality $x_{in}<1$, but based on the assumption that the entering flow is purely gaseous allows to further simplify the modelisation. 
-
-| Type  | Variables                                      | #        |
-|-------|------------------------------------------------|----------|
-| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 6        |
-| $n_p$ | $\Delta P$                                     | 1        |
-|       | $\dot{Q}_{in}$                                 | 1        |
-| $n_t$ | $\eta_{is}$                                    | 1        |
-| $n_v$ |                                                | 9        |
-
-| Type  | Equations                                        | #        |
-|-------|--------------------------------------------------|----------|
-| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 1        |
-| (EB)  | $\dot{Q}_{in}= \dot{m}_{in}c_p(T_{evap}-T_{in})$ | 1        |
-| (P)   | $\Delta P=0$                                     | 1        |
-| (M)   | $\dot{Q}_{in}= UA\cdot \text{LMTD}$              | 1        |
-| $n_e$ |                                                  | 4        |
-
-And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a compressor.
-
-### Condensor
-The VALI model suggest to model the condensor in two part: one taking care of the change of temperature (sensible), the second one modelling the phase change (latent). Using the same logic as the evaporator, only the main flow is considered and the other flows are modeled as heat transfer. The unit model equation will be the same for both condensor, and only the heat transfer model will vary. The base variables are the following:
-
-| Type  | Variables                                      | #        |
-|-------|------------------------------------------------|----------|
-| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 6        |
-| $n_p$ | $\Delta P$                                     | 1        |
-|       | $\dot{Q}$                                      | 1        |
-| $n_t$ |                                                | 0        |
-| $n_v$ |                                                | 8        |
-
-#### Sensible condensor
-The model equation for the sensible condensor is to assume a constant pressure during the heat transfer:
-
-| Type  | Equations                                        | #        |
-|-------|--------------------------------------------------|----------|
-| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 1        |
-| (EB)  | $\dot{Q}_{in}= \dot{m}_{in}c_p(T_{out}-T_{in})$  | 1        |
-| (P)   | $\Delta P=0$                                     | 1        |
-| (M)   | $\dot{Q}_{in}= UA\cdot \text{LMTD}$              | 1        |
-| $n_e$ |                                                  | 4        |
-
-And thus $n_s = n_x-n_e = 2$, meaning that we need 2 specifications to characterize the sensible condensor.
-
-#### Latent condensor
-The model equation for the latent condensor is to assume a constant temperature during the heat transfer:
-
-| Type  | Equations                                        | #        |
-|-------|--------------------------------------------------|----------|
-| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 1        |
-| (EB)  | $\dot{Q}_{in}= \dot{m}_{in}\cdot L$              | 1        |
-| (P)   | $\Delta P=0$                                     | 1        |
-| (M)   | $\dot{Q}_{in}= UA\cdot \text{LMTD}$              | 1        |
-| $n_e$ |                                                  | 4        |
-
-And thus $n_s = n_x-n_e = 2$, meaning that we need 2 specifications to characterize the latent condensor.
-
-### Expansion valve
-
-Assuming the expansion valves are not going through a phase change allows to ignore the vapor quality for both valves. The model implies an isenthalpic pressure drop.
-
-| Type  | Variables                                      | #        |
-|-------|------------------------------------------------|----------|
-| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 6        |
-| $n_p$ | $\Delta P$                                     | 1        |
-| $n_t$ | -                                              | 0        |
-| $n_v$ |                                                | 7        |
-
-| Type  | Equations                                        | #        |
-|-------|--------------------------------------------------|----------|
-| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 1        |
-| (EB)  | $0 = \dot{m}_{in}c_p(T_{out}-T_{in})$            | 1        |
-| (P)   | $\Delta P = cst$                                 | 1        |
-| (M)   | $h_{in}=h_{out}$                                 | 1        |
-| $n_e$ |                                                  | 4        |
-
-
-And thus $n_s = n_v-n_e= 3$, meaning we need 3 specifications to characterize a pressure valve.
-
-
-### Flash tank
-
-The flash tank involves a little bit more of complexity due to the multiple flows mixing. 
-
-| Type  | Variables                                      | #        |
-|-------|------------------------------------------------|----------|
-| $n_x$ | $(n_{in}+n_{out})*(n_c+2)$                     | 12       |
-| $n_p$ | $\Delta P_1$                                   | 2        |
-| $n_p$ | $\Delta P_2$                                   |          |
-| $n_t$ | -                                              | 0        |
-| $n_v$ |                                                | 14       |
-
-| Type  | Equations                                        | #        |
-|-------|--------------------------------------------------|----------|
-| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   | 2        |
-| (MB)  | $\dot{m}_{in} = \dot{m}_{out}$                   |          |
-| (EB)  | $0 = \dot{m}_{in}c_p(T_{out}-T_{in})$            | 1        |
-| (P)   | $\Delta P_1 = 0$                                 | 2        |
-| (P)   | $\Delta P_2 = 0$                                 |          |
-| (M)   |                                                  |          |
-| $n_e$ |                                                  | 5        |
-
-
-And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a flash tank.
-
-## VALI Tags selection
-Now that all the types of unit models are characterized, it should be possible to determine the minimum number of measurements needed to make the system fully determined. Summing all corresponding DOF with the number of units and substracting the links yields:
-
-
-
-Working model of the 2-stage HP for the working fluid R290.
-
-### Model adjustment to a second working fluid (Optional)
-
-**Task**
-
-Adjust the model from the previous section to a second working fluid of your choice between the 7 options listed in Table 4.1.
-
-*Hints*:
-
-- Modify the working fluid (Thermod) in your simulation file.
-- Correct the pressure ratio of the compressors so that the high-pressure level corresponds to the saturation pressure for the desired condensation temperature.
-- Adjust the flow rate so that the heat pump has a heating capacity of 6000 kW (the maximum capacity of the HP is in this magnitude).
-
-**Result**
-
-Working model of the 2-stage HP for the working fluid of your choice.
-
-## Data reconciliation
-
-**Given**
-
-Measurements for 7 working fluids, each with 2 temperature levels (low-temperature and medium-temperature) and between 6 and 11 periods.
-
-**Task**
-
-Run the VALI model with the corresponding measurements.
-
-**Result**
-
-Obtain the reconciled files.
-
-*Hint*:
-Note that the measurement file indicates where the reconciled file should be saved. For instance, for the *R-290_LT_1.txt* file, the location is defined by the command `ARCHIVE -T Reconciled/reconc_R-290_LT_1.txt`. Make sure to have a folder named *Reconciled* in the same folder as the Vali model.
-
-## Performance and cost evaluation
-
-**Given**
-
-Three AMPL files: *moes2021_P4_Rxxx.dat*, *moes2021_P4.mod* and *moes2021_P4.run*.
-
-Table with ambient temperatures for each measurement.
-
-**Task**
-
-For the performance evaluation:
-
-- Use the information in the reconciled files from VALI to complete the AMPL model.
-- Derive a regression curve that calculates the Carnot factor as a polynomial function of the ambient temperature for both stages of the HP. You are asked to derive the factors *a*, *b* and *c*. In general, you can assume:
-
-\begin{equation}
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="MOES project report">
+
+<title>Modeling and optimization of energy systems - 4&nbsp; Modelling of a heat pump and data reconciliation</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./04.00-energy_system_integration.html" rel="next">
+<link href="./02.00-Heat_recovery.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+      <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./03.00-HP_modeling.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Modelling of a heat pump and data reconciliation</span></a></li></ol></nav>
+      <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+      </a>
+      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Modeling and optimization of energy systems</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Preface</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01.00-Energy_demand.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Energy demand of the EPFL campus</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02.00-Heat_recovery.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Heat recovery</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03.00-HP_modeling.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Modelling of a heat pump and data reconciliation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04.00-energy_system_integration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Energy system optimization</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-Conclusions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Conclusions</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#degrees-of-freedom-dof-analysis" id="toc-degrees-of-freedom-dof-analysis" class="nav-link active" data-scroll-target="#degrees-of-freedom-dof-analysis"><span class="header-section-number">4.1</span> Degrees of Freedom (DOF) analysis</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction"><span class="header-section-number">4.2</span> Introduction</a></li>
+  <li><a href="#system-dof-analysis" id="toc-system-dof-analysis" class="nav-link" data-scroll-target="#system-dof-analysis"><span class="header-section-number">4.3</span> System DOF analysis</a>
+  <ul class="collapse">
+  <li><a href="#vali-tags-propositions" id="toc-vali-tags-propositions" class="nav-link" data-scroll-target="#vali-tags-propositions"><span class="header-section-number">4.3.1</span> VALI tags propositions</a></li>
+  </ul></li>
+  <li><a href="#unit-models" id="toc-unit-models" class="nav-link" data-scroll-target="#unit-models"><span class="header-section-number">4.4</span> Unit models</a>
+  <ul class="collapse">
+  <li><a href="#compressor" id="toc-compressor" class="nav-link" data-scroll-target="#compressor"><span class="header-section-number">4.4.1</span> Compressor</a></li>
+  <li><a href="#evaporator" id="toc-evaporator" class="nav-link" data-scroll-target="#evaporator"><span class="header-section-number">4.4.2</span> Evaporator</a></li>
+  <li><a href="#condensor" id="toc-condensor" class="nav-link" data-scroll-target="#condensor"><span class="header-section-number">4.4.3</span> Condensor</a></li>
+  <li><a href="#expansion-valve" id="toc-expansion-valve" class="nav-link" data-scroll-target="#expansion-valve"><span class="header-section-number">4.4.4</span> Expansion valve</a></li>
+  <li><a href="#flash-tank" id="toc-flash-tank" class="nav-link" data-scroll-target="#flash-tank"><span class="header-section-number">4.4.5</span> Flash tank</a></li>
+  </ul></li>
+  <li><a href="#vali-tags-selection" id="toc-vali-tags-selection" class="nav-link" data-scroll-target="#vali-tags-selection"><span class="header-section-number">4.5</span> VALI Tags selection</a>
+  <ul class="collapse">
+  <li><a href="#model-adjustment-to-a-second-working-fluid-optional" id="toc-model-adjustment-to-a-second-working-fluid-optional" class="nav-link" data-scroll-target="#model-adjustment-to-a-second-working-fluid-optional"><span class="header-section-number">4.5.1</span> Model adjustment to a second working fluid (Optional)</a></li>
+  </ul></li>
+  <li><a href="#data-reconciliation" id="toc-data-reconciliation" class="nav-link" data-scroll-target="#data-reconciliation"><span class="header-section-number">4.6</span> Data reconciliation</a></li>
+  <li><a href="#performance-and-cost-evaluation" id="toc-performance-and-cost-evaluation" class="nav-link" data-scroll-target="#performance-and-cost-evaluation"><span class="header-section-number">4.7</span> Performance and cost evaluation</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Modelling of a heat pump and data reconciliation</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="degrees-of-freedom-dof-analysis" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="degrees-of-freedom-dof-analysis"><span class="header-section-number">4.1</span> Degrees of Freedom (DOF) analysis</h2>
+<p><strong>Given:</strong></p>
+<p>The VALI model of the 2-stage heat pump with tags set to OFF (the default working fluid is R290, you should not change it) – <em>R-290.bls</em>.</p>
+<p>A csv file with 5 combinations of sets, only one of which is correct.</p>
+<p><strong>Task</strong></p>
+<p>Perform a DOF analysis to identify which tags must be set to CST and which ones must remain OFF.</p>
+<p>Activate the tags and make sure the model is running properly.</p>
+<p><em>Hint</em>: For each component, identify how many measurements are needed for mass and energy balances, how many measurements are set as parameters and how many are calculated by the model.</p>
+<p><strong>Result</strong></p>
+</section>
+<section id="introduction" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="introduction"><span class="header-section-number">4.2</span> Introduction</h2>
+<p>In order to perform a DOF analysis, the needed ingredients are necessary:</p>
+<ul>
+<li>The state variables of the flows</li>
+<li>The balance equations, often being energy balance (EB), mass balance (MB), pressure drop (P)</li>
+<li>The model/performances equations, describing how the unit act on an engineering perspective.</li>
+</ul>
+<p>The state variables of the flows are characterized by a minimum number of state variables given by the Gibbs phase rule, i.e.&nbsp;for a stream of N compounds, N+2 variables are sufficient to fully characterize it, with at least one extensive variable. From that, all other properties can be derived, provided the right constitutive equations.</p>
+<p>For this analysis, we’ll consider the steady-state operation of the system.</p>
+</section>
+<section id="system-dof-analysis" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="system-dof-analysis"><span class="header-section-number">4.3</span> System DOF analysis</h2>
+<p>A simple preliminary analysis allows to determine the overall minimum DOF of the system, giving a lower bound of measurements necessary to make it solvable. Representing the system as a flowsheet allows to retrieve the number of variables and equations. The variables consists of all the material flows, the electricity flows and the heat flows, assuming that each material flows bring 3 variables. The equations are one mass balance and one energy balance per unit in the system, the isentropic efficiencies for both compressor as well as the isenthalpic expansions in the valves. Finally, having 9 flows, all of them having 1 phase, and 8 units yields:</p>
+<p>$ n_s = n_v - n_e = (27+4+2)- (8+8+2+2) = 13$</p>
+<p>And thus <span class="math inline">\(n_s = 13\)</span>, meaning that we need at least 13 specifications to characterize the whole system.</p>
+<section id="vali-tags-propositions" class="level3" data-number="4.3.1">
+<h3 data-number="4.3.1" class="anchored" data-anchor-id="vali-tags-propositions"><span class="header-section-number">4.3.1</span> VALI tags propositions</h3>
+<p>For this exercise, we’re provided with 5 sets of possible tag arrangement. To goal is to determine which one of those is possible based on the DOF analysis. As we can see in (<a href="#tbl-DOFprop">Table&nbsp;<span>4.1</span></a>), all arrangement meet the minimum measurement requirements. However, we’re not certain that the local DOF is respected. Summing <span class="math inline">\(n_s\)</span> for each unit processs and substracting the link between them should allow to determine to total number of DOF of the system taking local DOF into account. Since all tag arrangement provide a different number of set points, the solution should be given by the arrangement with matching number of DOF.</p>
+<div id="tbl-DOFprop" class="anchored">
+<table class="table">
+<caption>Table&nbsp;4.1: Measurements of the possible arrangement</caption>
+<thead>
+<tr class="header">
+<th></th>
+<th>Option 1</th>
+<th>Option 2</th>
+<th>Option 3</th>
+<th>Option 4</th>
+<th>Option 5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>DOF</td>
+<td>14</td>
+<td>18</td>
+<td>19</td>
+<td>16</td>
+<td>13</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="unit-models" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="unit-models"><span class="header-section-number">4.4</span> Unit models</h2>
+<section id="compressor" class="level3" data-number="4.4.1">
+<h3 data-number="4.4.1" class="anchored" data-anchor-id="compressor"><span class="header-section-number">4.4.1</span> Compressor</h3>
+<p>Stating the unit model for a single compressor with one inlet stream and one outlet stream yields:</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Variables</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(n_x\)</span></td>
+<td><span class="math inline">\((n_{in}+n_{out})*(n_c+2)\)</span></td>
+<td>6</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_p\)</span></td>
+<td><span class="math inline">\(\Delta P\)</span></td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td><span class="math inline">\(\dot{W}_{in}\)</span></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_t\)</span></td>
+<td><span class="math inline">\(\eta_{is}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_v\)</span></td>
+<td></td>
+<td>9</td>
+</tr>
+</tbody>
+</table>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Equations</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>(MB)</td>
+<td><span class="math inline">\(\dot{m}_{in} = \dot{m}_{out}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(EB)</td>
+<td><span class="math inline">\(\dot{W}_{in}= \dot{m}_{in}c_p(T_{out}-T_{in})\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>(P)</td>
+<td><span class="math inline">\(\Delta P=cst\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(M)</td>
+<td><span class="math inline">\(\dot{W}_{in} =\eta_{is}\dot{W}_{in,is}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_e\)</span></td>
+<td></td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+<p>And thus <span class="math inline">\(n_s = n_x-n_e= 2\)</span>, meaning we need 5 specifications to characterize a compressor.</p>
+</section>
+<section id="evaporator" class="level3" data-number="4.4.2">
+<h3 data-number="4.4.2" class="anchored" data-anchor-id="evaporator"><span class="header-section-number">4.4.2</span> Evaporator</h3>
+<p>For the evaporator, we proceed the same way. We model the heat exchange of the lake as a constant heat transfer, allowing to simplify the equation statement since only our main flow has to be considered. In the general case, the fluid enters the evaporator with a vapor quality <span class="math inline">\(x_{in}&lt;1\)</span>, but based on the assumption that the entering flow is purely gaseous allows to further simplify the modelisation.</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Variables</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(n_x\)</span></td>
+<td><span class="math inline">\((n_{in}+n_{out})*(n_c+2)\)</span></td>
+<td>6</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_p\)</span></td>
+<td><span class="math inline">\(\Delta P\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td><span class="math inline">\(\dot{Q}_{in}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_t\)</span></td>
+<td><span class="math inline">\(\eta_{is}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_v\)</span></td>
+<td></td>
+<td>9</td>
+</tr>
+</tbody>
+</table>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Equations</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>(MB)</td>
+<td><span class="math inline">\(\dot{m}_{in} = \dot{m}_{out}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(EB)</td>
+<td><span class="math inline">\(\dot{Q}_{in}= \dot{m}_{in}c_p(T_{evap}-T_{in})\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>(P)</td>
+<td><span class="math inline">\(\Delta P=0\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(M)</td>
+<td><span class="math inline">\(\dot{Q}_{in}= UA\cdot \text{LMTD}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_e\)</span></td>
+<td></td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+<p>And thus <span class="math inline">\(n_s = n_x-n_e= 2\)</span>, meaning we need 5 specifications to characterize a compressor.</p>
+</section>
+<section id="condensor" class="level3" data-number="4.4.3">
+<h3 data-number="4.4.3" class="anchored" data-anchor-id="condensor"><span class="header-section-number">4.4.3</span> Condensor</h3>
+<p>The VALI model suggest to model the condensor in two part: one taking care of the change of temperature (sensible), the second one modelling the phase change (latent). Using the same logic as the evaporator, only the main flow is considered and the other flows are modeled as heat transfer. The unit model equation will be the same for both condensor, and only the heat transfer model will vary. The base variables are the following:</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Variables</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(n_x\)</span></td>
+<td><span class="math inline">\((n_{in}+n_{out})*(n_c+2)\)</span></td>
+<td>6</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_p\)</span></td>
+<td><span class="math inline">\(\Delta P\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td><span class="math inline">\(\dot{Q}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_t\)</span></td>
+<td></td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_v\)</span></td>
+<td></td>
+<td>8</td>
+</tr>
+</tbody>
+</table>
+<section id="sensible-condensor" class="level4" data-number="4.4.3.1">
+<h4 data-number="4.4.3.1" class="anchored" data-anchor-id="sensible-condensor"><span class="header-section-number">4.4.3.1</span> Sensible condensor</h4>
+<p>The model equation for the sensible condensor is to assume a constant pressure during the heat transfer:</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Equations</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>(MB)</td>
+<td><span class="math inline">\(\dot{m}_{in} = \dot{m}_{out}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(EB)</td>
+<td><span class="math inline">\(\dot{Q}_{in}= \dot{m}_{in}c_p(T_{out}-T_{in})\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>(P)</td>
+<td><span class="math inline">\(\Delta P=0\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(M)</td>
+<td><span class="math inline">\(\dot{Q}_{in}= UA\cdot \text{LMTD}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_e\)</span></td>
+<td></td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+<p>And thus <span class="math inline">\(n_s = n_x-n_e = 2\)</span>, meaning that we need 2 specifications to characterize the sensible condensor.</p>
+</section>
+<section id="latent-condensor" class="level4" data-number="4.4.3.2">
+<h4 data-number="4.4.3.2" class="anchored" data-anchor-id="latent-condensor"><span class="header-section-number">4.4.3.2</span> Latent condensor</h4>
+<p>The model equation for the latent condensor is to assume a constant temperature during the heat transfer:</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Equations</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>(MB)</td>
+<td><span class="math inline">\(\dot{m}_{in} = \dot{m}_{out}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(EB)</td>
+<td><span class="math inline">\(\dot{Q}_{in}= \dot{m}_{in}\cdot L\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>(P)</td>
+<td><span class="math inline">\(\Delta P=0\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(M)</td>
+<td><span class="math inline">\(\dot{Q}_{in}= UA\cdot \text{LMTD}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_e\)</span></td>
+<td></td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+<p>And thus <span class="math inline">\(n_s = n_x-n_e = 2\)</span>, meaning that we need 2 specifications to characterize the latent condensor.</p>
+</section>
+</section>
+<section id="expansion-valve" class="level3" data-number="4.4.4">
+<h3 data-number="4.4.4" class="anchored" data-anchor-id="expansion-valve"><span class="header-section-number">4.4.4</span> Expansion valve</h3>
+<p>Assuming the expansion valves are not going through a phase change allows to ignore the vapor quality for both valves. The model implies an isenthalpic pressure drop.</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Variables</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(n_x\)</span></td>
+<td><span class="math inline">\((n_{in}+n_{out})*(n_c+2)\)</span></td>
+<td>6</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_p\)</span></td>
+<td><span class="math inline">\(\Delta P\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_t\)</span></td>
+<td>-</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_v\)</span></td>
+<td></td>
+<td>7</td>
+</tr>
+</tbody>
+</table>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Equations</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>(MB)</td>
+<td><span class="math inline">\(\dot{m}_{in} = \dot{m}_{out}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(EB)</td>
+<td><span class="math inline">\(0 = \dot{m}_{in}c_p(T_{out}-T_{in})\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>(P)</td>
+<td><span class="math inline">\(\Delta P = cst\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(M)</td>
+<td><span class="math inline">\(h_{in}=h_{out}\)</span></td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_e\)</span></td>
+<td></td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+<p>And thus <span class="math inline">\(n_s = n_v-n_e= 3\)</span>, meaning we need 3 specifications to characterize a pressure valve.</p>
+</section>
+<section id="flash-tank" class="level3" data-number="4.4.5">
+<h3 data-number="4.4.5" class="anchored" data-anchor-id="flash-tank"><span class="header-section-number">4.4.5</span> Flash tank</h3>
+<p>The flash tank involves a little bit more of complexity due to the multiple flows mixing.</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Variables</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(n_x\)</span></td>
+<td><span class="math inline">\((n_{in}+n_{out})*(n_c+2)\)</span></td>
+<td>12</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_p\)</span></td>
+<td><span class="math inline">\(\Delta P_1\)</span></td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_p\)</span></td>
+<td><span class="math inline">\(\Delta P_2\)</span></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_t\)</span></td>
+<td>-</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_v\)</span></td>
+<td></td>
+<td>14</td>
+</tr>
+</tbody>
+</table>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Equations</th>
+<th>#</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>(MB)</td>
+<td><span class="math inline">\(\dot{m}_{in} = \dot{m}_{out}\)</span></td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td>(MB)</td>
+<td><span class="math inline">\(\dot{m}_{in} = \dot{m}_{out}\)</span></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>(EB)</td>
+<td><span class="math inline">\(0 = \dot{m}_{in}c_p(T_{out}-T_{in})\)</span></td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>(P)</td>
+<td><span class="math inline">\(\Delta P_1 = 0\)</span></td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td>(P)</td>
+<td><span class="math inline">\(\Delta P_2 = 0\)</span></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>(M)</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n_e\)</span></td>
+<td></td>
+<td>5</td>
+</tr>
+</tbody>
+</table>
+<p>And thus <span class="math inline">\(n_s = n_x-n_e= 2\)</span>, meaning we need 5 specifications to characterize a flash tank.</p>
+</section>
+</section>
+<section id="vali-tags-selection" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="vali-tags-selection"><span class="header-section-number">4.5</span> VALI Tags selection</h2>
+<p>Now that all the types of unit models are characterized, it should be possible to determine the minimum number of measurements needed to make the system fully determined. Summing all corresponding DOF with the number of units and substracting the links yields:</p>
+<p>Working model of the 2-stage HP for the working fluid R290.</p>
+<section id="model-adjustment-to-a-second-working-fluid-optional" class="level3" data-number="4.5.1">
+<h3 data-number="4.5.1" class="anchored" data-anchor-id="model-adjustment-to-a-second-working-fluid-optional"><span class="header-section-number">4.5.1</span> Model adjustment to a second working fluid (Optional)</h3>
+<p><strong>Task</strong></p>
+<p>Adjust the model from the previous section to a second working fluid of your choice between the 7 options listed in Table 4.1.</p>
+<p><em>Hints</em>:</p>
+<ul>
+<li>Modify the working fluid (Thermod) in your simulation file.</li>
+<li>Correct the pressure ratio of the compressors so that the high-pressure level corresponds to the saturation pressure for the desired condensation temperature.</li>
+<li>Adjust the flow rate so that the heat pump has a heating capacity of 6000 kW (the maximum capacity of the HP is in this magnitude).</li>
+</ul>
+<p><strong>Result</strong></p>
+<p>Working model of the 2-stage HP for the working fluid of your choice.</p>
+</section>
+</section>
+<section id="data-reconciliation" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="data-reconciliation"><span class="header-section-number">4.6</span> Data reconciliation</h2>
+<p><strong>Given</strong></p>
+<p>Measurements for 7 working fluids, each with 2 temperature levels (low-temperature and medium-temperature) and between 6 and 11 periods.</p>
+<p><strong>Task</strong></p>
+<p>Run the VALI model with the corresponding measurements.</p>
+<p><strong>Result</strong></p>
+<p>Obtain the reconciled files.</p>
+<p><em>Hint</em>: Note that the measurement file indicates where the reconciled file should be saved. For instance, for the <em>R-290_LT_1.txt</em> file, the location is defined by the command <code>ARCHIVE -T Reconciled/reconc_R-290_LT_1.txt</code>. Make sure to have a folder named <em>Reconciled</em> in the same folder as the Vali model.</p>
+</section>
+<section id="performance-and-cost-evaluation" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="performance-and-cost-evaluation"><span class="header-section-number">4.7</span> Performance and cost evaluation</h2>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>1
+SNOPT 7.5-1.2 : Optimal solution found.
+33 iterations, objective 0.008703935907
+Nonlin evals: constrs = 47, Jac = 46.
+1
+SNOPT 7.5-1.2 : Optimal solution found.
+34 iterations, objective 0.01206033113
+Nonlin evals: constrs = 57, Jac = 56.
+8
+SNOPT 7.5-1.2 : Optimal solution found.
+34 iterations, objective 0.009260142733
+Nonlin evals: constrs = 63, Jac = 62.
+8
+SNOPT 7.5-1.2 : Optimal solution found.
+30 iterations, objective 0.01308951011
+Nonlin evals: constrs = 44, Jac = 43.</code></pre>
+</div>
+<div class="cell-output-display">
+
+<div>                        <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script src="https://cdn.plot.ly/plotly-2.18.2.min.js"></script>                <div id="c4a82533-6c31-4f68-9915-b5a4658d0865" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("c4a82533-6c31-4f68-9915-b5a4658d0865")) {                    Plotly.newPlot(                        "c4a82533-6c31-4f68-9915-b5a4658d0865",                        [{"hovertemplate":"Fluids=R290_LT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R290_LT","line":{"color":"blue","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R290_LT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.3075149475687366,0.30726754444476734,0.3070201413335518,0.30677273823509016,0.30652533514938224,0.30627793207642817,0.3060305290162279,0.30578312596878143,0.30553572293408876,0.3052883199121499,0.30504091690296475,0.3047935139065335,0.30454611092285605,0.30429870795193237,0.3040513049937625,0.3038039020483464,0.3035564991156841,0.3033090961957756,0.303061693288621,0.3028142903942201,0.30256688751257305,0.30231948464367975,0.3020720817875403,0.3018246789441546,0.30157727611352275,0.30132987329564465,0.3010824704905204,0.30083506769814994,0.3005876649185333,0.3003402621516704,0.30009285939756136,0.29984545665620604,0.2995980539276046,0.29935065121175697,0.2991032485086631,0.29885584581832303,0.29860844314073676,0.2983610404759043,0.2981136378238256,0.2978662351845008,0.2976188325579297,0.2973714299441125,0.297124027343049,0.2968766247547393,0.29662922217918347,0.29638181961638144,0.29613441706633314,0.2958870145290387,0.29563961200449806,0.2953922094927112,0.2951448069936781,0.2948974045073989,0.2946500020338734,0.2944025995731018,0.2941551971250839,0.29390779468981987,0.2936603922673096,0.2934129898575532,0.29316558746055055,0.2929181850763017,0.2926707827048066,0.2924233803460654,0.29217597800007794,0.2919285756668443,0.29168117334636445,0.29143377103863843,0.29118636874366616,0.29093896646144773,0.2906915641919831,0.2904441619352722,0.2901967596913152,0.28994935746011197,0.28970195524166253,0.2894545530359669,0.28920715084302506,0.288959748662837,0.2887123464954028,0.28846494434072234,0.2882175421987957,0.28797014006962285,0.28772273795320386,0.2874753358495386,0.28722793375862715,0.28698053168046955,0.2867331296150657,0.2864857275624157,0.28623832552251943,0.285990923495377,0.28574352148098836,0.28549611947935355,0.28524871749047254,0.28500131551434527,0.28475391355097185,0.28450651160035223,0.2842591096624864,0.2840117077373744,0.28376430582501616,0.28351690392541173,0.2832695020385611,0.2830221001644643],"yaxis":"y","type":"scatter"},{"hovertemplate":"Fluids=R290_MT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R290_MT","line":{"color":"brown","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R290_MT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.34269352711984696,0.3417573699027231,0.3408212126983531,0.3398850555067368,0.3389488983278744,0.3380127411617658,0.3370765840084109,0.33614042686780987,0.33520426973996265,0.3342681126248692,0.3333319555225296,0.3323957984329437,0.33145964135611167,0.33052348429203343,0.32958732724070905,0.3286511702021384,0.32771501317632157,0.3267788561632585,0.3258426991629493,0.32490654217539383,0.32397038520059224,0.3230342282385444,0.3220980712892504,0.32116191435271013,0.32022575742892373,0.31928960051789107,0.31835344361961226,0.31741728673408726,0.316481129861316,0.3155449730012986,0.31460881615403496,0.31367265931952515,0.31273650249776913,0.3118003456887669,0.3108641888925185,0.30992803210902387,0.30899187533828304,0.308055718580296,0.3071195618350628,0.30618340510258335,0.30524724838285777,0.30431109167588594,0.3033749349816679,0.3024387783002037,0.3015026216314933,0.3005664649755367,0.29963030833233384,0.29869415170188485,0.29775799508418965,0.2968218384792482,0.2958856818870606,0.2949495253076268,0.2940133687409468,0.29307721218702054,0.29214105564584814,0.2912048991174295,0.2902687426017647,0.2893325860988537,0.28839642960869655,0.28746027313129313,0.2865241166666435,0.2855879602147477,0.2846518037756057,0.2837156473492175,0.2827794909355831,0.2818433345347025,0.28090717814657573,0.2799710217712027,0.2790348654085835,0.2780987090587181,0.2771625527216065,0.2762263963972487,0.2752902400856447,0.2743540837867945,0.2734179275006981,0.2724817712273555,0.2715456149667667,0.2706094587189317,0.2696733024838505,0.2687371462615231,0.2678009900519496,0.2668648338551297,0.26592867767106376,0.26499252149975155,0.26405636534119314,0.2631202091953886,0.26218405306233783,0.2612478969420408,0.2603117408344976,0.25937558473970823,0.25843942865767267,0.25750327258839084,0.25656711653186287,0.2556309604880887,0.25469480445706827,0.2537586484388017,0.2528224924332889,0.25188633644052993,0.2509501804605248,0.25001402449327337],"yaxis":"y","type":"scatter"},{"hovertemplate":"Fluids=R1270_LT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R1270_LT","line":{"color":"green","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R1270_LT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.40546869224791715,0.40550971523659185,0.40563278425312094,0.40583789929750447,0.4061250603697424,0.40649426746983475,0.4069455205977815,0.40747881975358263,0.40809416493723827,0.40879155614874824,0.4095709933881127,0.4104324766553315,0.41137600595040474,0.41240158127333243,0.4135092026241145,0.414698870002751,0.4159705834092419,0.41732434284358727,0.418760148305787,0.4202779997958412,0.42187789731374975,0.42355984085951276,0.42532383043313016,0.427169866034602,0.4290979476639282,0.4311080753211089,0.43320024900614396,0.43537446871903346,0.43763073445977735,0.4399690462283757,0.4423894040248284,0.44489180784913557,0.4474762577012971,0.4501427535813131,0.4528912954891835,0.4557218834249083,0.4586345173884876,0.4616291973799212,0.4647059233992093,0.46786469544635173,0.47110551352134866,0.4744283776242,0.4778332877549057,0.48132024391346584,0.4848892460998804,0.48854029431414936,0.49227338855627273,0.49608852882625054,0.49998571512408274,0.5039649474497694,0.5080262258033104,0.5121695501847059,0.5163949205939558,0.5207023370310601,0.5250917994960187,0.5295633079888319,0.5341168625094994,0.5387524630580214,0.5434701096343978,0.5482698022386285,0.5531515408707137,0.5581153255306534,0.5631611562184474,0.5682890329340958,0.5734989556775987,0.578790924448956,0.5841649392481677,0.5896210000752338,0.5951591069301544,0.6007792598129293,0.6064814587235587,0.6122657036620425,0.6181319946283806,0.6240803316225733,0.6301107146446203,0.6362231436945217,0.6424176187722775,0.6486941398778878,0.6550527070113525,0.6614933201726716,0.6680159793618452,0.6746206845788731,0.6813074358237554,0.6880762330964922,0.6949270763970834,0.7018599657255289,0.7088749010818289,0.7159718824659834,0.7231509098779922,0.7304119833178555,0.7377551027855731,0.7451802682811453,0.7526874798045717,0.7602767373558528,0.7679480409349881,0.7757013905419778,0.7835367861768219,0.7914542278395205,0.7994537155300734,0.8075352492484809],"yaxis":"y","type":"scatter"},{"hovertemplate":"Fluids=R1270_MT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R1270_MT","line":{"color":"red","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R1270_MT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.5002348322465653,0.5002358777084696,0.5002390141446874,0.5002442415552187,0.5002515599400638,0.5002609692992223,0.5002724696326944,0.5002860609404801,0.5003017432225794,0.5003195164789922,0.5003393807097186,0.5003613359147585,0.5003853820941121,0.5004115192477793,0.5004397473757599,0.5004700664780541,0.500502476554662,0.5005369776055834,0.5005735696308183,0.5006122526303669,0.500653026604229,0.5006958915524047,0.5007408474748939,0.5007878943716968,0.5008370322428132,0.5008882610882431,0.5009415809079867,0.5009969917020438,0.5010544934704144,0.5011140862130987,0.5011757699300965,0.501239544621408,0.5013054102870329,0.5013733669269714,0.5014434145412235,0.5015155531297892,0.5015897826926684,0.5016661032298613,0.5017445147413676,0.5018250172271876,0.5019076106873211,0.5019922951217682,0.5020790705305289,0.5021679369136032,0.502258894270991,0.5023519426026923,0.5024470819087073,0.5025443121890358,0.502643633443678,0.5027450456726337,0.5028485488759029,0.5029541430534857,0.503061828205382,0.503171604331592,0.5032834714321156,0.5033974295069527,0.5035134785561033,0.5036316185795676,0.5037518495773454,0.5038741715494368,0.5039985844958417,0.5041250884165602,0.5042536833115924,0.504384369180938,0.5045171460245973,0.5046520138425701,0.5047889726348564,0.5049280224014564,0.5050691631423699,0.5052123948575971,0.5053577175471377,0.5055051312109919,0.5056546358491597,0.505806231461641,0.5059599180484361,0.5061156956095446,0.5062735641449667,0.5064335236547023,0.5065955741387516,0.5067597155971144,0.5069259480297907,0.5070942714367807,0.5072646858180843,0.5074371911737013,0.507611787503632,0.5077884748078761,0.507967253086434,0.5081481223393054,0.5083310825664903,0.5085161337679889,0.5087032759438009,0.5088925090939266,0.5090838332183658,0.5092772483171186,0.509472754390185,0.5096703514375649,0.5098700394592585,0.5100718184552655,0.5102756884255861,0.5104816493702203],"yaxis":"y","type":"scatter"},{"marker":{"color":"blue"},"mode":"markers","showlegend":false,"x":[6.83,7.29,2.2,15.0,6.09,2.99,4.41,3.81,13.9,5.82],"y":[0.34745922801625706,0.31582233475495536,0.3235529629829829,0.3051899990435055,0.32381620989845844,0.2768118032478347,0.25782082680060886,0.2802520778543488,0.25510965006488856,0.3223606199575209],"type":"scatter"},{"marker":{"color":"brown"},"mode":"markers","showlegend":false,"x":[4.95,7.16,6.43,2.27,11.2,3.73,10.95,2.2,9.55,15.0],"y":[0.3568083191552777,0.36315030884967736,0.35997258633178025,0.34925086731821464,0.3091510027206231,0.29877165253736265,0.25962028488177574,0.29615937185549657,0.25855650709125694,0.30323897373994574],"type":"scatter"},{"marker":{"color":"green"},"mode":"markers","showlegend":false,"x":[11.96,10.55,2.2,15.0,3.64,6.71,8.03,9.99,null,null],"y":[0.5359023454219218,0.5117362772914944,0.41948278237759457,0.5000427602293249,0.36498259737637506,0.4200630019200568,0.44050833440407594,0.5056846547192859,null,null],"type":"scatter"},{"marker":{"color":"red"},"mode":"markers","showlegend":false,"x":[8.04,9.8,11.43,2.2,12.25,15.0,12.07,7.66,null,null],"y":[0.5296289067690414,0.5318497683987793,0.5433516085983964,0.43938315634800434,0.4361174435286307,0.484067355917129,0.5240693842693188,0.5277662377993255,null,null],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Ambient temperature [\u00b0C]"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Carnot efficiency"}},"legend":{"title":{"text":"Fluids"},"tracegroupgap":0},"title":{"text":"Carnot efficiency function of ambient temperature"}},                        {"responsive": true}                    )                };                            </script>        </div>
+</div>
+<div class="cell-output-display">
+
+<div>                        <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script src="https://cdn.plot.ly/plotly-2.18.2.min.js"></script>                <div id="0a64647a-77b9-410b-91e1-cf277608c43f" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("0a64647a-77b9-410b-91e1-cf277608c43f")) {                    Plotly.newPlot(                        "0a64647a-77b9-410b-91e1-cf277608c43f",                        [{"hovertemplate":"Fluids=R290_LT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R290_LT","line":{"color":"blue","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R290_LT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.3075149475687366,0.30726754444476734,0.3070201413335518,0.30677273823509016,0.30652533514938224,0.30627793207642817,0.3060305290162279,0.30578312596878143,0.30553572293408876,0.3052883199121499,0.30504091690296475,0.3047935139065335,0.30454611092285605,0.30429870795193237,0.3040513049937625,0.3038039020483464,0.3035564991156841,0.3033090961957756,0.303061693288621,0.3028142903942201,0.30256688751257305,0.30231948464367975,0.3020720817875403,0.3018246789441546,0.30157727611352275,0.30132987329564465,0.3010824704905204,0.30083506769814994,0.3005876649185333,0.3003402621516704,0.30009285939756136,0.29984545665620604,0.2995980539276046,0.29935065121175697,0.2991032485086631,0.29885584581832303,0.29860844314073676,0.2983610404759043,0.2981136378238256,0.2978662351845008,0.2976188325579297,0.2973714299441125,0.297124027343049,0.2968766247547393,0.29662922217918347,0.29638181961638144,0.29613441706633314,0.2958870145290387,0.29563961200449806,0.2953922094927112,0.2951448069936781,0.2948974045073989,0.2946500020338734,0.2944025995731018,0.2941551971250839,0.29390779468981987,0.2936603922673096,0.2934129898575532,0.29316558746055055,0.2929181850763017,0.2926707827048066,0.2924233803460654,0.29217597800007794,0.2919285756668443,0.29168117334636445,0.29143377103863843,0.29118636874366616,0.29093896646144773,0.2906915641919831,0.2904441619352722,0.2901967596913152,0.28994935746011197,0.28970195524166253,0.2894545530359669,0.28920715084302506,0.288959748662837,0.2887123464954028,0.28846494434072234,0.2882175421987957,0.28797014006962285,0.28772273795320386,0.2874753358495386,0.28722793375862715,0.28698053168046955,0.2867331296150657,0.2864857275624157,0.28623832552251943,0.285990923495377,0.28574352148098836,0.28549611947935355,0.28524871749047254,0.28500131551434527,0.28475391355097185,0.28450651160035223,0.2842591096624864,0.2840117077373744,0.28376430582501616,0.28351690392541173,0.2832695020385611,0.2830221001644643],"yaxis":"y","type":"scatter"},{"hovertemplate":"Fluids=R290_MT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R290_MT","line":{"color":"brown","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R290_MT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.34269352711984696,0.3417573699027231,0.3408212126983531,0.3398850555067368,0.3389488983278744,0.3380127411617658,0.3370765840084109,0.33614042686780987,0.33520426973996265,0.3342681126248692,0.3333319555225296,0.3323957984329437,0.33145964135611167,0.33052348429203343,0.32958732724070905,0.3286511702021384,0.32771501317632157,0.3267788561632585,0.3258426991629493,0.32490654217539383,0.32397038520059224,0.3230342282385444,0.3220980712892504,0.32116191435271013,0.32022575742892373,0.31928960051789107,0.31835344361961226,0.31741728673408726,0.316481129861316,0.3155449730012986,0.31460881615403496,0.31367265931952515,0.31273650249776913,0.3118003456887669,0.3108641888925185,0.30992803210902387,0.30899187533828304,0.308055718580296,0.3071195618350628,0.30618340510258335,0.30524724838285777,0.30431109167588594,0.3033749349816679,0.3024387783002037,0.3015026216314933,0.3005664649755367,0.29963030833233384,0.29869415170188485,0.29775799508418965,0.2968218384792482,0.2958856818870606,0.2949495253076268,0.2940133687409468,0.29307721218702054,0.29214105564584814,0.2912048991174295,0.2902687426017647,0.2893325860988537,0.28839642960869655,0.28746027313129313,0.2865241166666435,0.2855879602147477,0.2846518037756057,0.2837156473492175,0.2827794909355831,0.2818433345347025,0.28090717814657573,0.2799710217712027,0.2790348654085835,0.2780987090587181,0.2771625527216065,0.2762263963972487,0.2752902400856447,0.2743540837867945,0.2734179275006981,0.2724817712273555,0.2715456149667667,0.2706094587189317,0.2696733024838505,0.2687371462615231,0.2678009900519496,0.2668648338551297,0.26592867767106376,0.26499252149975155,0.26405636534119314,0.2631202091953886,0.26218405306233783,0.2612478969420408,0.2603117408344976,0.25937558473970823,0.25843942865767267,0.25750327258839084,0.25656711653186287,0.2556309604880887,0.25469480445706827,0.2537586484388017,0.2528224924332889,0.25188633644052993,0.2509501804605248,0.25001402449327337],"yaxis":"y","type":"scatter"},{"hovertemplate":"Fluids=R1270_LT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R1270_LT","line":{"color":"green","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R1270_LT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.40546869224791715,0.40550971523659185,0.40563278425312094,0.40583789929750447,0.4061250603697424,0.40649426746983475,0.4069455205977815,0.40747881975358263,0.40809416493723827,0.40879155614874824,0.4095709933881127,0.4104324766553315,0.41137600595040474,0.41240158127333243,0.4135092026241145,0.414698870002751,0.4159705834092419,0.41732434284358727,0.418760148305787,0.4202779997958412,0.42187789731374975,0.42355984085951276,0.42532383043313016,0.427169866034602,0.4290979476639282,0.4311080753211089,0.43320024900614396,0.43537446871903346,0.43763073445977735,0.4399690462283757,0.4423894040248284,0.44489180784913557,0.4474762577012971,0.4501427535813131,0.4528912954891835,0.4557218834249083,0.4586345173884876,0.4616291973799212,0.4647059233992093,0.46786469544635173,0.47110551352134866,0.4744283776242,0.4778332877549057,0.48132024391346584,0.4848892460998804,0.48854029431414936,0.49227338855627273,0.49608852882625054,0.49998571512408274,0.5039649474497694,0.5080262258033104,0.5121695501847059,0.5163949205939558,0.5207023370310601,0.5250917994960187,0.5295633079888319,0.5341168625094994,0.5387524630580214,0.5434701096343978,0.5482698022386285,0.5531515408707137,0.5581153255306534,0.5631611562184474,0.5682890329340958,0.5734989556775987,0.578790924448956,0.5841649392481677,0.5896210000752338,0.5951591069301544,0.6007792598129293,0.6064814587235587,0.6122657036620425,0.6181319946283806,0.6240803316225733,0.6301107146446203,0.6362231436945217,0.6424176187722775,0.6486941398778878,0.6550527070113525,0.6614933201726716,0.6680159793618452,0.6746206845788731,0.6813074358237554,0.6880762330964922,0.6949270763970834,0.7018599657255289,0.7088749010818289,0.7159718824659834,0.7231509098779922,0.7304119833178555,0.7377551027855731,0.7451802682811453,0.7526874798045717,0.7602767373558528,0.7679480409349881,0.7757013905419778,0.7835367861768219,0.7914542278395205,0.7994537155300734,0.8075352492484809],"yaxis":"y","type":"scatter"},{"hovertemplate":"Fluids=R1270_MT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R1270_MT","line":{"color":"red","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R1270_MT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.5002348322465653,0.5002358777084696,0.5002390141446874,0.5002442415552187,0.5002515599400638,0.5002609692992223,0.5002724696326944,0.5002860609404801,0.5003017432225794,0.5003195164789922,0.5003393807097186,0.5003613359147585,0.5003853820941121,0.5004115192477793,0.5004397473757599,0.5004700664780541,0.500502476554662,0.5005369776055834,0.5005735696308183,0.5006122526303669,0.500653026604229,0.5006958915524047,0.5007408474748939,0.5007878943716968,0.5008370322428132,0.5008882610882431,0.5009415809079867,0.5009969917020438,0.5010544934704144,0.5011140862130987,0.5011757699300965,0.501239544621408,0.5013054102870329,0.5013733669269714,0.5014434145412235,0.5015155531297892,0.5015897826926684,0.5016661032298613,0.5017445147413676,0.5018250172271876,0.5019076106873211,0.5019922951217682,0.5020790705305289,0.5021679369136032,0.502258894270991,0.5023519426026923,0.5024470819087073,0.5025443121890358,0.502643633443678,0.5027450456726337,0.5028485488759029,0.5029541430534857,0.503061828205382,0.503171604331592,0.5032834714321156,0.5033974295069527,0.5035134785561033,0.5036316185795676,0.5037518495773454,0.5038741715494368,0.5039985844958417,0.5041250884165602,0.5042536833115924,0.504384369180938,0.5045171460245973,0.5046520138425701,0.5047889726348564,0.5049280224014564,0.5050691631423699,0.5052123948575971,0.5053577175471377,0.5055051312109919,0.5056546358491597,0.505806231461641,0.5059599180484361,0.5061156956095446,0.5062735641449667,0.5064335236547023,0.5065955741387516,0.5067597155971144,0.5069259480297907,0.5070942714367807,0.5072646858180843,0.5074371911737013,0.507611787503632,0.5077884748078761,0.507967253086434,0.5081481223393054,0.5083310825664903,0.5085161337679889,0.5087032759438009,0.5088925090939266,0.5090838332183658,0.5092772483171186,0.509472754390185,0.5096703514375649,0.5098700394592585,0.5100718184552655,0.5102756884255861,0.5104816493702203],"yaxis":"y","type":"scatter"},{"marker":{"color":"blue"},"mode":"markers","showlegend":false,"x":[6.83,7.29,2.2,15.0,6.09,2.99,4.41,3.81,13.9,5.82],"y":[0.34745922801625706,0.31582233475495536,0.3235529629829829,0.3051899990435055,0.32381620989845844,0.2768118032478347,0.25782082680060886,0.2802520778543488,0.25510965006488856,0.3223606199575209],"type":"scatter"},{"marker":{"color":"brown"},"mode":"markers","showlegend":false,"x":[4.95,7.16,6.43,2.27,11.2,3.73,10.95,2.2,9.55,15.0],"y":[0.3568083191552777,0.36315030884967736,0.35997258633178025,0.34925086731821464,0.3091510027206231,0.29877165253736265,0.25962028488177574,0.29615937185549657,0.25855650709125694,0.30323897373994574],"type":"scatter"},{"marker":{"color":"green"},"mode":"markers","showlegend":false,"x":[11.96,10.55,2.2,15.0,3.64,6.71,8.03,9.99,null,null],"y":[0.5359023454219218,0.5117362772914944,0.41948278237759457,0.5000427602293249,0.36498259737637506,0.4200630019200568,0.44050833440407594,0.5056846547192859,null,null],"type":"scatter"},{"marker":{"color":"red"},"mode":"markers","showlegend":false,"x":[8.04,9.8,11.43,2.2,12.25,15.0,12.07,7.66,null,null],"y":[0.5296289067690414,0.5318497683987793,0.5433516085983964,0.43938315634800434,0.4361174435286307,0.484067355917129,0.5240693842693188,0.5277662377993255,null,null],"type":"scatter"},{"marker":{"color":"black","opacity":0},"mode":"markers","name":"Observed data","x":[5],"y":[0.5],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Ambient temperature [\u00b0C]"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Carnot efficiency"}},"legend":{"title":{"text":"Fluids"},"tracegroupgap":0},"title":{"text":"Carnot efficiency function of ambient temperature"}},                        {"responsive": true}                    )                };                            </script>        </div>
+</div>
+<div class="cell-output-display">
+
+<div>                        <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script src="https://cdn.plot.ly/plotly-2.18.2.min.js"></script>                <div id="2c2b9302-6db4-4865-9498-dbce5d4f8bd5" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script type="text/javascript">                                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("2c2b9302-6db4-4865-9498-dbce5d4f8bd5")) {                    Plotly.newPlot(                        "2c2b9302-6db4-4865-9498-dbce5d4f8bd5",                        [{"hovertemplate":"Fluids=R290_LT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R290_LT","line":{"color":"blue","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R290_LT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.3075149475687366,0.30726754444476734,0.3070201413335518,0.30677273823509016,0.30652533514938224,0.30627793207642817,0.3060305290162279,0.30578312596878143,0.30553572293408876,0.3052883199121499,0.30504091690296475,0.3047935139065335,0.30454611092285605,0.30429870795193237,0.3040513049937625,0.3038039020483464,0.3035564991156841,0.3033090961957756,0.303061693288621,0.3028142903942201,0.30256688751257305,0.30231948464367975,0.3020720817875403,0.3018246789441546,0.30157727611352275,0.30132987329564465,0.3010824704905204,0.30083506769814994,0.3005876649185333,0.3003402621516704,0.30009285939756136,0.29984545665620604,0.2995980539276046,0.29935065121175697,0.2991032485086631,0.29885584581832303,0.29860844314073676,0.2983610404759043,0.2981136378238256,0.2978662351845008,0.2976188325579297,0.2973714299441125,0.297124027343049,0.2968766247547393,0.29662922217918347,0.29638181961638144,0.29613441706633314,0.2958870145290387,0.29563961200449806,0.2953922094927112,0.2951448069936781,0.2948974045073989,0.2946500020338734,0.2944025995731018,0.2941551971250839,0.29390779468981987,0.2936603922673096,0.2934129898575532,0.29316558746055055,0.2929181850763017,0.2926707827048066,0.2924233803460654,0.29217597800007794,0.2919285756668443,0.29168117334636445,0.29143377103863843,0.29118636874366616,0.29093896646144773,0.2906915641919831,0.2904441619352722,0.2901967596913152,0.28994935746011197,0.28970195524166253,0.2894545530359669,0.28920715084302506,0.288959748662837,0.2887123464954028,0.28846494434072234,0.2882175421987957,0.28797014006962285,0.28772273795320386,0.2874753358495386,0.28722793375862715,0.28698053168046955,0.2867331296150657,0.2864857275624157,0.28623832552251943,0.285990923495377,0.28574352148098836,0.28549611947935355,0.28524871749047254,0.28500131551434527,0.28475391355097185,0.28450651160035223,0.2842591096624864,0.2840117077373744,0.28376430582501616,0.28351690392541173,0.2832695020385611,0.2830221001644643],"yaxis":"y","type":"scatter"},{"hovertemplate":"Fluids=R290_MT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R290_MT","line":{"color":"brown","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R290_MT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.34269352711984696,0.3417573699027231,0.3408212126983531,0.3398850555067368,0.3389488983278744,0.3380127411617658,0.3370765840084109,0.33614042686780987,0.33520426973996265,0.3342681126248692,0.3333319555225296,0.3323957984329437,0.33145964135611167,0.33052348429203343,0.32958732724070905,0.3286511702021384,0.32771501317632157,0.3267788561632585,0.3258426991629493,0.32490654217539383,0.32397038520059224,0.3230342282385444,0.3220980712892504,0.32116191435271013,0.32022575742892373,0.31928960051789107,0.31835344361961226,0.31741728673408726,0.316481129861316,0.3155449730012986,0.31460881615403496,0.31367265931952515,0.31273650249776913,0.3118003456887669,0.3108641888925185,0.30992803210902387,0.30899187533828304,0.308055718580296,0.3071195618350628,0.30618340510258335,0.30524724838285777,0.30431109167588594,0.3033749349816679,0.3024387783002037,0.3015026216314933,0.3005664649755367,0.29963030833233384,0.29869415170188485,0.29775799508418965,0.2968218384792482,0.2958856818870606,0.2949495253076268,0.2940133687409468,0.29307721218702054,0.29214105564584814,0.2912048991174295,0.2902687426017647,0.2893325860988537,0.28839642960869655,0.28746027313129313,0.2865241166666435,0.2855879602147477,0.2846518037756057,0.2837156473492175,0.2827794909355831,0.2818433345347025,0.28090717814657573,0.2799710217712027,0.2790348654085835,0.2780987090587181,0.2771625527216065,0.2762263963972487,0.2752902400856447,0.2743540837867945,0.2734179275006981,0.2724817712273555,0.2715456149667667,0.2706094587189317,0.2696733024838505,0.2687371462615231,0.2678009900519496,0.2668648338551297,0.26592867767106376,0.26499252149975155,0.26405636534119314,0.2631202091953886,0.26218405306233783,0.2612478969420408,0.2603117408344976,0.25937558473970823,0.25843942865767267,0.25750327258839084,0.25656711653186287,0.2556309604880887,0.25469480445706827,0.2537586484388017,0.2528224924332889,0.25188633644052993,0.2509501804605248,0.25001402449327337],"yaxis":"y","type":"scatter"},{"hovertemplate":"Fluids=R1270_LT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R1270_LT","line":{"color":"green","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R1270_LT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.40546869224791715,0.40550971523659185,0.40563278425312094,0.40583789929750447,0.4061250603697424,0.40649426746983475,0.4069455205977815,0.40747881975358263,0.40809416493723827,0.40879155614874824,0.4095709933881127,0.4104324766553315,0.41137600595040474,0.41240158127333243,0.4135092026241145,0.414698870002751,0.4159705834092419,0.41732434284358727,0.418760148305787,0.4202779997958412,0.42187789731374975,0.42355984085951276,0.42532383043313016,0.427169866034602,0.4290979476639282,0.4311080753211089,0.43320024900614396,0.43537446871903346,0.43763073445977735,0.4399690462283757,0.4423894040248284,0.44489180784913557,0.4474762577012971,0.4501427535813131,0.4528912954891835,0.4557218834249083,0.4586345173884876,0.4616291973799212,0.4647059233992093,0.46786469544635173,0.47110551352134866,0.4744283776242,0.4778332877549057,0.48132024391346584,0.4848892460998804,0.48854029431414936,0.49227338855627273,0.49608852882625054,0.49998571512408274,0.5039649474497694,0.5080262258033104,0.5121695501847059,0.5163949205939558,0.5207023370310601,0.5250917994960187,0.5295633079888319,0.5341168625094994,0.5387524630580214,0.5434701096343978,0.5482698022386285,0.5531515408707137,0.5581153255306534,0.5631611562184474,0.5682890329340958,0.5734989556775987,0.578790924448956,0.5841649392481677,0.5896210000752338,0.5951591069301544,0.6007792598129293,0.6064814587235587,0.6122657036620425,0.6181319946283806,0.6240803316225733,0.6301107146446203,0.6362231436945217,0.6424176187722775,0.6486941398778878,0.6550527070113525,0.6614933201726716,0.6680159793618452,0.6746206845788731,0.6813074358237554,0.6880762330964922,0.6949270763970834,0.7018599657255289,0.7088749010818289,0.7159718824659834,0.7231509098779922,0.7304119833178555,0.7377551027855731,0.7451802682811453,0.7526874798045717,0.7602767373558528,0.7679480409349881,0.7757013905419778,0.7835367861768219,0.7914542278395205,0.7994537155300734,0.8075352492484809],"yaxis":"y","type":"scatter"},{"hovertemplate":"Fluids=R1270_MT<br>Ambient temperature [\u00b0C]=%{x}<br>Carnot efficiency=%{y}<extra></extra>","legendgroup":"R1270_MT","line":{"color":"red","dash":"solid"},"marker":{"symbol":"circle"},"mode":"lines","name":"R1270_MT","orientation":"v","showlegend":true,"x":[0.0,0.25252525252525254,0.5050505050505051,0.7575757575757576,1.0101010101010102,1.2626262626262628,1.5151515151515151,1.7676767676767677,2.0202020202020203,2.272727272727273,2.5252525252525255,2.777777777777778,3.0303030303030303,3.282828282828283,3.5353535353535355,3.787878787878788,4.040404040404041,4.292929292929293,4.545454545454546,4.7979797979797985,5.050505050505051,5.303030303030304,5.555555555555556,5.808080808080809,6.0606060606060606,6.313131313131313,6.565656565656566,6.818181818181818,7.070707070707071,7.3232323232323235,7.575757575757576,7.828282828282829,8.080808080808081,8.333333333333334,8.585858585858587,8.83838383838384,9.090909090909092,9.343434343434344,9.595959595959597,9.84848484848485,10.101010101010102,10.353535353535355,10.606060606060607,10.85858585858586,11.111111111111112,11.363636363636365,11.616161616161618,11.86868686868687,12.121212121212121,12.373737373737374,12.626262626262626,12.878787878787879,13.131313131313131,13.383838383838384,13.636363636363637,13.88888888888889,14.141414141414142,14.393939393939394,14.646464646464647,14.8989898989899,15.151515151515152,15.404040404040405,15.656565656565657,15.90909090909091,16.161616161616163,16.414141414141415,16.666666666666668,16.91919191919192,17.171717171717173,17.424242424242426,17.67676767676768,17.92929292929293,18.181818181818183,18.434343434343436,18.68686868686869,18.93939393939394,19.191919191919194,19.444444444444446,19.6969696969697,19.94949494949495,20.202020202020204,20.454545454545457,20.70707070707071,20.959595959595962,21.212121212121215,21.464646464646467,21.71717171717172,21.969696969696972,22.222222222222225,22.474747474747478,22.72727272727273,22.979797979797983,23.232323232323235,23.484848484848488,23.73737373737374,23.989898989898993,24.242424242424242,24.494949494949495,24.747474747474747,25.0],"xaxis":"x","y":[0.5002348322465653,0.5002358777084696,0.5002390141446874,0.5002442415552187,0.5002515599400638,0.5002609692992223,0.5002724696326944,0.5002860609404801,0.5003017432225794,0.5003195164789922,0.5003393807097186,0.5003613359147585,0.5003853820941121,0.5004115192477793,0.5004397473757599,0.5004700664780541,0.500502476554662,0.5005369776055834,0.5005735696308183,0.5006122526303669,0.500653026604229,0.5006958915524047,0.5007408474748939,0.5007878943716968,0.5008370322428132,0.5008882610882431,0.5009415809079867,0.5009969917020438,0.5010544934704144,0.5011140862130987,0.5011757699300965,0.501239544621408,0.5013054102870329,0.5013733669269714,0.5014434145412235,0.5015155531297892,0.5015897826926684,0.5016661032298613,0.5017445147413676,0.5018250172271876,0.5019076106873211,0.5019922951217682,0.5020790705305289,0.5021679369136032,0.502258894270991,0.5023519426026923,0.5024470819087073,0.5025443121890358,0.502643633443678,0.5027450456726337,0.5028485488759029,0.5029541430534857,0.503061828205382,0.503171604331592,0.5032834714321156,0.5033974295069527,0.5035134785561033,0.5036316185795676,0.5037518495773454,0.5038741715494368,0.5039985844958417,0.5041250884165602,0.5042536833115924,0.504384369180938,0.5045171460245973,0.5046520138425701,0.5047889726348564,0.5049280224014564,0.5050691631423699,0.5052123948575971,0.5053577175471377,0.5055051312109919,0.5056546358491597,0.505806231461641,0.5059599180484361,0.5061156956095446,0.5062735641449667,0.5064335236547023,0.5065955741387516,0.5067597155971144,0.5069259480297907,0.5070942714367807,0.5072646858180843,0.5074371911737013,0.507611787503632,0.5077884748078761,0.507967253086434,0.5081481223393054,0.5083310825664903,0.5085161337679889,0.5087032759438009,0.5088925090939266,0.5090838332183658,0.5092772483171186,0.509472754390185,0.5096703514375649,0.5098700394592585,0.5100718184552655,0.5102756884255861,0.5104816493702203],"yaxis":"y","type":"scatter"},{"marker":{"color":"blue"},"mode":"markers","showlegend":false,"x":[6.83,7.29,2.2,15.0,6.09,2.99,4.41,3.81,13.9,5.82],"y":[0.34745922801625706,0.31582233475495536,0.3235529629829829,0.3051899990435055,0.32381620989845844,0.2768118032478347,0.25782082680060886,0.2802520778543488,0.25510965006488856,0.3223606199575209],"type":"scatter"},{"marker":{"color":"brown"},"mode":"markers","showlegend":false,"x":[4.95,7.16,6.43,2.27,11.2,3.73,10.95,2.2,9.55,15.0],"y":[0.3568083191552777,0.36315030884967736,0.35997258633178025,0.34925086731821464,0.3091510027206231,0.29877165253736265,0.25962028488177574,0.29615937185549657,0.25855650709125694,0.30323897373994574],"type":"scatter"},{"marker":{"color":"green"},"mode":"markers","showlegend":false,"x":[11.96,10.55,2.2,15.0,3.64,6.71,8.03,9.99,null,null],"y":[0.5359023454219218,0.5117362772914944,0.41948278237759457,0.5000427602293249,0.36498259737637506,0.4200630019200568,0.44050833440407594,0.5056846547192859,null,null],"type":"scatter"},{"marker":{"color":"red"},"mode":"markers","showlegend":false,"x":[8.04,9.8,11.43,2.2,12.25,15.0,12.07,7.66,null,null],"y":[0.5296289067690414,0.5318497683987793,0.5433516085983964,0.43938315634800434,0.4361174435286307,0.484067355917129,0.5240693842693188,0.5277662377993255,null,null],"type":"scatter"},{"marker":{"color":"black","opacity":0},"mode":"markers","name":"Observed data","x":[5],"y":[0.5],"type":"scatter"},{"line":{"color":"black"},"marker":{"opacity":0,"size":0},"name":"Regression","x":[5],"y":[0.5],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Ambient temperature [\u00b0C]"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Carnot efficiency"}},"legend":{"title":{"text":"Fluids"},"tracegroupgap":0},"title":{"text":"Carnot efficiency function of ambient temperature"}},                        {"responsive": true}                    )                };                            </script>        </div>
+</div>
+</div>
+<p><strong>Given</strong></p>
+<p>Three AMPL files: <em>moes2021_P4_Rxxx.dat</em>, <em>moes2021_P4.mod</em> and <em>moes2021_P4.run</em>.</p>
+<p>Table with ambient temperatures for each measurement.</p>
+<p><strong>Task</strong></p>
+<p>For the performance evaluation:</p>
+<ul>
+<li>Use the information in the reconciled files from VALI to complete the AMPL model.</li>
+<li>Derive a regression curve that calculates the Carnot factor as a polynomial function of the ambient temperature for both stages of the HP. You are asked to derive the factors <em>a</em>, <em>b</em> and <em>c</em>. In general, you can assume:</li>
+</ul>
+<p><span class="math display">\[\begin{equation}
 C_{Carnot}^*(t) = a \cdot T_{amb}^2(t) - b \cdot T_{amb}(t) + c
 (\#eq:Carnot1)
-\end{equation}
-
-\begin{equation}
+\end{equation}\]</span></p>
+<p><span class="math display">\[\begin{equation}
 C_{Carnot} = \frac {Q(t)}{W(t)} \cdot \frac {T_{cond}(t)-T_{evap}(t)}{T_{cond}(t)}
 (\#eq:Carnot2)
-\end{equation}
+\end{equation}\]</span></p>
+<ul>
+<li>Make sure to identify the evaporator and the condenser temperature of both sides accordingly. You will find some hints in the AMPL code. Note that the temperatures in Eq. @ref(eq:Carnot2) must be in K.</li>
+</ul>
+<p>For the cost evaluation:</p>
+<ul>
+<li>Assume the worst case conditions to evaluate the area of the heat exchangers, which is then fixed, and to size the other components (e.g.&nbsp;compressors). Calculate the cost for the two-stage HP with cost functions provided in the literature or taken from previous sections. Consider only the costs of the heat exchangers and the compressor, since they are the main contributors to the investment cost of heat pumps.</li>
+</ul>
+<p><strong>Result</strong></p>
+<p>Polynomial function for the Carnot factor as a function of the ambient temperature Ta.</p>
+<p>Size of the heat exchangers and compressor.</p>
+<p>Cost of the total system.</p>
+<p>Unit cost of the system per kW of heating capacity.</p>
 
-- Make sure to identify the evaporator and the condenser temperature of both sides accordingly. You will find some hints in the AMPL code. Note that the temperatures in Eq. \@ref(eq:Carnot2) must be in K.
 
-For the cost evaluation:
+</section>
 
-- Assume the worst case conditions to evaluate the area of the heat exchangers, which is then fixed, and to size the other components (e.g. compressors).
-Calculate the cost for the two-stage HP with cost functions provided in the literature or taken from previous sections. Consider only the costs of the heat exchangers and the compressor, since they are the main contributors to the investment cost of heat pumps. 
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./02.00-Heat_recovery.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Heat recovery</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./04.00-energy_system_integration.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Energy system optimization</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
 
-**Result**
 
-Polynomial function for the Carnot factor as a function of the ambient temperature Ta.
 
-Size of the heat exchangers and compressor.
-
-Cost of the total system.
-
-Unit cost of the system per kW of heating capacity.
+</body></html>
