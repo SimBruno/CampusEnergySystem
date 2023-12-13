@@ -246,12 +246,78 @@ Obtain the reconciled files.
 Note that the measurement file indicates where the reconciled file should be saved. For instance, for the *R-290_LT_1.txt* file, the location is defined by the command `ARCHIVE -T Reconciled/reconc_R-290_LT_1.txt`. Make sure to have a folder named *Reconciled* in the same folder as the Vali model.
 
 ## Performance and cost evaluation
+The purpose of this section is to evaluate the performance of the double stage heat pump and the cost of the equipments. The performance is evaluated for low temperature supply ($50°C$) and high temperature supply ($65°C$) for both fluids. The goal is to perform a regression on the second law efficiency to model it's evolution with the external ambient temperature. In the last section,  data was measured on the heat pump for both fluids and both temperature levels at different external temperatures. Data reconciliation was performed with the model in order to minimize the measurements error. These results will now be used to evaluate the heat pump performance at different temperatures, and fit these measurements on a regression model. The following model will be used:
+$$ C_{carnot}=a\cdot T_{ext}^2- b\cdot T_{ext}+c$$
 
-```{python, echo=F, eval=T,label= regression}
+with $T_{ext}$ the external ambient temperature. Regression is performed using AMPL, which allows to simultaneously get the equipment price. First, let's write the optimization problem for regression:
+\begin{array}{l}
+\min{\sum_t (C_{factor,1}(t)-C_{factor,2}(t))^2} \\
+\text{ s.t.}\\
+\end{array}
 
+| Constraint type                            | Equation                                                                                                                   |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Carnot efficiencies                          |                                                                                                                   |
+| Real carnot efficiency                           | $C_{factor,1}=\dfrac{Q_{cond}(t)}{W_{hp}(t)}\dfrac{T_{ln,cond}(t)-T_{evap}(t)}{T_{ln,cond}(t)}~\forall t \text{ where } W_{hp}(t)>0$                                                                          |
+| Regression model                           | $C_{factor,1}=a\cdot T_{ext}^2- b\cdot T_{ext}+c$                                                                    |
+| Log mean temperature of the condenser | $T_{ln,cond}(t)=\dfrac{T_{EPFL,in}(t)-T_{EPFL,out}(t)}{\ln{\left(\dfrac{T_{EPFL,in}(t)}{T_{EPFL,out}(t)}\right)}}$ |
+| Work supplied by compressors | $W_{hp}(t)=W_{comp,1}(t)+W_{comp,2}(t)$ |
+
+Where $Q_{cond}$ is the total heat load to supply, $W_{comp,1}$ is the energy supplied by the first compressor and $W_{comp,2}$ is the energy supplied by the second compressor of the two-stage heat pump. $T_{EPFL,in}$ and $T_{EPFL,out}$ are the heat exchanger temperatures at inlet and outlet respectively on the heat supply side. $T_{evap}$ is the temperature at the evaporator (where heat is taken from the lake). Lastly, the factors $a$, $b$, and $c$ are the variables to determine by thsi regression. The equipment cost can be retrieved using the following equations:
+
+| Constraint type                            | Equation                                                                                                                   |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Costs |               |
+| First compressor cost | $C_{comp,1}=\bigg(10^{k_1+k_2\log_{10}(W_{comp,2}^{max})+k_3\left(\log_{10}(W_{comp,1}^{max})\right)^2}\bigg) \dfrac{I}{I_{ref}}f_{BM}$|
+| Second compressor cost | $C_{comp,1}=\bigg(10^{k_1+k_2\log_{10}(W_{comp,2}^{max})+k_3\left(\log_{10}(W_{comp,1}^{max})\right)^2}\bigg) \dfrac{I}{I_{ref}}f_{BM}$|
+| Evaporator cost | $C_{evap}=\bigg(10^{k_{1,h}+k_{2,h}\log_{10}(A_{evap})+k_{3,h}\left(\log_{10}(A_{evap})\right)^2}\bigg) \dfrac{I}{I_{ref}}f_{BM,h}$|
+| Condenser cost | $C_{cond}=\bigg(10^{k_{1,h}+k_{2,h}\log_{10}(A_{cond})+k_{3,h}\left(\log_{10}(A_{cond})\right)^2}\bigg) \dfrac{I}{I_{ref}}f_{BM,h}$|
+| Areas |                               |
+| Evaporator area | $A_{evap}=\dfrac{Q_{evap}^{max}}{U_{water,ref}*\Delta T_{ln,evap}}$ |
+| Condenser area | $A_{cond}=\dfrac{Q_{cond}^{max}}{U_{air,ref}*\Delta T_{ln,cond}}$ |
+| Log mean temperature differences (LMTD) |                               |
+| Evaporator LMTD | $\dfrac{(T_{lake,in}-T_{evap}^{max})-(T_{evap}^{max}-T_{lake,out})}{\ln \left(\dfrac{T_{lake,in}-T_{evap}^{max}}{T_{evap}^{max}-T_{lake,out}} \right)}$ |
+| Condenser LMTD | $\dfrac{(T_{cond}^{max}-T_{EPFL,in}^{max})-(T_{cond}^{max}-T_{EPFL,out}^{max})}{\ln \left(\dfrac{T_{cond}^{max}-T_{EPFL,in}^{max}}{T_{cond}^{max}-T_{EPFL,out}^{max}} \right)}$ |
+| Maximum values |                  |
+| Time index at maximum load | $t_{max}=\arg \max_{t}\big(Q_{cond}(t)\big)$
+| Evaporator temperature at maximum load |  $T_{evap}^{max}=T_{evap}(t_{max})$        |
+| Condenser temperature at maximum load |  $T_{evap}^{max}=T_{cond}(t_{max})$        |
+| Inlet EPFL temperature at maximum load |  $T_{evap}^{max}=T_{EPFL,in}(t_{max})$        |
+| Outlet EPFL temperature at maximum load |  $T_{evap}^{max}=T_{EPFL,out}(t_{max})$        |
+| Maximum load |  $Q_{cond}^{max}=\max{\big(Q_cond(t)\big)}$        |
+| Evaporator heat at maximum load |  $Q_{evap}^{max}=Q_{evap}(t_{max})$        |
+| First heat pump power at maximum load |  $W_{comp,1}^{max}=W_{comp,1}(t_{max})$        |
+| Second heat pump power at maximum load |  $W_{comp,2}^{max}=W_{comp,2}(t_{max})$        |
+
+
+The results are shown in the table below
+```{python, echo=F, eval=T,label= get_regression}
 
 results, observed =fct2.get_reg()
-#| label: weather cluster plotting
+PATH = os.path.join(os.path.dirname(os.getcwd()),"report-group-3", "codes_03_HP_modeling","Regression_Mirco","regression_results.csv")
+ # the path to codes_01_energy_demand.py
+
+
+results.to_csv(PATH)
+```
+
+```{r table-widget, echo=F, eval=T, fig.cap= 'Results of the regression'}
+#| label: fig-thermalProp
+
+regression_results <- read.csv("codes_03_HP_modeling/Regression_Mirco//regression_results.csv")
+
+library(DT)
+
+datatable(regression_results, options = list(pageLength = 5, scrollX=TRUE)            
+)
+```
+
+
+```{python, echo=F, eval=T,label= plot_regression}
+
+
+
+
 T_ext_span=np.linspace(0,25,100)
 carnot_span=pd.DataFrame(index=T_ext_span)
 colors=['blue','brown','green','red']
