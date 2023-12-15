@@ -47,6 +47,8 @@ param refSize default 1000;									    # reference size of the utilities [kW]
 param Text{t in Time};  
 param Tint default 21;											# internal set point temperature [C]
 param specElec{Buildings} default 0.04;
+param c_elec default 75.3; #electricity emissions in Switzerland 13/12/2023[gCO2/kWh] --> https://www.horocarbon.ch/mix.php
+param c_gas default 228; #natural gas emissions in Switzerland 2018[gCO2/kWh] --> https://www.wwf.ch/sites/default/files/doc-2018-10/2018-06-Factsheet-NaturalGas-Biogas-PtG.pdf
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Calculation of heating demand
