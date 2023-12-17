@@ -5,9 +5,10 @@ In part 4, we will follow the same methodology than in part 2. First, build your
 
 ```{r}
 #path <- file.path('../venv/Scripts/python.exe')
-path <- file.path('C:/Users/coren/AppData/Local/Programs/Python/Python310/python.exe')
+#path <- file.path('C:/Users/coren/AppData/Local/Programs/Python/Python310/python.exe')
+use_virtualenv('./venv', required=FALSE)
 library(reticulate)
-use_python(path)
+#use_python(path)
 ```
 Load your .mod and .dat files, set solving options.
 
@@ -15,7 +16,8 @@ Load your .mod and .dat files, set solving options.
 from amplpy import AMPL, Environment
 ampl = AMPL()
 
-ampl.cd("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/ampl_files") # select the right folder
+#ampl.cd("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/ampl_files") # select the right folder
+ampl.cd("./codes_04_energy_system_integration/ampl_files") 
 
 ampl.read("moes.mod")
 ampl.readData("moes.dat")
@@ -62,8 +64,8 @@ Save your data:
 
 ```{python}
 import sys
-sys.path.append('C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/')
-
+#sys.path.append('C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/')
+sys.path.append('./codes_04_energy_system_integration/')
 from functions import save_ampl_results
 save_ampl_results(ampl, pkl_name="scenario1")
 ```
@@ -72,7 +74,8 @@ Use your data:
 
 ```{python}
 import pandas as pd
-myData = pd.read_pickle("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/results/scenario1.pkl")
+#myData = pd.read_pickle("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/results/scenario1.pkl")
+myData = pd.read_pickle("./codes_04_energy_system_integration/results/scenario1.pkl")
 myData["Totalcost"]
 ```
 

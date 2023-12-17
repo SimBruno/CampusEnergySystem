@@ -52,7 +52,7 @@ buildings.head(2)
 #| label: fig-buildings
 #| fig-cap: Buildings data
 
-buildings <- read.csv("codes_01_energy_demand\\Buildings.csv")
+buildings <- read.csv("codes_01_energy_demand/Buildings.csv")
 
 library(DT)
 
@@ -166,7 +166,7 @@ thermal_properties.to_csv(os.path.join(PATH, "thermal_properties.csv"),index=Fal
 ```{r table-widget, echo=F, eval=T, fig.cap= 'Thermal properties of the buildings'}
 #| label: fig-thermalProp
 
-thermal_properties <- read.csv("codes_01_energy_demand\\thermal_properties.csv")
+thermal_properties <- read.csv("codes_01_energy_demand/thermal_properties.csv")
 
 library(DT)
 

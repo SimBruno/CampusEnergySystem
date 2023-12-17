@@ -292,19 +292,16 @@ Where $Q_{cond}$ is the total heat load to supply, $W_{comp,1}$ is the energy su
 
 The results are shown in the table below
 ```{python, echo=F, eval=T,label= get_regression}
-
 results, observed =fct2.get_reg()
 PATH = os.path.join(os.path.dirname(os.getcwd()),"report-group-3", "codes_03_HP_modeling","Regression_Mirco","regression_results.csv")
  # the path to codes_01_energy_demand.py
-
-
 results.to_csv(PATH)
 ```
 
 ```{r table-widget, echo=F, eval=T, fig.cap= 'Results of the regression'}
 #| label: fig-thermalProp
 
-regression_results <- read.csv("codes_03_HP_modeling/Regression_Mirco//regression_results.csv")
+regression_results <- read.csv("codes_03_HP_modeling/Regression_Mirco/regression_results.csv")
 
 library(DT)
 
