@@ -52,7 +52,7 @@ buildings.head(2)
 #| label: fig-buildings
 #| fig-cap: Buildings data
 
-buildings <- read.csv("codes_01_energy_demand/Buildings.csv")
+buildings <- read.csv("codes_01_energy_demand\\Buildings.csv")
 
 library(DT)
 
