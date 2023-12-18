@@ -7,7 +7,7 @@ In light of the MOES course at EPFL, the following project models a new energy i
 #| label: fig-Campus-EPFL
 knitr::include_graphics('Figures/Campus.png')
 ```
-```{r setup venv, eval = F, echo=FALSE, message=FALSE, results="hide"}
+```{r setup venv, eval = T, echo=FALSE, message=FALSE, results="hide"}
 # To set up your virtual environment in python, input the following code in your terminal after running this chunk:
 # For mac
 # 'source venv/bin/activate'
