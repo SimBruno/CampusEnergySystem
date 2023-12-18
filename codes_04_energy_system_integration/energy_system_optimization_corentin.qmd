@@ -19,9 +19,11 @@ ampl.cd("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integratio
 ampl.read("moes.mod")
 ampl.readData("moes.dat")
 
-ampl.read("moesPV.mod")
+ampl.read("moesSolar.mod")
 ampl.read("moesboiler.dat")
 ampl.read("moesPV.dat")
+ampl.read("moesSOFC.dat")
+ampl.read("moesSTC.dat")
 
 ampl.setOption('solver', 'cplex')
 ampl.setOption('presolve_eps', 5e-05)
@@ -72,6 +74,7 @@ Use your data:
 import pandas as pd
 myData = pd.read_pickle("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/results/scenario1.pkl")
 myData["Totalcost"]
+print(myData["mult"])
 ```
 
 
