@@ -1,0 +1,88 @@
+
+
+In part 4, we will follow the same methodology than in part 2. First, build your ampl models in VS code using the .run files. Once the models are stable, use .qmd or .py documents to send your parameters from part 1, solve and retrieve the data for your report.
+
+
+```{r}
+path <- file.path('C:/Users/coren/AppData/Local/Programs/Python/Python310/python.exe')
+library(reticulate)
+use_python(path)
+```
+Load your .mod and .dat files, set solving options.
+
+```{python initialize ampl, echo=F, results='hide'}
+from amplpy import AMPL, Environment
+ampl = AMPL()
+
+ampl.cd("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/ampl_files") # select the right folder
+
+ampl.read("moes.mod")
+ampl.readData("moes.dat")
+
+ampl.read("moesPV.mod")
+ampl.read("moesboiler.dat")
+ampl.read("moesPV.dat")
+
+ampl.setOption('solver', 'cplex')
+ampl.setOption('presolve_eps', 5e-05)
+ampl.setOption('omit_zero_rows', 1)
+ampl.setOption('omit_zero_cols', 1)
+
+```
+
+
+Load the data from part 1:
+
+```{python send data to ampl, echo=F, results='hide', eval=F}
+import pandas as pd
+import os
+
+data=pd.read_csv("./codes_01_energy_demand/data_MOES.csv")
+data.index = ["Building" + str(i) for i in range(1,len(data)+1)] # the index of the dataframe has to match the values of the set "Buildings" in ampl
+
+# send parameters to ampl
+ for col in data.columns:
+  ampl.getParameter(col).setValues(data[col])
+
+data
+
+```
+
+Solve:
+
+```{python solve ampl, echo=F, results='hide'}
+# Solve
+ampl.setOption('solver', 'gurobi')
+ampl.solve()
+```
+
+
+Save your data:
+
+```{python}
+import sys
+sys.path.append('C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/')
+from functions import save_ampl_results
+save_ampl_results(ampl, pkl_name="scenario1")
+```
+
+Use your data:
+
+```{python}
+import pandas as pd
+myData = pd.read_pickle("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/results/scenario1.pkl")
+myData["Totalcost"]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
