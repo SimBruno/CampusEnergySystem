@@ -20,6 +20,7 @@ let Flowout['Electricity','SOFC'] := (Qheatingsupply['SOFC'] / eff_SOFC_heat) * 
 Set the maximum scaling factor
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 let  Fmax['SOFC'] := 1000; # Q_demandEPFL/ Q_ref
+let  Fmin['SOFC'] := 1;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the minimum temperature of the SOFC
