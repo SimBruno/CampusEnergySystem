@@ -5,29 +5,29 @@
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the efficienc of the SOFC
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-param eff_SOFC_elec := 0.60; # https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwjshf27mPuCAxUH4aQKHc-fDRcQFnoECAwQAQ&url=https%3A%2F%2Fpublications.jrc.ec.europa.eu%2Frepository%2Fbitstream%2FJRC115923%2Fjrc115923_stationary_fuel_cells_16042019_final_pubsy_online.pdf&usg=AOvVaw3SgDm4EvGihllGAxjhbTLw&opi=89978449
+param eff_SOFC_elec := 0.50; # sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
 param eff_SOFC_heat := 0.40; # sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
-
+#param Lhvhydro := 33.33 #kWh/kg
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set flow rate of hydrogen as a function of efficiency
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-let Qelecsupply['SOFC']:= 10000; # CHANGER
-let Qheatingsupply['SOFC']:= 10000; # CHANGER
-let Flowin['Electricity','SOFC'] := Qelecsupply['SOFC'] / eff_SOFC_elec; 
-let Flowin['Heating','SOFC'] := Qheatingsupply['SOFC'] / eff_SOFC_heat; 
+
+let Qheatingsupply['SOFC']:= 100; # kW CHANGER sur internet
+let Flowin['Hydrogen','SOFC'] := Qheatingsupply['SOFC'] / eff_SOFC_heat; 
+let Flowout['Electricity','SOFC'] := (Qheatingsupply['SOFC'] / eff_SOFC_heat) * eff_SOFC_elec;    
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the maximum scaling factor
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-let  Fmax['SOFC'] := 10; # CHANGER
+let  Fmax['SOFC'] := 1000; # Q_demandEPFL/ Q_ref
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the minimum temperature of the SOFC
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-let Tminheating['SOFC'] := 120; # CHANGER
+let Tminheating['SOFC'] := 500; #°C
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the cinv2 of the SOFC
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-let cinv1["SOFC"]:=15542.6196; # CHF but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
-let cinv2["SOFC"]:=2100; # CHF/kW but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
+let cinv1["SOFC"]:= 2112; # CHF/yr but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
+let cinv2["SOFC"]:=285.39; # CHF/(kW.yr) but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources

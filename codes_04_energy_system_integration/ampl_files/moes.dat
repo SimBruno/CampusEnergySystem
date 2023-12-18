@@ -26,6 +26,7 @@ set Technologies := 													# set of technologies
 Boiler 
 PV 
 SOFC 
+STC
 ;			
 
 set Grids :=															# set of grid units
