@@ -1,32 +1,18 @@
 # Data source: Swiss Energyscope
 # Data source: P.Stadler et al, Contribution of Model Predictive Control in the Integration of Renewable Energy Sources within the Built Environment,2018
 # Assumption: interest rate 3%
- 
-/*---------------------------------------------------------------------------------------------------------------------------------------
-Set the efficienc of the SOFC
----------------------------------------------------------------------------------------------------------------------------------------*/
-param eff_STC := 0.836; # sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
-
-/*---------------------------------------------------------------------------------------------------------------------------------------
-Set flow rate of hydrogen as a function of efficiency
----------------------------------------------------------------------------------------------------------------------------------------*/
-let Qelecsupply['STC']:= 10000; # CHANGER
-let Qheatingsupply['STC']:= 10000; # CHANGER
-let Flowin['Electricity','STC'] := Qelecsupply['STC'] / eff_SOFC_elec; 
-let Flowin['Heating','STC'] := Qheatingsupply['STC'] / eff_SOFC_heat; 
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the maximum scaling factor
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-let  Fmax['STC'] := 10; # CHANGER
+let Fmax['STC'] := 5000; # CHANGER
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the minimum temperature of the SOFC
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-let Tminheating['STC'] := 120; # CHANGER
+let Tminheating['STC'] := 100; # °C
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the cinv2 of the SOFC
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-let cinv1["STC"]:=347; # CHF sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
-let cinv2["STC"]:=126; # CHF/m2 sr: Stadler P., Model-based sizing of building energy systems with renewable sources
+let cinv1["STC"]:=0.087*347; # CHF/year sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources

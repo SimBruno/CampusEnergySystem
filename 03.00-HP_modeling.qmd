@@ -205,16 +205,34 @@ The flash tank involves a little bit more of complexity due to the multiple flow
 
 And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a flash tank.
 
+
 ## VALI Tags selection
-Now that all the types of unit models are characterized, it should be possible to determine the minimum number of measurements needed to make the system fully determined. Summing all corresponding DOF with the number of units and substracting the links yields:
+Now that all the types of unit models are characterized, it should be possible to determine the minimum number of measurements needed to make the system fully determined. 
+<!-- Summing all corresponding DOF with the number of units and substracting the links yields: -->
 
+Let's discard a some options by looking at redundancies/overspecifications, which will prevent VALI from running:
 
+- Option 2: All values are specified in the following equation $\Delta T_{min}=T_6-T_{out,bis}$, which makes the model overspecified.
 
-Working model of the 2-stage HP for the working fluid R290.
+- Option 3: All values are specified in the following equation $Q_{cond,load}=Q_{cond,sens}+Q_{cond,lat}$, which makes the model overspecified.
 
-### Model adjustment to a second working fluid (Optional)
+- Option 5: All values are specified in the following equation $COP_{real}=\dfrac{Q_{cond,load}}{Q_{cond,load}-Q_{evap}}$, which makes the model overspecified.
 
-**Task**
+Add working model of the 2-stage HP for the working fluid R290.
+
+### Model adjustment to a second working fluid 
+
+Let's choose a new working fluid from @fig-working-fluid
+```{r working_fluid, out.width='100%', fig.align='center', fig.cap='Selected refrigerants for the study', echo=F, fig.show='hold'}
+#| label: fig-working-fluid
+knitr::include_graphics('Figures/working_fluid.png')
+```
+
+The modern challenge of working fluid selection resides in balancing good thermal properties, long lifetime and environmental friendliness. As the latter is one of the critical parameters for all the project, let's ensure to use a fluid with a small global warming potential. The choice restricts to either Ammonia or Propylene. Even though propylene is far more expansive, it has a better chemical stability, i.e. lifetime. For our application, this is quite important. Finally, let's review the thermal properties and safety guidelines of propylene, to make the final decision:
+
+FOR Louis: Add propylene thermal properties and compare with a basic common working fluid.
+
+<!-- **Task**
 
 Adjust the model from the previous section to a second working fluid of your choice between the 7 options listed in Table 4.1.
 
@@ -226,11 +244,20 @@ Adjust the model from the previous section to a second working fluid of your cho
 
 **Result**
 
-Working model of the 2-stage HP for the working fluid of your choice.
+Working model of the 2-stage HP for the working fluid of your choice. -->
 
 ## Data reconciliation
 
-**Given**
+Now that the double stage heat pump model is working for both fluids, let's get precise measurements. Experts provided us some measurements at different ambient temperatures, for both fluids and for low (50°C) and medium (65°C) temperature supply. Some measurements are redundant with the model. This is very good for us. Since the measurements may have errors due to sensors accuracy, bad calibration or random errors, we have the ability to correct them via data reconciliation.
+
+Let $y_i$ (for $i=1,...,N_{mes}$) be a variable of the model which can be measured. Let $y_i^*$ be the actual measurement of $y_i$, measured with a sensor that has a standard deviation of $\sigma_i$. Let $x_j$ be a variable of the model that wasn't measured. Let's write the set of all $y_i$ and all $x_j$ as vectors: $X,Y$. Finally, let's write the model equations as constrains: $F(X,Y)=0$. Reconciliation aims getting a set of solutions which minimzes the total square error between model and measurements, weighted by each sensor accuracy. Therefore, the problem can be written:
+
+$$\min_{X,Y} \sum_{i=1}^{N_{mes}}\left( \dfrac{y_i-y_i^*}{\sigma_i} \right)^2$$
+$$\text{s.t. } F(X,Y)=0$$
+
+
+Vali is able to perform data reconciliation when a measurement file is provided. Therefore, reconciled files are generated for both fluids and for both temperature supplies.
+<!-- **Given**
 
 Measurements for 7 working fluids, each with 2 temperature levels (low-temperature and medium-temperature) and between 6 and 11 periods.
 
@@ -243,7 +270,7 @@ Run the VALI model with the corresponding measurements.
 Obtain the reconciled files.
 
 *Hint*:
-Note that the measurement file indicates where the reconciled file should be saved. For instance, for the *R-290_LT_1.txt* file, the location is defined by the command `ARCHIVE -T Reconciled/reconc_R-290_LT_1.txt`. Make sure to have a folder named *Reconciled* in the same folder as the Vali model.
+Note that the measurement file indicates where the reconciled file should be saved. For instance, for the *R-290_LT_1.txt* file, the location is defined by the command `ARCHIVE -T Reconciled/reconc_R-290_LT_1.txt`. Make sure to have a folder named *Reconciled* in the same folder as the Vali model. -->
 
 ## Performance and cost evaluation
 The purpose of this section is to evaluate the performance of the double stage heat pump and the cost of the equipments. The performance is evaluated for low temperature supply ($50°C$) and high temperature supply ($65°C$) for both fluids. The goal is to perform a regression on the second law efficiency to model it's evolution with the external ambient temperature. In the last section,  data was measured on the heat pump for both fluids and both temperature levels at different external temperatures. Data reconciliation was performed with the model in order to minimize the measurements error. These results will now be used to evaluate the heat pump performance at different temperatures, and fit these measurements on a regression model. The following model will be used:
@@ -290,17 +317,16 @@ Where $Q_{cond}$ is the total heat load to supply, $W_{comp,1}$ is the energy su
 | Second heat pump power at maximum load |  $W_{comp,2}^{max}=W_{comp,2}(t_{max})$        |
 
 
-The results are shown in the table below
+The results are shown in @fig-regression_results
 ```{python, echo=F, eval=T,label= get_regression}
 results, observed =fct2.get_reg()
 PATH = os.path.join(os.path.dirname(os.getcwd()),"report-group-3", "codes_03_HP_modeling","Regression_Mirco","regression_results.csv")
- # the path to codes_01_energy_demand.py
+
 results.to_csv(PATH)
 ```
 
 ```{r table-widget, echo=F, eval=T, fig.cap= 'Results of the regression'}
-#| label: fig-thermalProp
-
+#| label: fig-regression_results
 regression_results <- read.csv("codes_03_HP_modeling/Regression_Mirco/regression_results.csv")
 
 library(DT)
@@ -311,10 +337,6 @@ datatable(regression_results, options = list(pageLength = 5, scrollX=TRUE)
 
 
 ```{python, echo=F, eval=T,label= plot_regression}
-
-
-
-
 T_ext_span=np.linspace(0,25,100)
 carnot_span=pd.DataFrame(index=T_ext_span)
 colors=['blue','brown','green','red']
@@ -333,7 +355,7 @@ fig.add_scatter(x=[5],y=[0.5],mode='markers',marker=dict(color='black',opacity=0
 fig.add_trace(go.Scatter(x=[5],y=[0.5],name='Regression',line=dict(color='black'),marker=dict(size=0,opacity=0)))
 ```
 
-**Given**
+<!-- **Given**
 
 Three AMPL files: *moes2021_P4_Rxxx.dat*, *moes2021_P4.mod* and *moes2021_P4.run*.
 
@@ -371,4 +393,5 @@ Size of the heat exchangers and compressor.
 
 Cost of the total system.
 
-Unit cost of the system per kW of heating capacity.
+Unit cost of the system per kW of heating capacity. -->
+

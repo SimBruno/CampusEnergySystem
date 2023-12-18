@@ -26,6 +26,8 @@ set Technologies := 													# set of technologies
 Boiler 
 PV 
 SOFC 
+STC
+HP2
 ;			
 
 set Grids :=															# set of grid units
@@ -55,6 +57,7 @@ ElectricityCons
 set UtilitiesOfType[Heating] :=											# set to assign utilities to utility type
 Boiler
 SOFC
+STC
 ;
 
 set UtilitiesOfType[ElectricitySup] :=
@@ -64,12 +67,14 @@ ElecGridBuy
 ;
 
 set UtilitiesOfType[ElectricityCons] :=
+HP2
 ElecGridSell
 ;
 
 set UtilitiesOfLayer[Electricity] := 
 SOFC 
 PV 
+HP2
 ElecGridBuy 
 ElecGridSell 
 ;
