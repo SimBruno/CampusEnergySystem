@@ -30,5 +30,5 @@ let Tminheating['SOFC'] := 500; #°C
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the cinv2 of the SOFC
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-let cinv1["SOFC"]:= 2112; # CHF/yr but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
+let cinv1["SOFC"]:= 4224; # CHF/yr but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources *2 since 2 SOFC to last 20years
 let cinv2["SOFC"]:=285.39; # CHF/(kW.yr) but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
