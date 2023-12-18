@@ -17,7 +17,14 @@ f_el = 0.8 # Share of electricity demand which is converted to heat appliances
 
 
 def load_data_weather_buildings():
-    
+    """
+    Load weather and building data from CSV files.
+
+    Returns:
+    - weather (pd.DataFrame): DataFrame containing weather data with columns 'Temp' (Temperature) and 'Irr' (Irradiance).
+    - buildings (pd.DataFrame): DataFrame containing building data with columns 'Name', 'Year', 'Ground' (Ground area),
+      'Heat' (Heat capacity), and 'Elec' (Electrical capacity).
+    """
     path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
 
     weather = pd.read_csv(os.path.join(path, "Weather.csv"),header=0,encoding = 'unicode_escape')
@@ -29,6 +36,15 @@ def load_data_weather_buildings():
     return weather, buildings
 
 def occupancy_profile():
+    """
+    Generate occupancy profiles for different building types and electricity consumption on weekdays.
+
+    Returns:
+    - profile_off (ndarray): Office occupancy profile.
+    - profile_class (ndarray): Classroom occupancy profile.
+    - profile_rest (ndarray): Restaurant occupancy profile.
+    - profile_elec (ndarray): Electricity consumption profile on weekdays.
+    """
     # Define occupancy and electricity profiles
     occ_off = [0, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.4, 0.6, 0.8, 0.8, 0.4, 0.6, 0.8, 0.8, 0.4, 0.2, 0, 0, 0, 0, 0]
     occ_class = [0, 0, 0, 0, 0, 0, 0, 0, 0.4, 0.6, 1, 1, 0.8, 0.2, 0.6, 1, 0.8, 0.8, 0.4, 0, 0, 0, 0, 0]
@@ -52,29 +68,52 @@ def occupancy_profile():
     return occupancy.Office.values, occupancy.Class.values, occupancy.Restaurant.values, occupancy.Electricity.values
 
 def people_gains(profile_class, profile_rest, profile_off):
-    # Heat gains from people (Office, Restaurant, Classroom)
+    """
+    Calculate heat gains from people in different building types based on their occupancy profiles.
+
+    Parameters:
+    - profile_class: occupancy profile for the classroom building type.
+    - profile_rest: occupancy profile for the restaurant building type.
+    - profile_off: occupancy profile for the office building type.
+
+    Returns:
+    - people_gains: calculated heat gains from people for each corresponding hour.
+
+    The function calculates the heat gains from people by multiplying the occupancy profiles for each building type 
+    with their respective scaling factors. The scaling factors are determined by the product of the heat gains from people 
+    and the share areas of each building type. The final result is the sum of the products for all building types.
+
+    Note:
+    - The input arrays (profile_class, profile_rest, profile_off) should have the same length.
+    - The function assumes that the input profiles are provided for each hour and follow the same time sequence.
+    - The units of heat gains, share areas, and resulting people gains are not specified in the code.
+    """
+    # Heat gains from people [W/m^2] (Office, Restaurant, Classroom)
     hg_off=5
     hg_rest=35
     hg_class=23.3
     hg_others=0
     
-    # Share areas (Office, Restaurant, Classroom)
+    # Share areas [-] (Office, Restaurant, Classroom)
     A_off=0.3
     A_rest=0.05
     A_class=0.35
     A_others=0.3
 
-    # Scaling factors
-
+    # Scaling factors [-]
     sf_off = hg_off*A_off
     sf_rest = hg_rest*A_rest
     sf_class = hg_class*A_class
     sf_others = hg_others*A_others
+
+    # Heat gains [W/m^2]
     return sf_off*profile_off + sf_rest*profile_rest + sf_class*profile_class 
 
 def elec_gains(building_id, buildings , profile_elec):
     #elec_build=buildings.Elec ###Wh
     cf = 1000/profile_elec.sum() # Conversion factor from Wh to W and capacity factor
+    
+    # Elec gains [W/m^2]
     return cf*profile_elec*buildings.loc[buildings.Name==building_id].apply(lambda x: x['Elec']/x['Ground'] , axis=1).to_numpy()[0] # W/m2 for each hour of the year
 
 def solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec, tolerance=1e-6,max_iteration=1000, k_th_guess=5, k_sun_guess=1):
@@ -85,12 +124,12 @@ def solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec, 
     iteration=0
 
     # Initialize guess values
-    k_th = k_th_guess
-    k_sun = k_sun_guess
+    k_th = k_th_guess # W/(m^2 K)
+    k_sun = k_sun_guess # W/(m^2 K)
 
     # Getting other parameters
-    A_th=buildings['Ground'].loc[buildings.Name==building_id].values[0] # m2
-    Q_th=buildings['Heat'].loc[buildings.Name==building_id].values[0]*1000 # W
+    A_th=buildings['Ground'].loc[buildings.Name==building_id].values[0] # [m^2]
+    Q_th=buildings['Heat'].loc[buildings.Name==building_id].values[0]*1000 # [kWh] -->  [Wh]
     T_ext=weather.Temp + 273 # K
     irr=weather.Irr # W/m2
 
@@ -140,7 +179,8 @@ def solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec, 
         
         if (e_th < tolerance) and (e_sun < tolerance) and (abs(k_th - k_th_old) < tolerance*(1+ abs(k_th_old))) and (abs(k_sun - k_sun_old) < tolerance*(1+ abs(k_sun_old))):
             break  # Converged, exit the loop
-        iteration += 1        
+        iteration += 1     
+    # k_th [W/(m^2 K)], k_sun [-], number of iterations, error1, error2, A_th [m^2], specQ_people [W/m^2], q_elec_mean [W/m^2], heating_indicator [bool]
     return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, q_elec.mean(), heating_indicator 
 
 ######################################################
@@ -280,7 +320,7 @@ if __name__ == '__main__':
     # Load data
     weather, buildings = load_data_weather_buildings()
 
-    #Compute gains and profile
+    # Compute gains and profile
     profile_off, profile_class, profile_rest, profile_elec = occupancy_profile()
 
     # Compute typical operating conditions  with clustering
@@ -320,13 +360,17 @@ if __name__ == '__main__':
         Q_th[building_id]=Q_temp
         #for i in cluster_df['cluster'].unique():
     
+    Q_th.to_csv(os.path.join(PATH, "Q_th_test.csv"),index=True)
+
     # Concatenate into clusters
     Q_th_cluster=pd.concat([pd.DataFrame(data=Q_th.iloc[cluster_df['Time']].assign(cluster=cluster_df['cluster'].astype(int)).groupby('cluster').apply(lambda x: x.sum(axis=0)).values, columns=buildings['Name'].tolist()+['cluster']).drop('cluster',axis=1),pd.DataFrame(data=np.reshape(np.array(Q_extreme),(1,len(buildings))),columns=buildings['Name'].tolist())],ignore_index=True)
    
-
+    Q_th_cluster
     # Save The DFs in csv
-    Q_th_cluster.drop(columns=buildings.query('Year==2')['Name'].values).to_csv(os.path.join(PATH, "Q_cluster_medium.csv"),index=True)
-    solution.to_csv(os.path.join(PATH, "data_MOES.csv"),index=False)
+    Q_th_cluster.drop(columns=buildings.query('Year==1')['Name'].values).to_csv(os.path.join(PATH, "Q_cluster_medium.csv"),index=True)
+    print(Q_th_cluster.drop(columns=buildings.query('Year==1')['Name']).sum(axis=1))
+    
+    #solution.to_csv(os.path.join(PATH, "data_MOES.csv"),index=False)
 
     #heating_indicator = (((Q_th >= 0).all(axis=1)) & (T_ext <= T_th) & (profile_elec > 0)) # filter heat demands only
     #Q_th = Q_th[heating_indicator]/1000 # convert to kWh

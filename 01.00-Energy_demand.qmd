@@ -147,20 +147,30 @@ thermal_properties  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_
 Q_th = pd.DataFrame(columns=buildings['Name']) 
 T_ext = weather.Temp + 273 # K
 irr = weather.Irr # W/m2
+
+Q_extreme = []
+T_extreme = []
+irr_extreme = []
+
 q_people = fct1.people_gains(profile_class, profile_rest, profile_off)
 
 for building_id in buildings['Name']:
+    #Estimate k_th and k_sun for each building
+    # q_people = fct1.people_gains(building_id, profile_class, profile_rest, profile_off)
     q_elec = fct1.elec_gains(building_id, buildings, profile_elec)
-    [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean,heating_indicator] = fct1.solving_NR(building_id, buildings, weather,q_elec,q_people,profile_elec)
-    thermal_properties.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean/1000, 'k_th': k_th/1000, 'k_sun': k_sun,'specQ_people': specQ_people})
-    # Recompute hourly energy demands
-    Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000
-    Q_th[heating_indicator==False] = 0
+    [k_th, k_sun, number_iteration, error1, error2, A_th, specQ_people, q_elec_mean, heating_indicator] = fct1.solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
+    thermal_properties.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': q_elec_mean/1000, 'k_th': k_th/1000, 'k_sun': k_sun,'specQ_people': specQ_people/1000})
+    #Compute Q_th for each hour
+    Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000 # Wh--> kWh
+
+Q_th[heating_indicator==0] = 0 # Set Q_th to be only heat demand
+
+# Q_extreme.append(A_th*(k_th*(T_int-(273-9.2)) - specQ_people - q_elec_mean*f_el)/1000)
 
 #Q_th = Q_th[heating_indicator]/1000 #kWh conversion
 # save the table 
 PATH = os.path.dirname(os.getcwd()) # the path to codes_01_energy_demand.py
-thermal_properties.to_csv(os.path.join(PATH, "thermal_properties.csv"),index=False)
+thermal_properties.to_csv(os.path.join(PATH,"report-group-3","codes_01_energy_demand", "thermal_properties.csv"),index=False)
 ```
 
 ```{r table-widget, echo=F, eval=T, fig.cap= 'Thermal properties of the buildings'}
@@ -283,24 +293,41 @@ fct1.elbow_method(weather_clustering.data,15)
 ### Clustering results
 The result of the clustering are shown below. 
 
-```{python, echo=F, eval=T}
+```{python, echo=F, eval=T, results = 'show'}
 #| label: perform clustering
 
 weather, cluster = fct1.clusteringCorentin(weather,n_clusters=6)
 
-# Compute Q_th_cluster
-Q_th_cluster = pd.Series(Q_th[buildings['Name'].loc[buildings.Year == 1]].groupby(weather['Cluster']).sum().sum(axis=1))
-# rebuild as a dataframe
-cluster['Q_th'] = Q_th_cluster
-A_th = thermal_properties['FloorArea']
-k_th = thermal_properties['k_th']
-k_sun = thermal_properties['k_sun']
-specQ_people = thermal_properties['specQ_people']
-specElec = thermal_properties['specElec']
-# recompute extreme heat demand Q_extreme and assign to extreme cluster
-T_extreme, irr_extreme = cluster[['Temp','Irr']].iloc[-1]
-cluster['Q_th'].iloc[-1] = (A_th*(k_th*(T_int-(273+T_extreme))- k_sun*irr_extreme - specElec*f_el- specQ_people)).sum(axis=None)/1000
+Q_th_cluster = pd.DataFrame(columns=buildings.Name)
+Q_th_extreme = pd.Series(index=buildings.Name)
+
+# Extract thermal_properties of buildings
+A_th            = thermal_properties['FloorArea']   # m^2
+k_th            = thermal_properties['k_th']        # kW/m^2 K
+k_sun           = thermal_properties['k_sun']       # -
+specQ_people    = thermal_properties['specQ_people']# kW/m^2
+specElec        = thermal_properties['specElec']    # kW/m^2
+
+T_cluster = cluster['Temp']
+irr_cluster = cluster['Irr']
+T_extreme = weather['Temp'].iloc[-1]
+irr_extreme = weather['Irr'].iloc[-1]
+
+# Recompute thermal load for each cluster using cluster centers
+for building_id in buildings['Name']:
+    Q_th_cluster[building_id] = A_th[building_id]*(k_th[building_id]*(T_int-(T_cluster+273)) - k_sun[building_id]*irr_cluster/1000 - specQ_people[building_id] - specElec[building_id]*f_el) # [kWh]
+    Q_th_extreme[building_id] = A_th[building_id]*(k_th[building_id]*(T_int-(T_extreme+273)) - k_sun[building_id]*irr_extreme/1000 - specQ_people[building_id] - specElec[building_id]*f_el) # [kWh]
+Q_th_cluster.loc[len(Q_th_cluster)] = Q_th_extreme
+
+# Keep only Medium temps buildings (Year 1)
+Q_th_cluster = Q_th_cluster[buildings['Name'].loc[buildings.Year == 1]]
+
+# Sum and multiply by operating hours the (positive) heating loads
+cluster['Q_th'] = Q_th_cluster[Q_th_cluster >= 0].sum(axis=1)*cluster['Hours']
+
+cluster.to_csv(os.path.join(PATH,"report-group-3","codes_01_energy_demand", "clusters_data.csv"),index=False)
 ```
+
 ```{python, echo=F, eval = T}
 #| label: plot clustering 
 # Scatter plot for weather data type A
@@ -326,6 +353,7 @@ title_html = '<h2 style="text-align:center;">Cluster Centroids</h2>'
 final_html = title_html + html_table
 HTML(final_html)
 ```
+
 \begin{comment}
 Here you report what you have done and found concerning part 1. It includes the parametric estimations of the electricity demand, the heat gains from the people, the Kth and Ksun values using Newton_Raphson and the typical period clustering. All .qmd files present in the main folder are read while rendering the book. The four folders called **codes** are here to make your calculations. The files contained in these folders are not read while rendering the book. **We advice you to work and develop your models in the subfolders only**. Then you will use the .qmd in the main folder to report the models and data generated in the sub-folders. 
 
