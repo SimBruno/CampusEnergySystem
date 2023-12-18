@@ -27,6 +27,7 @@ Boiler
 PV 
 SOFC 
 STC
+HP2
 ;			
 
 set Grids :=															# set of grid units
@@ -66,12 +67,14 @@ ElecGridBuy
 ;
 
 set UtilitiesOfType[ElectricityCons] :=
+HP2
 ElecGridSell
 ;
 
 set UtilitiesOfLayer[Electricity] := 
 SOFC 
 PV 
+HP2
 ElecGridBuy 
 ElecGridSell 
 ;
