@@ -1,4 +1,10 @@
 
+
+
+
+
+
+
 # Heat recovery {#sec:heat recovery}
 In this section, EPFL heat supply is investigated. At first, the reference case is presented where heat is provided to EPFL at $T=65°C$. In this reference, all the heat is provided by a HP which heats up the lake water thanks to EPFL exiting heat flow.
 Then in order to improve this system 3 scenarios are assessed:
@@ -65,6 +71,22 @@ Let's solve the following optimization problem, in order to obtain the less expa
 Where $\dot{M}Cp_{Lake}$ and $\dot{M}Cp_{EPFL}$ are the flow of the lake and the EPFL supply system respectively. Note that $E$ is the heat pump electricity in [kW], $Q_{cond,ref}$ and $Q_{evap,ref}$ are the heat power in [kW] flowing through the condenser and the evaporator respectively, $Q_{heating}(t)$ is the EPFL medium heat consumption. Data is clustered using the clusters produced before. $t_{op}$ is the operational time for each cluster. $T_{LM,cond,ref}$, $T_{LM,evap,ref}$ are the logarithmic mean temperatures at the condenser and the evaporator respectively. Finally, $\epsilon$ is the Carnot efficiency of the heat pump.
 
 Using AMPL, the problem is solved and the OPEX is 635641.3566 [CHF/y]
+
+```{python, eval = T, echo = F}
+from amplpy import AMPL
+import pandas as pd
+import os
+from codes_02_heat_recovery.helper import run_ampl
+
+# Read data from CSV
+data_file = "clusters_data.csv" # assumes .csv is located in codes_01_energy_demand
+
+model_file = "NLP_ref.mod"
+model_directory = "1.Reference_case_Mirco"
+
+run_ampl(data_file, model_directory,model_file)
+```
+
 
 ##  Data Center heat recovery {#subsec:case-2}
 
@@ -233,6 +255,15 @@ But the optimization problem is also following new constraints specific to the a
 All constraint equations from reference case (Mass Balance and EPFL Heat/Elec Demand) are not repeated here but must also be considered as constraints.
 
 The resolution of this optimization problem returns:
+```{python, echo = F, eval= T}
+# Read data from CSV
+data_file = "clusters_data.csv" # assumes .csv is located in codes_01_energy_demand
+
+model_file = "NLP_DC.mod"
+model_directory = "2.DC_recovery_Mirco"
+
+run_ampl(data_file, model_directory,model_file)
+```
 
 - $OPEX=.........$ [CHF/y]
 - $CAPEX=.........$ [CHF/y]
