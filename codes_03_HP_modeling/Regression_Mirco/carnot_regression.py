@@ -24,7 +24,7 @@ def get_reg():
     fluid=['R290_LT','R290_MT','R1270_LT', 'R1270_MT']
 
     # Initialization
-    results=pd.DataFrame(columns=['a','b','c','Cond_cost','Evap_cost', 'comp1_cost', 'comp2_cost','Total_cost'])
+    results=pd.DataFrame(columns=['a','b','c','Cond_cost','Evap_cost', 'comp1_cost', 'comp2_cost','Total_cost','Fmin','Fmax', 'cinv1', 'cinv2'])
     count=0
     leg=[]
     observed=pd.DataFrame()
@@ -49,12 +49,13 @@ def get_reg():
         data_ampl=pd.DataFrame(data=data_ampl.values,columns=query_ampl)
         data_ampl['Time']=range(1,len(files)+1)
         data_ampl.set_index('Time',inplace=True)
-        print(data_ampl[data_ampl['Q_cond']==data_ampl['Q_cond'].max()].index.values[0])
+        print(data_ampl[data_ampl['Q_cond']==data_ampl['Q_cond'].min()])
         
 
         # Getting values for ambient temperature
         ambiant_df=pd.read_csv(os.path.join(os.path.dirname( __file__ ),"Text.csv"))
         data_ampl['T_ext']=ambiant_df[j].dropna().values
+        data_ampl.sort_values(by='Q_cond',inplace=True)
 
         # Regression with ampl
         ampl=AMPL()
@@ -62,7 +63,9 @@ def get_reg():
         ampl.set_option("solver",'snopt')
         ampl.set_option("solver_msg",0)
         ampl.set_data(data_ampl,"Time")
-        ampl.get_parameter('max_demand_index').set(data_ampl.index[data_ampl['Q_cond']==data_ampl['Q_cond'].max()].values[0]);
+        ampl.get_parameter('max_demand_index').set(data_ampl.index[data_ampl['Q_cond']==data_ampl['Q_cond'].max()].values[0])
+        ampl.get_parameter('min_demand_index').set(data_ampl.index.values[0])
+        #ampl.get_parameter('min_demand_index').set(data_ampl.index[data_ampl['Q_cond']==data_ampl['Q_cond'].min()].values[0])
         ampl.solve()
 
 
@@ -75,11 +78,26 @@ def get_reg():
         comp1_cost=ampl.get_variable("comp1_cost").get_values().to_list()[0]
         comp2_cost=ampl.get_variable("comp2_cost").get_values().to_list()[0]
         Total_cost=Cond_cost+Evap_cost+comp1_cost+comp2_cost
+        Cond_cost_2=ampl.get_variable("Cond_cost_2").get_values().to_list()[0]
+        Evap_cost_2=ampl.get_variable("Evap_cost_2").get_values().to_list()[0]
+        comp1_cost_2=ampl.get_variable("comp1_cost_2").get_values().to_list()[0]
+        comp2_cost_2=ampl.get_variable("comp2_cost_2").get_values().to_list()[0]
+        Total_cost_2=Cond_cost_2+Evap_cost_2+comp1_cost_2+comp2_cost_2
         T_ext=[val[1] for val in ampl.get_parameter("T_ext").get_values().to_list()]
         carnot=[val[1] for val in ampl.get_variable("c_factor1").get_values().to_list()]
+        Q_cond_max=ampl.get_parameter("Q_cond_max").get_values().to_list()[0]
+        Q_cond_min=ampl.get_parameter("Q_cond_min").get_values().to_list()[0]
+        
 
+        # Retrieving results from ampl2
+        refsize=1000 #[kW]
+        Fmin=Q_cond_min/refsize
+        Fmax=Q_cond_max/refsize
+        cinv2=(Total_cost-Total_cost_2)/(Q_cond_max-Q_cond_min)
+        cinv1=Total_cost-cinv2*Q_cond_max
+        print(Fmin,Fmax,cinv1,cinv2)
         # Saving values
-        results.loc[j]=pd.Series({'a':a,'b':b,'c':c,'Cond_cost':Cond_cost,'Evap_cost': Evap_cost,'comp1_cost':comp1_cost,'comp2_cost':comp2_cost,'Total_cost':Total_cost})
+        results.loc[j]=pd.Series({'a':a,'b':b,'c':c,'Cond_cost':Cond_cost,'Evap_cost': Evap_cost,'comp1_cost':comp1_cost,'comp2_cost':comp2_cost,'Total_cost':Total_cost,'Fmin':Fmin, 'Fmax':Fmax, 'cinv1':cinv1,'cinv2':cinv2})
         additional=pd.DataFrame({"T_ext_"+j:T_ext,"Carnot_"+j:carnot})
         observed=pd.concat([observed,additional],axis=1)
         # Plotting results
@@ -90,7 +108,7 @@ def get_reg():
         count+=1
 
     # Print results
-    # print(results)
+    print(results['Total_cost'])
 
     # # Plot
     # plt.title("Carnot efficiency function of ambient temperature")
@@ -101,10 +119,8 @@ def get_reg():
     # plt.legend(leg)
     # plt.show()
 
-    # if __name__=="__main__":
-    #     try:
-    #         main(len(sys.argv),sys.argv)
-    #     except Exception as e:
-    #         print(e)
-    #         raise
+
     return results, observed
+
+if __name__=="__main__":
+    results,ovserved=get_reg()
