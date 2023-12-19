@@ -318,9 +318,10 @@ Where $Q_{cond}$ is the total heat load to supply, $W_{comp,1}$ is the energy su
 
 
 The results are shown in @fig-regression_results
-```{python, echo=F, eval=T,label= get_regression}
+```{python, echo=F, eval=T,label= get_regression,results='hide'}
 results, observed =fct2.get_reg()
 PATH = os.path.join(os.path.dirname(os.getcwd()),"report-group-3", "codes_03_HP_modeling","Regression_Mirco","regression_results.csv")
+
 
 results.to_csv(PATH)
 ```
@@ -335,9 +336,9 @@ datatable(regression_results, options = list(pageLength = 5, scrollX=TRUE)
 )
 ```
 
-
+Note that cinv1 is in CHF/y and cinv2 is in CHF/kW/y. We consider that for the heat pump at low temperature, it is able to provide heat at 55°C and that for medium temperature, it is able to provide heat at 70°C. The Fmin and Fmax values are compared with a reference size of 1000 $kW_{heat}$. Data from R290 seems to be incorrect. Updated measurement files were given to us, so we should update them and it shall work. However, we clearly see that propylene is better, so let's take propylene.
 ```{python, echo=F, eval=T,label= plot_regression}
-T_ext_span=np.linspace(0,25,100)
+T_ext_span=np.linspace(0,15,100)
 carnot_span=pd.DataFrame(index=T_ext_span)
 colors=['blue','brown','green','red']
 
