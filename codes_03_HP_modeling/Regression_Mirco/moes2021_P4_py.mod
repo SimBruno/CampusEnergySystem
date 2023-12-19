@@ -39,6 +39,9 @@ param f_BM_HEX			:=  4.74; 	# bare module factor for HEX
 param ref_index 		:= 394.3; 	# CEPCI reference 2001 
 param index 			:= 537.5 ;	# CEPCI 2016
 
+param i 				:= 0.06 ; #interest rate
+param n 				:= 20; #[y] life-time
+
 param U_water_ref       := 0.75; #water-refrigerant global heat transfer coefficient (kW/m2.K)
 param U_air_ref         := 0.049; #air-refrigerant global heat transfer coefficient (kW/m2.K)
 
@@ -46,6 +49,8 @@ param U_air_ref         := 0.049; #air-refrigerant global heat transfer coeffici
 #################
 # !!!!! Fill here: : take temporal index from maximal heat demand
 param max_demand_index;
+param min_demand_index;
+
 #################
 param T_cond_max := T_cond[max_demand_index];
 param Q_cond_max := Q_cond[max_demand_index];
@@ -55,6 +60,17 @@ param T_EPFL_in_max := T_EPFL_in[max_demand_index];
 param T_EPFL_out_max := T_EPFL_out[max_demand_index];
 param W_comp1_max := W_comp1[max_demand_index];
 param W_comp2_max := W_comp2[max_demand_index];
+param W_hp_max := W_comp1_max+W_comp2_max;
+
+param T_cond_min := T_cond[min_demand_index];
+param Q_cond_min := Q_cond[min_demand_index];
+param W_comp1_min := W_comp1[min_demand_index];
+param W_comp2_min := W_comp2[min_demand_index];
+param T_evap_min := T_evap[min_demand_index];
+param Q_evap_min := Q_evap[min_demand_index];
+param T_EPFL_in_min := T_EPFL_in[min_demand_index];
+param T_EPFL_out_min := T_EPFL_out[min_demand_index];
+param W_hp_min := W_comp1_min+W_comp2_min;
 
 #################
 # !!!!! Fill here: maximum mass flow according to previously defined parameters (Q=mcp*dT)
@@ -72,13 +88,23 @@ var c 						>= 0.0000000001; #factor for fitting function for carnot factor
 var se 						>= 0.0000001; # squared error, to be minimized (c_factor1- c_factor2)^2 
 var comp1_cost 				>= 0.001 ; 
 var comp2_cost 				>= 0.001 ; 
+var comp1_cost_2			>= 0.001 ; 
+var comp2_cost_2 			>= 0.001 ; 
+
+
 
 var Cond_cost				>= 0.001 ; #cost of condenser hex 
 var Cond_area				>= 0.001 ; #area of condenser hex 
+var Cond_cost_2				>= 0.001 ; #cost of condenser hex 
+var Cond_area_2				>= 0.001 ; #area of condenser hex 
 var Evap_cost				>= 0.001 ; #cost of evaporator hex 
 var Evap_area				>= 0.001 ; #area of evaporator hex 
+var Evap_cost_2				>= 0.001 ; #cost of evaporator hex 
+var Evap_area_2				>= 0.001 ; #area of evaporator hex 
 var DTlnEvap				>= 0.001 ; #logarithmic mean temperature difference of evaporator hex
+var DTlnEvap_2				>= 0.001 ; #logarithmic mean temperature difference of evaporator hex
 var DTlnCond				>= 0.001 ; #logarithmic mean temperature difference of condenser hex
+var DTlnCond_2				>= 0.001 ; #logarithmic mean temperature difference of condenser hex
 var TlnCond{Time}           >= 0.001; #logaritmic mean temperature of  temperature loop epfl
 
 ################################
@@ -106,6 +132,9 @@ subject to TlnCond_constraint{t in Time}: #calculates the Log mean temperatrure 
 subject to DTlnCond_constraint: #calculated the DTLN of the condenser heat exchanger EPFL  temperature loop - heat pump for the expreme period, you can neglect the sensible heat transfer
 	DTlnCond * log((T_cond_max-T_EPFL_in_max)/(T_cond_max-T_EPFL_out_max)) = (T_cond_max-T_EPFL_in_max)-(T_cond_max-T_EPFL_out_max);
 
+subject to DTlnCond_constraint_2: #calculated the DTLN of the condenser heat exchanger EPFL  temperature loop - heat pump for the expreme period, you can neglect the sensible heat transfer
+	DTlnCond_2 * log((T_cond_min-T_EPFL_in_min)/(T_cond_min-T_EPFL_out_min)) = (T_cond_min-T_EPFL_in_min)-(T_cond_min-T_EPFL_out_min);
+
 
 #################
 # !!!!! Fill here: Condenser area based on maximum condistions, Q=U*A*LMTD
@@ -113,14 +142,23 @@ subject to DTlnCond_constraint: #calculated the DTLN of the condenser heat excha
 subject to Condenser_area: #Area of condenser HEX, calclated for extreme period 
 	Cond_area = Q_cond_max/(U_air_ref*DTlnCond);	
 
- subject to Condenser_cost:
- 	Cond_cost = 10^(k1_HEX + k2_HEX*log10(Cond_area) + k3_HEX*(log10(Cond_area))**2) * index /ref_index * f_BM_HEX;  	
+subject to Condenser_cost:
+ 	Cond_cost = 10^(k1_HEX + k2_HEX*log10(Cond_area) + k3_HEX*(log10(Cond_area))**2) * index /ref_index * f_BM_HEX* (i*(1+i)^n)/((1+i)^n - 1);
+
+subject to Condenser_area_2: #Area of condenser HEX, calclated for extreme period 
+	Cond_area_2 = Q_cond_min/(U_air_ref*DTlnCond_2);	
+
+subject to Condenser_cost_2:
+ 	Cond_cost_2 = 10^(k1_HEX + k2_HEX*log10(Cond_area_2) + k3_HEX*(log10(Cond_area_2))**2) * index /ref_index * f_BM_HEX* (i*(1+i)^n)/((1+i)^n - 1);  	
 
 
 
 # Evaporator
 subject to DTlnEvap_constraint: #calculated the DTLN of the condenser heat exchanger EPFL  temperature loop - heat pump for the expreme period, you can neglect the sensible heat transfer
 	DTlnEvap * log(-(T_evap_max-T_lake_in)/(T_evap_max-T_lake_out)) = -(T_evap_max-T_lake_in)-(T_evap_max-T_lake_out);
+
+subject to DTlnEvap_constraint_2: #calculated the DTLN of the condenser heat exchanger EPFL  temperature loop - heat pump for the expreme period, you can neglect the sensible heat transfer
+	 T_evap_min>= T_lake_out ==> DTlnEvap_2 * log(-(T_evap_min-T_lake_in)/(T_evap_min-T_lake_out)) = -(T_evap_min-T_lake_in)-(T_evap_min-T_lake_out) else DTlnEvap_2 * log((T_lake_in-T_evap_min)/(T_lake_out-T_evap_min)) = (T_lake_in-T_evap_min)-(T_lake_out-T_evap_min);
 #################
 # !!!!! Fill here: Evaporator area based on maximum condistions, Q=U*A*LMTD
 #################
@@ -128,20 +166,33 @@ subject to Evaporator_area: #Area of evap HEX, calclated for extreme period
 	Evap_area =Q_evap_max/(U_water_ref*DTlnEvap);
 
  subject to Evaporator_cost:
- 	Evap_cost = 10^(k1_HEX + k2_HEX*log10(Evap_area) + k3_HEX*(log10(Evap_area))**2) * index /ref_index * f_BM_HEX;  	
+ 	Evap_cost = 10^(k1_HEX + k2_HEX*log10(Evap_area) + k3_HEX*(log10(Evap_area))**2) * index /ref_index * f_BM_HEX*(i*(1+i)^n)/((1+i)^n - 1);
+
+subject to Evaporator_area_2: #Area of evap HEX, calclated for extreme period 
+	Evap_area_2 =Q_evap_min/(U_water_ref*DTlnEvap_2);
+
+ subject to Evaporator_cost_2:
+ 	Evap_cost_2 = 10^(k1_HEX + k2_HEX*log10(Evap_area_2) + k3_HEX*(log10(Evap_area_2))**2) * index /ref_index * f_BM_HEX*(i*(1+i)^n)/((1+i)^n - 1);  	
 
 
 
 # Compressor
 subject to Comp1cost: 
 #calculates the cost for comp1 for extreme period 
- 	comp1_cost = 10^(k1 + k2*log10(W_comp1_max) + k3*(log10(W_comp1_max))^2) * index /ref_index * f_BM  ;
+ 	comp1_cost = 10^(k1 + k2*log10(W_comp1_max) + k3*(log10(W_comp1_max))^2) * index /ref_index * f_BM * (i*(1+i)^n)/((1+i)^n - 1) ;
 
  subject to Comp2cost: 
 #calculates the cost for comp1 for extreme period 
- 	comp2_cost = 10^(k1 + k2*log10(W_comp2_max) + k3*(log10(W_comp2_max))^2) * index /ref_index * f_BM  ;
+ 	comp2_cost = 10^(k1 + k2*log10(W_comp2_max) + k3*(log10(W_comp2_max))^2) * index /ref_index * f_BM * (i*(1+i)^n)/((1+i)^n - 1) ;
 
+# Compressor
+subject to Comp1cost_2: 
+#calculates the cost for comp1 for extreme period 
+ 	comp1_cost_2 = 10^(k1 + k2*log10(W_comp1_min) + k3*(log10(W_comp1_min))^2) * index /ref_index * f_BM * (i*(1+i)^n)/((1+i)^n - 1) ;
 
+ subject to Comp2cost_2: 
+#calculates the cost for comp1 for extreme period 
+ 	comp2_cost_2 = 10^(k1 + k2*log10(W_comp2_min) + k3*(log10(W_comp2_min))^2) * index /ref_index * f_BM * (i*(1+i)^n)/((1+i)^n - 1) ;
 
 
 
