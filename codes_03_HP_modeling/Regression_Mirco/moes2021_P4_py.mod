@@ -140,13 +140,13 @@ subject to DTlnCond_constraint_2: #calculated the DTLN of the condenser heat exc
 # !!!!! Fill here: Condenser area based on maximum condistions, Q=U*A*LMTD
 #################
 subject to Condenser_area: #Area of condenser HEX, calclated for extreme period 
-	Cond_area = Q_cond_max/(U_air_ref*DTlnCond);	
+	Cond_area = Q_cond_max/(U_water_ref*DTlnCond);	
 
 subject to Condenser_cost:
  	Cond_cost = 10^(k1_HEX + k2_HEX*log10(Cond_area) + k3_HEX*(log10(Cond_area))**2) * index /ref_index * f_BM_HEX* (i*(1+i)^n)/((1+i)^n - 1);
 
 subject to Condenser_area_2: #Area of condenser HEX, calclated for extreme period 
-	Cond_area_2 = Q_cond_min/(U_air_ref*DTlnCond_2);	
+	Cond_area_2 = Q_cond_min/(U_water_ref*DTlnCond_2);	
 
 subject to Condenser_cost_2:
  	Cond_cost_2 = 10^(k1_HEX + k2_HEX*log10(Cond_area_2) + k3_HEX*(log10(Cond_area_2))**2) * index /ref_index * f_BM_HEX* (i*(1+i)^n)/((1+i)^n - 1);  	
