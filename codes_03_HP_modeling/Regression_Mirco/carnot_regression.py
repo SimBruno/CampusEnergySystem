@@ -24,7 +24,7 @@ def get_reg():
     fluid=['R290_LT','R290_MT','R1270_LT', 'R1270_MT']
 
     # Initialization
-    results=pd.DataFrame(columns=['a','b','c','Cond_cost','Evap_cost', 'comp1_cost', 'comp2_cost','Total_cost','Fmin','Fmax', 'cinv1', 'cinv2'])
+    results=pd.DataFrame(columns=['a','b','c','Cond_area','Evap_area','DTlnCond','DTlnEvap','Cond_cost','Evap_cost', 'comp1_cost', 'comp2_cost','Total_cost','Fmin','Fmax', 'cinv1', 'cinv2'])
     count=0
     leg=[]
     observed=pd.DataFrame()
@@ -87,8 +87,10 @@ def get_reg():
         carnot=[val[1] for val in ampl.get_variable("c_factor1").get_values().to_list()]
         Q_cond_max=ampl.get_parameter("Q_cond_max").get_values().to_list()[0]
         Q_cond_min=ampl.get_parameter("Q_cond_min").get_values().to_list()[0]
-        
-
+        Cond_area=ampl.get_variable("Cond_area").get_values().to_list()[0]
+        Evap_area=ampl.get_variable("Evap_area").get_values().to_list()[0]
+        DTlnCond=ampl.get_variable("DTlnCond").get_values().to_list()[0]
+        DTlnEvap=ampl.get_variable("DTlnEvap").get_values().to_list()[0]
         # Retrieving results from ampl2
         refsize=1000 #[kW]
         Fmin=Q_cond_min/refsize
@@ -97,7 +99,7 @@ def get_reg():
         cinv1=Total_cost-cinv2*Q_cond_max
         print(Fmin,Fmax,cinv1,cinv2)
         # Saving values
-        results.loc[j]=pd.Series({'a':a,'b':b,'c':c,'Cond_cost':Cond_cost,'Evap_cost': Evap_cost,'comp1_cost':comp1_cost,'comp2_cost':comp2_cost,'Total_cost':Total_cost,'Fmin':Fmin, 'Fmax':Fmax, 'cinv1':cinv1,'cinv2':cinv2})
+        results.loc[j]=pd.Series({'a':a,'b':b,'c':c,'Cond_area':Cond_area,'Evap_area':Evap_area,'DTlnCond':DTlnCond,'DTlnEvap':DTlnEvap,'Cond_cost':Cond_cost,'Evap_cost': Evap_cost,'comp1_cost':comp1_cost,'comp2_cost':comp2_cost,'Total_cost':Total_cost,'Fmin':Fmin, 'Fmax':Fmax, 'cinv1':cinv1,'cinv2':cinv2})
         additional=pd.DataFrame({"T_ext_"+j:T_ext,"Carnot_"+j:carnot})
         observed=pd.concat([observed,additional],axis=1)
         # Plotting results
@@ -124,3 +126,4 @@ def get_reg():
 
 if __name__=="__main__":
     results,ovserved=get_reg()
+    print(results[['DTlnCond','DTlnEvap','Cond_area','Evap_area','cinv1','cinv2']])
