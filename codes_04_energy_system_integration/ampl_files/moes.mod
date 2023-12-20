@@ -215,7 +215,7 @@ subject to ic_cstr:
 var Emissions;
 subject to em_cstr:
 	Emissions = sum{u in Utilities, t in Time} (FlowInUnit['Electricity',u,t] * top[t] * c_elec)
-	+ sum{u in Utilities, t in Time} (FlowInUnit['NaturalGas',u,t] * top[t] * c_gas);
+	+ sum{u in Utilities, t in Time} (FlowInUnit['Natgas',u,t] * top[t] * c_gas);
 
 
 /*---------------------------------------------------------------------------------------------------------------------------------------

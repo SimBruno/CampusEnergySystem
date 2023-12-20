@@ -17,7 +17,7 @@ let Flowin['Natgas','Boiler'] := Qheatingsupply['Boiler'] / eff_Boil;
 Set the maximum scaling factor
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 let  Fmax['Boiler'] := 10;
-let  Fmin['Boiler'] := 0.1;
+#let  Fmin['Boiler'] := 1;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the minimum temperature of the boiler
