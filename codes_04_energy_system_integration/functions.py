@@ -1,4 +1,5 @@
 import pickle
+import os
 
 def save_ampl_results(ampl, pkl_name="results"): 
 
@@ -18,7 +19,8 @@ def save_ampl_results(ampl, pkl_name="results"):
 
   # save data
   #result_file_path = "./codes_04_energy_system_integration/results/"+ pkl_name + ".pkl"
-  result_file_path = "C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/results/scenario1.pkl"
+  result_file_path=os.path.abspath(os.path.join(os.path.dirname( __file__ ),'results',pkl_name+".pkl"))
+  #result_file_path = "./codes_04_energy_system_integration/results/scenario1.pkl"
   f = open(result_file_path, 'wb')
   pickle.dump(results, f)
   f.close()

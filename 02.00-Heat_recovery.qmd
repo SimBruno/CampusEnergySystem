@@ -255,7 +255,7 @@ But the optimization problem is also following new constraints specific to the a
 All constraint equations from reference case (Mass Balance and EPFL Heat/Elec Demand) are not repeated here but must also be considered as constraints.
 
 The resolution of this optimization problem returns:
-```{python, echo = F, eval= T}
+```{python, echo = F, eval= F}
 # Read data from CSV
 data_file = "clusters_data.csv" # assumes .csv is located in codes_01_energy_demand
 

@@ -47,7 +47,21 @@ param refSize default 1000;									    # reference size of the utilities [kW]
 param Text{t in Time};  
 param Tint default 21;											# internal set point temperature [C]
 param specElec{Buildings} default 0.04;
+param a_ex{Utilities} default 0;
+param b_ex{Utilities} default 0;
+param c_ex{Utilities} default 1;
 
+
+# Heat pumps data
+
+param EPFLMediumT 	:= 338; #[degK] - desired temperature high temperature loop
+param EPFLLowT		:= 323;
+param EPFLMediumOut := 303; # temperature of return low temperature loop [degK]
+param THPhighin 	:= 280; #[deg K] temperature of water coming from lake into the evaporator of the HP
+param THPhighout 	:= 276; #[deg K] temperature of water coming from lake into the evaporator of the HP
+param TLMCondMedium := (EPFLMediumOut-EPFLMediumT)/(log(EPFLMediumOut/EPFLMediumT)); #Assume cste
+param TLMCondLow := (EPFLMediumOut-EPFLLowT)/(log(EPFLMediumOut/EPFLLowT)); #Assume cste
+param TLMEvapHP := (THPhighin-THPhighout)/(log((THPhighin)/(THPhighout))); 
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Calculation of heating demand
@@ -131,6 +145,9 @@ subject to size_cstr5{u in Utilities}: 							# coupling the binary variable wit
 subject to size_cstr6{u in Utilities}: 				# limitzing the binary variable use
 	use[u] <= sum{t in Time} use_t[u,t];	
 
+subject to Not_all_HP:
+ 	use['R1270_LT']+use['R1270_MT']+use['R290_LT']+use['R290_MT']<=1;
+
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Heating balance constraints: demand = supply
 ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -146,6 +163,8 @@ subject to MT_balance{t in Time}:
 subject to heaitng_mult_cstr{u in UtilitiesOfType['Heating'], t in Time}:
 	mult_t[u,t] = sum{h in HeatingLevel} mult_heating_t[u,t,h];
 
+	
+
 # the following two constraints are to ensure that one utility will not be usd if the supply temperature is less than needed.
 subject to zero_constraint1{t in Time}:
 	sum{u in UtilitiesOfType['Heating']: Tminheating[u] <= Theating['MediumT'] + dTmin} mult_heating_t[u,t,'MediumT'] = 0;
@@ -157,10 +176,19 @@ subject to zero_constraint2{t in Time}:
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Resource balance constraints (except for electricity): flowin = flowout
 ---------------------------------------------------------------------------------------------------------------------------------------*/
+
+
+
 subject to inflow_cstr {l in Layers, u in UtilitiesOfLayer[l], t in Time}:
-	FlowInUnit[l, u, t] = mult_t[u,t] * Flowin[l,u];
+	if u!= 'R1270_LT' and u!= 'R1270_MT' and u!= 'R290_LT' and u!= 'R290_MT' then
+		FlowInUnit[l, u, t] = mult_t[u,t] * Flowin[l,u];
+
+
 subject to outflow_cstr {l in Layers, u in UtilitiesOfLayer[l], t in Time}:
-	FlowOutUnit[l, u, t] = mult_t[u,t] * Flowout[l,u]; 
+	if u!= 'R1270_LT' and u!= 'R1270_MT' and u!= 'R290_LT' and u!= 'R290_MT' then
+		FlowOutUnit[l, u, t] = mult_t[u,t] * Flowout[l,u]; 
+
+	
 subject to balance_cstr {l in Layers, t in Time: l != 'Electricity'}:
 	sum{u in UtilitiesOfLayer[l]} FlowInUnit[l,u,t] = sum{u in UtilitiesOfLayer[l]} FlowOutUnit[l,u,t];
 

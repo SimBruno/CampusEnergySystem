@@ -55,7 +55,7 @@ Solve:
 
 ```{python solve ampl, echo=F, results='hide'}
 # Solve
-ampl.setOption('solver', 'gurobi')
+ampl.setOption('solver', 'snopt')
 ampl.solve()
 ```
 

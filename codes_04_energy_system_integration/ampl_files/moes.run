@@ -8,9 +8,24 @@ data moes.dat;
 Including all technologies files 
 ---------------------------------------------------------------------------------------------------------------------------------------*/ 
 include moesSolar.mod;
+include moesSolar.dat;
+
+#include moesSOFC.dat;
 
 include moesboiler.dat;
-include moesSolar.dat;
+
+
+include moesHP_R1270_MT.dat;
+include moesHP_R1270_MT.mod;
+
+include moesHP_R1270_LT.dat;
+include moesHP_R1270_LT.mod;
+
+include moesHP_R290_LT.dat;
+include moesHP_R290_LT.mod;
+
+include moesHP_R290_MT.dat;
+include moesHP_R290_MT.mod;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 AMPL options
@@ -27,15 +42,19 @@ solve;
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Display commands
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-display Edemand;
-display Qheating;
-display Qheatingdemand;
+
+#display Qheating;
+#display Qheatingdemand;
 
 display mult;
 display mult_t;
 
 display use;
 display use_t;
+display Edemand;
+
+display FlowOutUnit;
+
 
 #display Flowin;
 #display Flowout;

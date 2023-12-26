@@ -27,7 +27,10 @@ Boiler
 PV 
 #SOFC 
 #STC
-#HP2
+R1270_LT
+R1270_MT
+R290_LT
+R290_MT
 ;			
 
 set Grids :=															# set of grid units
@@ -58,7 +61,10 @@ set UtilitiesOfType[Heating] :=											# set to assign utilities to utility t
 Boiler
 #SOFC
 #STC
-#HP2
+R1270_LT
+R1270_MT
+R290_LT
+R290_MT
 ;
 
 set UtilitiesOfType[ElectricitySup] :=
@@ -68,14 +74,20 @@ ElecGridBuy
 ;
 
 set UtilitiesOfType[ElectricityCons] :=
-#HP2
+R1270_LT
+R1270_MT
+R290_LT
+R290_MT
 ElecGridSell
 ;
 
 set UtilitiesOfLayer[Electricity] := 
 #SOFC 
 PV 
-#HP2
+R1270_LT
+R1270_MT
+R290_LT
+R290_MT
 ElecGridBuy 
 ElecGridSell 
 ;
@@ -88,7 +100,7 @@ NatGasGrid
 #set UtilitiesOfLayer[Hydrogen] :=
 #SOFC
 #HydrogenGrid
-#;
+;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Generic Parameters
