@@ -51,6 +51,8 @@ param a_ex{Utilities} default 0;
 param b_ex{Utilities} default 0;
 param c_ex{Utilities} default 1;
 
+param Max_Emissions default 1e20;
+param Max_Totalcost default 1e20;
 
 # Heat pumps data
 
@@ -241,15 +243,24 @@ subject to ic_cstr:
 
 #variable and constraint for emissions calculation [gCO2/year]
 var Emissions;
+var Totalcost;
 subject to em_cstr:
 	Emissions = sum{u in Utilities, t in Time} (FlowInUnit['Electricity',u,t] * top[t] * c_elec)
 	+ sum{u in Utilities, t in Time} (FlowInUnit['Natgas',u,t] * top[t] * c_gas);
 
+subject to max_emission_cstr:
+	Emissions <= Max_Emissions;
+
+subject to Totalcost_value:
+	Totalcost=InvCost+OpCost;
+
+subject to max_totalcost_cstr:
+	Totalcost<=Max_Totalcost;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Objective function
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-minimize Totalcost:InvCost + OpCost + Emissions*CO2tax*10^(-6);
+#minimize Totalcost:InvCost + OpCost;# + Emissions*CO2tax*10^(-6);
 
 
 
