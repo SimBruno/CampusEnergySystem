@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 # Heat recovery {#sec:heat recovery}
 In this section, EPFL heat supply is investigated. At first, the reference case is presented where heat is provided to EPFL at $T=65°C$. In this reference, all the heat is provided by a HP which heats up the lake water thanks to EPFL exiting heat flow.
 Then in order to improve this system 3 scenarios are assessed:
@@ -70,9 +63,7 @@ Let's solve the following optimization problem, in order to obtain the less expa
 
 Where $\dot{M}Cp_{Lake}$ and $\dot{M}Cp_{EPFL}$ are the flow of the lake and the EPFL supply system respectively. Note that $E$ is the heat pump electricity in [kW], $Q_{cond,ref}$ and $Q_{evap,ref}$ are the heat power in [kW] flowing through the condenser and the evaporator respectively, $Q_{heating}(t)$ is the EPFL medium heat consumption. Data is clustered using the clusters produced before. $t_{op}$ is the operational time for each cluster. $T_{LM,cond,ref}$, $T_{LM,evap,ref}$ are the logarithmic mean temperatures at the condenser and the evaporator respectively. Finally, $\epsilon$ is the Carnot efficiency of the heat pump.
 
-Using AMPL, the problem is solved and the OPEX is 635641.3566 [CHF/y]
-
-```{python, eval = T, echo = F}
+```{python, eval = F, echo = F}
 from amplpy import AMPL
 import pandas as pd
 import os
@@ -85,9 +76,51 @@ model_file = "NLP_ref.mod"
 model_directory = "1.Reference_case_Mirco"
 
 run_ampl(data_file, model_directory,model_file)
+
+print(sol)
 ```
 
 
+```{python, eval = T, echo = F}
+#| label: ampl-ref
+
+from amplpy import AMPL
+import pandas as pd
+import os
+from codes_02_heat_recovery.helper import run_ampl
+
+##Build model for reference case
+
+# Read data from CSV
+data_file = "clusters_data.csv"
+data_path = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
+data = pd.read_csv(data_path)
+
+model_file = "NLP_ref.mod"
+model_directory = "1.Reference_case_Mirco"
+model_path = os.path.join(os.getcwd(),"codes_02_heat_recovery",model_directory, model_file)
+
+# Create an AMPL instance
+ampl = AMPL()
+ampl.option["solver"] = "snopt"
+
+# Load the model
+ampl.read(model_path)
+
+# Pass data to AMPL
+ampl.set['Time']=set(data.index)
+ampl.getParameter("top").setValues(data['Hours'])
+ampl.getParameter("Qheating").setValues(data['Q_th'])
+
+# Solve the model
+ampl.solve()
+
+
+totalcost = ampl.getObjective("Totopex")
+print(f'OPEX = {totalcost.get_values()}')
+```
+
+Using AMPL, the problem is solved and the OPEX is 635641.3566 [CHF/y]
 ##  Data Center heat recovery {#subsec:case-2}
 
 ```{r task-2-case-2, out.width='100%', fig.align='center', fig.cap='Case 2: Heat recovery from data center', echo=F, fig.show='hold'}
@@ -144,11 +177,56 @@ Finally, to ensure that heat exchange does not invert, let's put additional cons
 Where $\Delta T$ is the temperature difference between flows in the HEX. As the increase in this $\Delta T$ reduces the OPEX, but increases the CAPEX, and inversely, there exists an optimal $\Delta T$.
 
 The resolution of this optimization problem returns:
+
+
+```{python, eval = F, echo = F}
+#| label: ampl-DC
+
+from amplpy import AMPL
+import pandas as pd
+import os
+from codes_02_heat_recovery.helper import run_ampl
+
+##Build model for DC model
+
+# Read data from CSV
+data_file   = "clusters_data.csv"
+data_path   = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
+data        = pd.read_csv(data_path)
+
+model_file = "NLP_DC.mod"
+model_directory = "2.DC_recovery_Mirco"
+model_path = os.path.join(os.getcwd(),"codes_02_heat_recovery",model_directory, model_file)
+
+# Create an AMPL instance
+ampl = AMPL()
+
+# Load the model
+ampl.read(model_path)
+
+# Pass data to AMPL
+ampl.set['Time'] = set(data.index)
+ampl.getParameter("top").setValues(data['Hours'])
+ampl.getParameter("Qheating").setValues(data['Q_th'])
+
+# Solve the model
+ampl.option["solver"] = "snopt"
+ampl.solve()
+
+totalcost = ampl.getObjective("TCost")
+
+print(f'OPEX = {totalcost.get_values()}')
+```
+
+
+
 $$
 TOTEX=631756 \text{ [CHF/y], } A_{HE,DC}=188.07 \text{ [m$^2$] and } \Delta T=3.79 \text{ [K]}
 $$
 
 The cost reduction is really small: 3885 [CHF/y]. Therefore, this solution may not be the best one.
+
+
 
 ## Air ventilation heat recovery {#subsec:case-3}
 
@@ -196,6 +274,76 @@ Where $\Delta T_{min}$ is the minimum temperature difference between hot and col
 All constraint equations from reference case (MASS BALANCE and MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION) are not repeated here but must also be considered as constraints.
 
 The resolution of this optimization problem returns:
+
+```{python, eval = T, echo = F, results = 'show'}
+#| label: ampl-vent
+
+from IPython.display import display, HTML
+from amplpy import AMPL
+import pandas as pd
+import os
+#from codes_02_heat_recovery.helper import run_ampl
+
+##Build model for vent case
+
+# Read data from CSV
+data_file   = "clusters_data.csv"
+data_path   = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
+data        = pd.read_csv(data_path)
+
+buildings_file  = "thermal_properties.csv"
+buildings_path  = os.path.join(os.getcwd(),"codes_01_energy_demand", buildings_file)
+buildings       = pd.read_csv(buildings_path)
+
+buildings.index = [f'Building{i}' for i in range(1,len(buildings)+1)]
+
+model_file      = "NLP_vent.mod"
+model_directory = "3.Ventilation_AL"
+model_path      = os.path.join(os.getcwd(),"codes_02_heat_recovery", model_directory, model_file)
+
+# Create an AMPL instance
+ampl = AMPL()
+
+# Load the model
+ampl.read(model_path)
+
+# Pass data to AMPL
+ampl.set['Time']=set(data.index)
+ampl.getParameter("top").setValues(data['Hours'])
+ampl.getParameter("Text").setValues(data['Temp'])
+ampl.getParameter("irradiation").setValues(data['Irr'])
+
+
+ampl.getParameter("k_th").setValues(buildings['k_th'])
+ampl.getParameter("k_sun").setValues(buildings['k_sun'])
+ampl.getParameter("FloorArea").setValues(buildings['FloorArea'])
+ampl.getParameter("specElec").setValues(buildings['specElec'])
+ampl.getParameter("specQ_people").setValues(buildings['specQ_people'])
+
+# Solve the model
+ampl.option["solver"] = "snopt"
+ampl.solve()
+
+total_cost_value = ampl.getVariable('TC').value()
+opex_value = ampl.getVariable('OPEX').value()
+capex_value = ampl.getVariable('CAPEX').value()
+
+# Create a Pandas DataFrame
+vent_df = pd.DataFrame({
+    'Variable': ['Total Cost', 'OPEX', 'CAPEX'],
+    'Value': [total_cost_value, opex_value, capex_value]
+})
+
+print(vent_df)
+
+html_vent = vent_df.to_html()
+title_html = '<h2 style="text-align:center;">Test HTML</h2>'
+html_vent_final = title_html +html_vent
+HTML(html_vent_final)
+
+```
+
+
 
 - $OPEX=680761$ [CHF/y]
 - $CAPEX=15844.7$ [CHF/y]
@@ -255,14 +403,63 @@ But the optimization problem is also following new constraints specific to the a
 All constraint equations from reference case (Mass Balance and EPFL Heat/Elec Demand) are not repeated here but must also be considered as constraints.
 
 The resolution of this optimization problem returns:
-```{python, echo = F, eval= F}
+```{python, eval = T, echo = F}
+#| label: ampl-vent-HP
+
+from amplpy import AMPL
+import pandas as pd
+import os
+#from codes_02_heat_recovery.helper import run_ampl
+
+##Build model for vent case
+
 # Read data from CSV
-data_file = "clusters_data.csv" # assumes .csv is located in codes_01_energy_demand
+data_file       = "clusters_data.csv"
+data_path       = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
+data            = pd.read_csv(data_path)
 
-model_file = "NLP_DC.mod"
-model_directory = "2.DC_recovery_Mirco"
+buildings_file  = "thermal_properties.csv"
+buildings_path  = os.path.join(os.getcwd(),"codes_01_energy_demand", buildings_file)
+buildings       = pd.read_csv(buildings_path)
 
-run_ampl(data_file, model_directory,model_file)
+buildings.index = [f'Building{i}' for i in range(1,len(buildings)+1)]
+
+model_file      = "NLP_vent_HP.mod"
+model_directory = "4.Ventilation_HP_SAL"
+model_path      = os.path.join(os.getcwd(),"codes_02_heat_recovery", model_directory, model_file)
+
+# Create an AMPL instance
+ampl            = AMPL()
+
+# Load the model
+ampl.read(model_path)
+
+# Pass data to AMPL
+ampl.set['Time']= set(data.index)
+ampl.getParameter("top").setValues(data['Hours'])
+ampl.getParameter("Text").setValues(data['Temp'])
+ampl.getParameter("irradiation").setValues(data['Irr'])
+
+
+ampl.getParameter("k_th").setValues(buildings['k_th'])
+ampl.getParameter("k_sun").setValues(buildings['k_sun'])
+ampl.getParameter("FloorArea").setValues(buildings['FloorArea'])
+ampl.getParameter("specElec").setValues(buildings['specElec'])
+ampl.getParameter("specQ_people").setValues(buildings['specQ_people'])
+
+# Solve the model
+ampl.option["solver"] = "snopt"
+ampl.solve()
+
+total_cost_value = ampl.getVariable('TC').value()
+print(f"Total Cost: {total_cost_value}")
+
+opex_value = ampl.getVariable('OPEX').value()
+capex_value = ampl.getVariable('CAPEX').value()
+
+# Print the values
+print(f"OPEX: {opex_value}")
+print(f"CAPEX: {capex_value}")
 ```
 
 - $OPEX=.........$ [CHF/y]
