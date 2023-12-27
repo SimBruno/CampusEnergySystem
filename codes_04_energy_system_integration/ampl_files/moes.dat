@@ -25,8 +25,8 @@ set Time := 															# set of typical periods
 set Technologies := 													# set of technologies
 Boiler 
 PV 
-#SOFC 
-#STC
+SOFC 
+STC
 R1270_LT
 R1270_MT
 R290_LT
@@ -37,13 +37,13 @@ set Grids :=															# set of grid units
 ElecGridBuy 
 ElecGridSell 
 NatGasGrid
-#HydrogenGrid
+HydrogenGrid
 ;	
 
 set Layers :=															# set of layers (resources)
 Natgas
 Electricity
-#Hydrogen
+Hydrogen
 ;	
 
 set HeatingLevel :=														# set of heating levels
@@ -59,8 +59,8 @@ ElectricityCons
 
 set UtilitiesOfType[Heating] :=											# set to assign utilities to utility type
 Boiler
-#SOFC
-#STC
+SOFC
+STC
 R1270_LT
 R1270_MT
 R290_LT
@@ -97,9 +97,9 @@ Boiler
 NatGasGrid 
 ;
 
-#set UtilitiesOfLayer[Hydrogen] :=
-#SOFC
-#HydrogenGrid
+set UtilitiesOfLayer[Hydrogen] :=
+SOFC
+HydrogenGrid
 ;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
@@ -131,6 +131,8 @@ param irradiation :=													# irradiation at each typical period
 ;
 
 
+
+
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Heating demand parameters
 ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -147,16 +149,15 @@ param Text := 															# external temperature [C] at each typical period
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Utility parameters
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-param c_spec :=															# specific cost of resources[CHF/kWh)]
-NatGasGrid 0.0303
-ElecGridBuy 0.0916
-ElecGridSell -0.06
-#HydrogenGrid 0.3731
+# param c_spec :=															# specific cost of resources[CHF/kWh)]
+# NatGasGrid 0.0303
+# ElecGridBuy 0.0916
+# ElecGridSell -0.06
+# HydrogenGrid 0.3731;
 
 # assumption: SOFC produce electricity and heat from hydrogen but not the reverse
 #https://h2v.eu/analysis/statistics/financing/hydrogen-cost-and-sales-prices
 #https://blog.romande-energie.ch/fr/articles/152-hydrogene-transition-energetique
-;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the grid parameters: resource flow and fmax
@@ -167,5 +168,5 @@ let  Flowout['Electricity','ElecGridBuy'] := refSize;
 let  Fmax['ElecGridBuy'] := 1000;
 let  Flowin['Electricity','ElecGridSell'] := refSize;
 let  Fmax['ElecGridSell'] := 1000;
-#let  Flowin['Hydrogen','HydrogenGrid'] := refSize;
-#let  Fmax['HydrogenGrid'] := 1000;
+let  Flowin['Hydrogen','HydrogenGrid'] := refSize;
+let  Fmax['HydrogenGrid'] := 1000;

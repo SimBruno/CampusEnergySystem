@@ -182,12 +182,12 @@ Resource balance constraints (except for electricity): flowin = flowout
 
 
 subject to inflow_cstr {l in Layers, u in UtilitiesOfLayer[l], t in Time}:
-	if u!= 'R1270_LT' and u!= 'R1270_MT' and u!= 'R290_LT' and u!= 'R290_MT' then
+	if u!= 'R1270_LT' and u!= 'R1270_MT' and u!= 'R290_LT' and u!= 'R290_MT' and u!='STC' then
 		FlowInUnit[l, u, t] = mult_t[u,t] * Flowin[l,u];
 
 
 subject to outflow_cstr {l in Layers, u in UtilitiesOfLayer[l], t in Time}:
-	if u!= 'R1270_LT' and u!= 'R1270_MT' and u!= 'R290_LT' and u!= 'R290_MT' then
+	if u!= 'R1270_LT' and u!= 'R1270_MT' and u!= 'R290_LT' and u!= 'R290_MT' and u!='STC' then
 		FlowOutUnit[l, u, t] = mult_t[u,t] * Flowout[l,u]; 
 
 	
@@ -203,7 +203,19 @@ subject to electricity_balance{t in Time}:
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Cost parameters and constraints
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-param c_spec{Grids} default 0.001;									# specific cost of the resource [CHF/kWh]
+param c_spec{g in Grids}
+default 
+if g='NatGasGrid' then 0.0303
+else if  g='ElecGridBuy' then 0.0916
+else if g='ElecGridSell' then -0.06
+else if g='HydrogenGrid' then 0.3731
+else 0.001;
+
+# let c_spec{NatGasGrid} default 0.0303;
+# let c_spec{ElecGridBuy} default 0.0916;
+# let c_spec{ElecGridSell} default -0.06;
+# let c_spec{HydrogenGrid} default 0.3731;
+
 param cop2g{g in Grids} = c_spec[g] * refSize;					# mult_t dependent cost of the reosurce [CHF/kWh * refSize]
 
 param cop1t{Technologies} default 0.001;							# fixed cost of the technology [CHF/h]
@@ -262,5 +274,14 @@ Objective function
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 #minimize Totalcost:InvCost + OpCost;# + Emissions*CO2tax*10^(-6);
 
+#subject to test_cstr:
+#	use['R290_MT']=0;
+
+#subject to test_cstr2:
+#	use['Boiler']=0;
+
+
+# subject to test_cstr3:
+# 	use['SOFC']=1;
 
 

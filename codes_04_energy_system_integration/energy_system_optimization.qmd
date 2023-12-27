@@ -96,6 +96,10 @@ myData["Totalcost"]
 myData["k_th"]
 myData["Emissions"]
 myData["use"]
+myData["mult_t"].loc["ElecGridBuy"]
+myData["mult_t"].loc["NatGasGrid"]
+myData["mult_t"].loc["Boiler"]
+myData["mult_t"].loc["STC"]
 ```
 
 
@@ -112,8 +116,30 @@ Totcost
 ```
 
 
+```{python}
+from functions import solve_Emissions
+solve_Emissions(1e20)
+myData = pd.read_pickle("./codes_04_energy_system_integration/results/solve_Emissions.pkl")
+myData["use"]
+myData["mult_t"].loc["Boiler"]
+myData["mult_t"].loc["R290_MT"]
+myData["usedroofAreaSTC"]
+```
 
 
+```{python}
+from functions import solve_Emissions, solve_TOTEX
+import sys
+import pandas as pd
+sys.path.append('./codes_04_energy_system_integration/')
+solve_TOTEX(1e20)
+myData = pd.read_pickle("./codes_04_energy_system_integration/results/solve_TOTEX.pkl")
+myData["use"]
+myData["mult_t"].loc["Boiler"]
+myData["mult_t"].loc["R290_MT"]
+myData["usedroofAreaSTC"]
+myData["c_spec"]
+```
 
 
 

@@ -33,7 +33,7 @@ def save_ampl_results(ampl, pkl_name="results"):
   f.close()
   return 
 
-def solve_TOTEX(Max_Emissions):
+def solve_TOTEX(Max_Emissions=1e20):
   ampl = AMPL()
   ampl.cd("./codes_04_energy_system_integration/ampl_files") 
   ampl.read("moes.mod")
@@ -64,6 +64,7 @@ def solve_TOTEX(Max_Emissions):
   for col in data.columns:
     ampl.getParameter(col).setValues(data[col])
   ampl.get_parameter("Max_Emissions").set(Max_Emissions)
+  ampl.get_parameter("c_spec")
   ampl.setOption('solver', 'gurobi')
   ampl.solve()
   
@@ -71,7 +72,7 @@ def solve_TOTEX(Max_Emissions):
   myData = pd.read_pickle("./codes_04_energy_system_integration/results/solve_TOTEX.pkl")
   return myData['Totalcost'].values[0][0],myData['Emissions'].values[0][0]
   
-def solve_Emissions(Max_Totalcost):
+def solve_Emissions(Max_Totalcost=1e20):
   ampl = AMPL()
   ampl.cd("./codes_04_energy_system_integration/ampl_files") 
   ampl.read("moes.mod")
@@ -135,7 +136,6 @@ if __name__ == '__main__':
   plt.show()
   print(Emiss_Emissions)
   print(Totcost_Emissions)
-
   # from amplpy import AMPL, Environment
   # from functions import save_ampl_results
   # import pandas as pd

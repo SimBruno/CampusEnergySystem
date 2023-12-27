@@ -3,6 +3,8 @@ Load the main model and its data
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 reset;
 model moes.mod;
+include objective_TOTEX.mod;
+#include objective_Emissions.mod;
 data moes.dat;
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Including all technologies files 
@@ -10,7 +12,7 @@ Including all technologies files
 include moesSolar.mod;
 include moesSolar.dat;
 
-#include moesSOFC.dat;
+include moesSOFC.dat;
 
 include moesboiler.dat;
 
@@ -46,14 +48,18 @@ Display commands
 #display Qheating;
 #display Qheatingdemand;
 
-display mult;
+#display mult;
 display mult_t;
-
+#display use_t;
 display use;
-display use_t;
-display Edemand;
+display Emissions;
+display Totalcost;
 
-display FlowOutUnit;
+
+#display usedroofAreaSTC;
+#display Edemand;
+
+#display FlowOutUnit;
 
 
 #display Flowin;
