@@ -12,15 +12,15 @@ param eff_SOFC_heat := 0.40; # sr: Stadler P.,  Model-based sizing of building e
 Set flow rate of hydrogen as a function of efficiency
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 
-let Qheatingsupply['SOFC']:= 10000;#100; # kW CHANGER sur internet
+let Qheatingsupply['SOFC']:= 100; # kW CHANGER sur internet
 let Flowin['Hydrogen','SOFC'] := Qheatingsupply['SOFC'] / eff_SOFC_heat; 
-#let Flowout['Electricity','SOFC'] := (Qheatingsupply['SOFC'] / eff_SOFC_heat) * eff_SOFC_elec;    
+let Flowout['Electricity','SOFC'] := (Qheatingsupply['SOFC'] / eff_SOFC_heat) * eff_SOFC_elec;    
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the maximum scaling factor
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-let  Fmax['SOFC'] := 100;#10000;#1000; # Q_demandEPFL/ Q_ref
-# let  Fmin['SOFC'] := 1;
+let  Fmax['SOFC'] := 10000;#1000; # Q_demandEPFL/ Q_ref
+let  Fmin['SOFC'] := 1;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Set the minimum temperature of the SOFC
@@ -31,4 +31,5 @@ let Tminheating['SOFC'] := 500; #°C
 Set the cinv2 of the SOFC
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 let cinv1["SOFC"]:= 4224; # CHF/yr but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources *2 since 2 SOFC to last 20years
-let cinv2["SOFC"]:=285.39*Qheatingsupply['SOFC']; # CHF/(yr) but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
+let cinv2["SOFC"]:= 285.39*Qheatingsupply['SOFC']; # CHF/(yr) but need to be in $/yr sr: Stadler P.,  Model-based sizing of building energy systems with renewable sources
+

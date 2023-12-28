@@ -1,2 +1,2 @@
 
-minimize TOTEX: Totalcost;
+minimize object1: Totalcost;

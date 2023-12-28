@@ -68,7 +68,7 @@ R290_MT
 ;
 
 set UtilitiesOfType[ElectricitySup] :=
-#SOFC
+SOFC
 PV
 ElecGridBuy
 ;
@@ -82,7 +82,7 @@ ElecGridSell
 ;
 
 set UtilitiesOfLayer[Electricity] := 
-#SOFC 
+SOFC 
 PV 
 R1270_LT
 R1270_MT
@@ -168,5 +168,5 @@ let  Flowout['Electricity','ElecGridBuy'] := refSize;
 let  Fmax['ElecGridBuy'] := 1000;
 let  Flowin['Electricity','ElecGridSell'] := refSize;
 let  Fmax['ElecGridSell'] := 1000;
-let  Flowin['Hydrogen','HydrogenGrid'] := refSize;
+let  Flowout['Hydrogen','HydrogenGrid'] := refSize;
 let  Fmax['HydrogenGrid'] := 1000;
