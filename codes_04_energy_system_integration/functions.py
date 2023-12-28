@@ -6,6 +6,7 @@ import pandas as pd
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from enum import Enum
 
 
 def save_ampl_results(ampl, pkl_name="results"): 
@@ -33,6 +34,82 @@ def save_ampl_results(ampl, pkl_name="results"):
   f.close()
   return 
 
+
+class criteria(Enum):
+    OPEX = 'OPEX'
+    CAPEX = 'CAPEX'
+    Emissions = 'Emissions'
+    TOTEX = 'TOTEX'
+    parametric = 'parametric'
+
+
+def optimize(criteria,TAX=120e-6,Max_Emissions=1e30, Max_Totalcost=1e30, Max_Invcost=1e30,Max_Opcost=1e30,NatGasGrid=0.0303,ElecGridSell=-0.06,ElecGridBuy=0.0916,HydrogenGrid=0.3731):
+  
+  ampl = AMPL()
+  ampl.cd("./codes_04_energy_system_integration/ampl_files") 
+  ampl.read("moes.mod")
+  ampl.get_parameter("CO2tax").set(TAX)
+  if criteria==criteria.Emissions:
+    ampl.read("objective_Emissions.mod")
+  elif criteria==criteria.OPEX:
+    ampl.read("objective_OPEX.mod")
+  elif criteria==criteria.CAPEX:
+    ampl.read("objective_CAPEX.mod")
+  elif criteria==criteria.parametric:
+    ampl.read("objective_parametric.mod")
+  else:
+    ampl.read("objective_TOTEX.mod")
+
+
+  ampl.readData("moes.dat")
+
+  ampl.read("moesSolar.mod")
+  ampl.read("moesSolar.dat")
+  ampl.read("moesSOFC.dat")
+  ampl.read("moesHP_R290_LT.mod")
+  ampl.read("moesHP_R290_LT.dat")
+  ampl.read("moesHP_R290_MT.mod")
+  ampl.read("moesHP_R290_MT.dat")
+  ampl.read("moesHP_R1270_LT.mod")
+  ampl.read("moesHP_R1270_LT.dat")
+  ampl.read("moesHP_R1270_MT.mod")
+  ampl.read("moesHP_R1270_MT.dat")
+  ampl.read("moesboiler.dat")
+
+  ampl.setOption('solver', 'cplex')
+  ampl.setOption('presolve_eps', 5e-05)
+  ampl.setOption('omit_zero_rows', 1)
+  ampl.setOption('omit_zero_cols', 1)
+  
+  data=pd.read_csv("./codes_01_energy_demand/data_MOES.csv")
+  data.index = ["Building" + str(i) for i in range(1,len(data)+1)] # the index of the dataframe has to match the values of the set "Buildings" in ampl
+
+  # send parameters to ampl
+  for col in data.columns:
+    ampl.getParameter(col).setValues(data[col])
+    
+  ampl.get_parameter("Max_Emissions").set(Max_Emissions)
+  ampl.get_parameter("Max_Totalcost").set(Max_Totalcost)
+  ampl.get_parameter("Max_Invcost").set(Max_Invcost)
+  ampl.get_parameter("Max_Opcost").set(Max_Opcost)
+  #ampl.get_parameter("c_spec")
+  resources=pd.DataFrame(
+        [
+            ("NatGasGrid", NatGasGrid),
+            ("ElecGridBuy", ElecGridBuy),
+            ("ElecGridSell", ElecGridSell),
+            ("HydrogenGrid", HydrogenGrid),
+        ],
+        columns=["Grids", "c_spec"],
+    ).set_index("Grids")
+  ampl.set_data(resources, "Grids")
+  ampl.setOption('solver', 'gurobi')
+  ampl.solve()
+  save_ampl_results(ampl, pkl_name="optimize_dump")
+  myData = pd.read_pickle("./codes_04_energy_system_integration/results/optimize_dump.pkl")
+  return myData
+
+
 def solve_TOTEX(Max_Emissions=1e20):
   ampl = AMPL()
   ampl.cd("./codes_04_energy_system_integration/ampl_files") 
@@ -42,7 +119,7 @@ def solve_TOTEX(Max_Emissions=1e20):
 
   ampl.read("moesSolar.mod")
   ampl.readData("moesSolar.dat")
-
+  ampl.read("moesSOFC.dat")
   ampl.read("moesHP_R290_LT.mod")
   ampl.read("moesHP_R290_LT.dat")
   ampl.read("moesHP_R290_MT.mod")
@@ -64,7 +141,7 @@ def solve_TOTEX(Max_Emissions=1e20):
   for col in data.columns:
     ampl.getParameter(col).setValues(data[col])
   ampl.get_parameter("Max_Emissions").set(Max_Emissions)
-  ampl.get_parameter("c_spec")
+
   ampl.setOption('solver', 'gurobi')
   ampl.solve()
   
@@ -81,7 +158,7 @@ def solve_Emissions(Max_Totalcost=1e20):
 
   ampl.read("moesSolar.mod")
   ampl.readData("moesSolar.dat")
-
+  ampl.read("moesSOFC.dat")
   ampl.read("moesHP_R290_LT.mod")
   ampl.read("moesHP_R290_LT.dat")
   ampl.read("moesHP_R290_MT.mod")
@@ -103,6 +180,7 @@ def solve_Emissions(Max_Totalcost=1e20):
   for col in data.columns:
     ampl.getParameter(col).setValues(data[col])
   ampl.get_parameter("Max_Totalcost").set(Max_Totalcost)
+
   ampl.setOption('solver', 'gurobi')
   ampl.solve()
   
@@ -126,16 +204,29 @@ def draw_pareto(n):
   return Totalcost_pareto_min_TOTEX,Emissions_pareto_min_TOTEX,Totalcost_pareto_min_Emissions,Emissions_pareto_min_Emissions
 
 
+
+
+
+
+
+
+
 if __name__ == '__main__':
 
-  Totcost_TOTEX,Emiss_TOTEX,Totcost_Emissions,Emiss_Emissions=draw_pareto(20)
-  plt.scatter(Totcost_TOTEX,Emiss_TOTEX,c='r',alpha=0.3)
-  plt.scatter(Totcost_Emissions,Emiss_Emissions,c='b',alpha=0.3)
-  plt.legend(["TOTEX optimization","Emissions optimization"])
-  plt.grid()
-  plt.show()
-  print(Emiss_Emissions)
-  print(Totcost_Emissions)
+  data=optimize(criteria.Emissions, TAX=400e-6)
+  print(data['c_elec'])
+  print(data['Emissions'])
+  print(data['OpCost'])
+  print(data['mult'])
+  print(data['CO2tax'])
+  # Totcost_TOTEX,Emiss_TOTEX,Totcost_Emissions,Emiss_Emissions=draw_pareto(20)
+  # plt.scatter(Totcost_TOTEX,Emiss_TOTEX,c='r',alpha=0.3)
+  # plt.scatter(Totcost_Emissions,Emiss_Emissions,c='b',alpha=0.3)
+  # plt.legend(["TOTEX optimization","Emissions optimization"])
+  # plt.grid()
+  # plt.show()
+  # print(Emiss_Emissions)
+  # print(Totcost_Emissions)
   # from amplpy import AMPL, Environment
   # from functions import save_ampl_results
   # import pandas as pd

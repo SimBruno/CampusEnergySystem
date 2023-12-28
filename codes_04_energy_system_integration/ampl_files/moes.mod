@@ -51,8 +51,10 @@ param a_ex{Utilities} default 0;
 param b_ex{Utilities} default 0;
 param c_ex{Utilities} default 1;
 
-param Max_Emissions default 1e20;
-param Max_Totalcost default 1e20;
+param Max_Emissions default 1e30;
+param Max_Totalcost default 1e30;
+param Max_Invcost default 1e30;
+param Max_Opcost default 1e30;
 
 # Heat pumps data
 
@@ -203,13 +205,14 @@ subject to electricity_balance{t in Time}:
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Cost parameters and constraints
 ---------------------------------------------------------------------------------------------------------------------------------------*/
-param c_spec{g in Grids}
-default 
-if g='NatGasGrid' then 0.0303
-else if  g='ElecGridBuy' then 0.0916
-else if g='ElecGridSell' then -0.06
-else if g='HydrogenGrid' then 0.3731
-else 0.001;
+param c_spec{Grids} default 0.001;
+# param c_spec{g in Grids}
+# default 
+# if g='NatGasGrid' then 0.0303
+# else if  g='ElecGridBuy' then 0.0916
+# else if g='ElecGridSell' then -0.06
+# else if g='HydrogenGrid' then 0.3731
+# else 0.001;
 
 # let c_spec{NatGasGrid} default 0.0303;
 # let c_spec{ElecGridBuy} default 0.0916;
@@ -238,7 +241,7 @@ param cinv2{t in Technologies} default 0.001;						# variable investment cost of
 
 param c_elec default 75.3; #electricity emissions in Switzerland 13/12/2023[gCO2/kWh] --> https://www.horocarbon.ch/mix.php
 param c_gas default 228; #natural gas emissions in Switzerland 2018[gCO2/kWh] --> https://www.wwf.ch/sites/default/files/doc-2018-10/2018-06-Factsheet-NaturalGas-Biogas-PtG.pdf
-param CO2tax default 120; #CO2 tax in Switzerland 2022 [CHF/tCO2] --> https://www.iea.org/policies/17762-swiss-carbon-tax#
+param CO2tax default 120e-6; #CO2 tax in Switzerland 2022 [CHF/tCO2] --> https://www.iea.org/policies/17762-swiss-carbon-tax#
 
 #param eff{Technologies diff {"Cogen","SOFC","HP1stageLT","HP1stageMT"}} default 0.9;		# efficiency of each technology, these values are not definitive ones. 
 #param cop{{"HP1stageLT","HP1stageMT"}, Time} default 3;		# efficiency of each technology, these values are not definitive ones. 
@@ -268,6 +271,12 @@ subject to Totalcost_value:
 
 subject to max_totalcost_cstr:
 	Totalcost<=Max_Totalcost;
+
+subject to max_invcost_cstr:
+	InvCost<=Max_Invcost;
+
+subject to max_Opcost_cstr:
+	OpCost<=Max_Opcost;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Objective function

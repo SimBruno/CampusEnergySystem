@@ -54,6 +54,7 @@ display mult_t;
 display use;
 display Emissions;
 display Totalcost;
+display c_spec;
 
 
 #display usedroofAreaSTC;

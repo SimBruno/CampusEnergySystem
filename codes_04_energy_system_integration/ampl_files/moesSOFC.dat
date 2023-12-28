@@ -12,7 +12,7 @@ param eff_SOFC_heat := 0.40; # sr: Stadler P.,  Model-based sizing of building e
 Set flow rate of hydrogen as a function of efficiency
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 
-let Qheatingsupply['SOFC']:= 10000;#100; # kW CHANGER sur internet
+let Qheatingsupply['SOFC']:= 100;#100; # kW CHANGER sur internet
 let Flowin['Hydrogen','SOFC'] := Qheatingsupply['SOFC'] / eff_SOFC_heat; 
 #let Flowout['Electricity','SOFC'] := (Qheatingsupply['SOFC'] / eff_SOFC_heat) * eff_SOFC_elec;    
 
