@@ -52,9 +52,9 @@ Display commands
 display mult_t;
 #display use_t;
 display use;
-display Emissions;
-display Totalcost;
-display c_spec;
+# display Emissions;
+# display Totalcost;
+# display c_spec;
 
 
 #display usedroofAreaSTC;

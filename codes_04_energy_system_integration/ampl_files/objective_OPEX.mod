@@ -1,2 +1,2 @@
 
-minimize OPEX: OpCost;
+minimize object1: OpCost;

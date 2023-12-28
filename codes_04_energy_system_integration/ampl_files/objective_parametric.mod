@@ -1,2 +1,2 @@
 
-minimize TOTENVEX: Totalcost+CO2tax*Emissions;
+minimize object1: Totalcost+CO2tax*Emissions;

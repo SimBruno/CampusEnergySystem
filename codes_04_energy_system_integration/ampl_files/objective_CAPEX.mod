@@ -1,2 +1,2 @@
 
-minimize CAPEX: InvCost;
+minimize object1: InvCost;
