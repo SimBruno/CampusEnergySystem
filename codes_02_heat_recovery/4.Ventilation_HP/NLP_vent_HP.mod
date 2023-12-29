@@ -3,7 +3,7 @@
 ################################
 # Sets & Parameters
 reset;
-set Time default {};        				#your time set from the MILP 
+set Time default {1..3};        				#your time set from the MILP 
 set Buildings default {};
 for {n in {1..24}}{let Buildings:= Buildings union {'Building'&n};}
 
