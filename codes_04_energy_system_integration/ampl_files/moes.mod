@@ -25,7 +25,7 @@ set low_T_id = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
 for {n in {low_T_id}}{let LowTempBuildings:= LowTempBuildings union {'Building'&n};}
 
 
-set Time default {}; 											# time segments of the problem 
+set Time default {1..7}; 											# time segments of the problem 
 set Technologies default {};									# technologies to provide heating cooling and elec
 set Grids default {};											# grid units to buy resources (fuel, electricity etc.)
 set Utilities := Technologies union Grids;						# combination of technologies and grids
@@ -39,12 +39,12 @@ set UtilitiesOfLayer{Layers} default {};
 Generic Parameters
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 param dTmin default 5;											# minimum temperature difference in the heat exchangers
-param top{Time};												# operating time [h] of each time step
+param top{Time} default 100;												# operating time [h] of each time step
 param Theating{HeatingLevel}	;								# temperatue [C] of the heating levels
-param irradiation{Time};										# solar irradiation [kW/m2] at each time step
+param irradiation{Time} default 0.1;										# solar irradiation [kW/m2] at each time step
 param roofArea default 15500;									# available roof area for PV installation
 param refSize default 1000;									    # reference size of the utilities [kW]
-param Text{t in Time};  
+param Text{t in Time} default 9;  
 param Tint default 21;											# internal set point temperature [C]
 param specElec{Buildings} default 0.04;
 param a_ex{Utilities} default 0;
@@ -258,10 +258,13 @@ subject to ic_cstr:
 
 #variable and constraint for emissions calculation [gCO2/year]
 var Emissions;
+param technology_emission{tc in Technologies} default 0;
 var Totalcost;
 subject to em_cstr:
 	Emissions = sum{u in Utilities, t in Time} (FlowInUnit['Electricity',u,t] * top[t] * c_elec)
-	+ sum{u in Utilities, t in Time} (FlowInUnit['Natgas',u,t] * top[t] * c_gas);
+	+ sum{u in Utilities, t in Time} (FlowInUnit['Natgas',u,t] * top[t] * c_gas)
+	+ sum{u in UtilitiesOfType['Heating'],t in Time} (mult_t[u,t]*Qheatingsupply[u]*top[t]*technology_emission[u])
+	+ sum{tc in Technologies diff UtilitiesOfType['Heating'],t in Time,l in Layers} (mult_t[tc,t]*top[t]*technology_emission[tc]*FlowOutUnit[l,tc,t]);
 
 subject to max_emission_cstr:
 	Emissions <= Max_Emissions;

@@ -43,17 +43,19 @@ class criteria(Enum):
     parametric = 'parametric'
 
 
-def optimize(criteria,result_file="optimize_dump",TAX=120e-6,Max_Emissions=1e30, Max_Totalcost=1e30, Max_Invcost=1e30,Max_Opcost=1e30,NatGasGrid=0.0303,ElecGridSell=-0.06,ElecGridBuy=0.0916,HydrogenGrid=0.3731):
+def optimize(criteria,result_file="optimize_dump",TAX=120e-6,Max_Emissions=1e30, Max_Totalcost=1e30, Max_Invcost=1e30,Max_Opcost=1e30,NatGasGrid=0.0303,ElecGridSell=-0.06,ElecGridBuy=0.0916,HydrogenGrid=0.3731, c_gas=228, c_elec=75.3):
   """Optimize the EPFL energy system.
   
   First specifiy criteria by writing for example criteria.OPEX, criteria.parametric, or criteria.Emissions.
-  By default, TOTEX is optimized. If criteria.parametric is selected, a tax is applied to CO2 emissions, and the TOTEX is optimized. You can specify the CO2tax by setting TAX. by default, TAX=120e-6.
+  By default, TOTEX is optimized. If criteria.parametric is selected, a tax is applied to CO2 emissions, and the TOTEX is optimized. You can specify the CO2tax by setting TAX. by default, TAX=120e-6 [CHF/tCO2].
   
   A constraint on the maximum value of the TOTEX,CAPEX,OPEX and Emissions can be specified via
-  Max_Totalcost, Max_Invcost, Max_Opcost, Max_Emissions. By default, they are unconstrained (more precisely constrained to 1e20, which is so large that it won't affect the optimization).
+  Max_Totalcost, Max_Invcost, Max_Opcost, Max_Emissions. By default, they are unconstrained (more precisely constrained to 1e20 [gCO2/yr], which is so large that it won't affect the optimization).
   
-  Lastly, the price of resources can be specified using NatGasGrid, ElecGridBuy, ElecGridSell, HydrogenGrid. By default, resources have a price of
-  NatGasGrid=0.0303, ElecGridBuy=0.0916, ElecGridSell=-0.06, HydrogenGrid=0.3731
+  The price of resources can be specified using NatGasGrid, ElecGridBuy, ElecGridSell, HydrogenGrid. By default, resources have a price of
+  NatGasGrid=0.0303 [CHF/kWh], ElecGridBuy=0.0916 [CHF/kWh], ElecGridSell=-0.06 [CHF/kWh], HydrogenGrid=0.3731 [CHF/kWh].
+
+  Lastly, the emission factor for electricity and gas can be changed using c_elec and c_gas. by default, they are at c_elec=75.3 [CHF/tCO2], c_gas=228 [gCO2/kWh]
 
   The output is also saved to pickle format in the folder results. The name of the file can be specified using result_file. By default, result_file="optimize_dump".
   """
@@ -101,6 +103,14 @@ def optimize(criteria,result_file="optimize_dump",TAX=120e-6,Max_Emissions=1e30,
   ampl.setOption('omit_zero_rows', 1)
   ampl.setOption('omit_zero_cols', 1)
   
+  # Import cluster data
+  data_cluster=pd.read_csv("./codes_01_energy_demand/clusters_data.csv").drop(columns='Q_th').reset_index().rename(columns={'Temp':'Text', 'Irr':'irradiation', 'Hours':'top','index':'Time'}).set_index('Time')
+  data_cluster['irradiation']=data_cluster['irradiation']/1000
+  
+
+  # Set cluster data
+  ampl.set_data(data_cluster, "Time")
+
   # Read data from task 1
   data=pd.read_csv("./codes_01_energy_demand/data_MOES.csv")
   data.index = ["Building" + str(i) for i in range(1,len(data)+1)] # the index of the dataframe has to match the values of the set "Buildings" in ampl
@@ -109,8 +119,10 @@ def optimize(criteria,result_file="optimize_dump",TAX=120e-6,Max_Emissions=1e30,
   for col in data.columns:
     ampl.getParameter(col).setValues(data[col])
   
-  # Set CO2TAX
+  # Set CO2TAX and emission factors
   ampl.get_parameter("CO2tax").set(TAX)
+  ampl.get_parameter("c_gas").set(c_gas)
+  ampl.get_parameter("c_elec").set(c_elec)
 
   # Set Maximum values for criterias
   ampl.get_parameter("Max_Emissions").set(Max_Emissions)
@@ -159,7 +171,7 @@ class criteria2(Enum):
     parametric = 'parametric'
 
 
-def get_pareto(criteria1, criteria2,n=10,TAX_pareto=120e-6,Max_Emissions_pareto=1e30, Max_Totalcost_pareto=1e30, Max_Invcost_pareto=1e30,Max_Opcost_pareto=1e30,NatGasGrid_pareto=0.0303,ElecGridSell_pareto=-0.06,ElecGridBuy_pareto=0.0916,HydrogenGrid_pareto=0.3731):
+def get_pareto(criteria1, criteria2,n=10,TAX_pareto=120e-6,Max_Emissions_pareto=1e30, Max_Totalcost_pareto=1e30, Max_Invcost_pareto=1e30,Max_Opcost_pareto=1e30,NatGasGrid_pareto=0.0303,ElecGridSell_pareto=-0.06,ElecGridBuy_pareto=0.0916,HydrogenGrid_pareto=0.3731, c_elec_pareto=75.3, c_gas_pareto=228):
   # Check that two different criterias are selected
   if criteria1==criteria2:
     print("You must select differents criterias for pareto optimization")
@@ -173,7 +185,7 @@ def get_pareto(criteria1, criteria2,n=10,TAX_pareto=120e-6,Max_Emissions_pareto=
 
   # Get bounds for optimization
   # Optimize unbounded on first criteria
-  data_crit_1=optimize(criteria1,TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto)
+  data_crit_1=optimize(criteria1,TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
   crit1_min=data_crit_1['object1']
   if criteria2==criteria2.Emissions:
     crit2_max=data_crit_1['Emissions'].values[0][0]
@@ -185,7 +197,7 @@ def get_pareto(criteria1, criteria2,n=10,TAX_pareto=120e-6,Max_Emissions_pareto=
     crit2_max=data_crit_1['Totalcost'].values[0][0]
 
   # Optimize unbounded on second criteria
-  data_crit_2=optimize(criteria2,TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto)
+  data_crit_2=optimize(criteria2,TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
   crit2_min=data_crit_2['object1']
   if criteria1==criteria1.Emissions:
     crit1_max=data_crit_2['Emissions'].values[0][0]
@@ -204,37 +216,37 @@ def get_pareto(criteria1, criteria2,n=10,TAX_pareto=120e-6,Max_Emissions_pareto=
   for j in range(0,n):
     # Get pareto curve by optimizing criteria 1 and constraining criteria 2
     if criteria2==criteria2.Emissions:
-      data_pareto=optimize(criteria1,Max_Emissions=crit2_span[j])
+      data_pareto=optimize(criteria1,Max_Emissions=crit2_span[j],TAX=TAX_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit1_pareto_min_crit1[j]=data_pareto['object1']
       crit2_pareto_min_crit1[j]=data_pareto['Emissions'].values[0][0]
     elif criteria2==criteria2.OPEX:
-      data_pareto=optimize(criteria1,Max_Opcost=crit2_span[j])
+      data_pareto=optimize(criteria1,Max_Opcost=crit2_span[j],TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit1_pareto_min_crit1[j]=data_pareto['object1']
       crit2_pareto_min_crit1[j]=data_pareto['OpCost'].values[0][0]
     elif criteria2==criteria2.CAPEX:
-      data_pareto=optimize(criteria1,Max_Invcost=crit2_span[j])
+      data_pareto=optimize(criteria1,Max_Invcost=crit2_span[j],TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit1_pareto_min_crit1[j]=data_pareto['object1']
       crit2_pareto_min_crit1[j]=data_pareto['InvCost'].values[0][0]
     elif criteria2==criteria2.TOTEX:
-      data_pareto=optimize(criteria1,Max_Totalcost=crit2_span[j])
+      data_pareto=optimize(criteria1,Max_Totalcost=crit2_span[j],TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit1_pareto_min_crit1[j]=data_pareto['object1']
       crit2_pareto_min_crit1[j]=data_pareto['Totalcost'].values[0][0]
 
     # Get pareto curve by optimizing criteria 2 and constraining criteria 1
     if criteria1==criteria1.Emissions:
-      data_pareto=optimize(criteria2,Max_Emissions=crit1_span[j])
+      data_pareto=optimize(criteria2,Max_Emissions=crit1_span[j],TAX=TAX_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit2_pareto_min_crit2[j]=data_pareto['object1']
       crit1_pareto_min_crit2[j]=data_pareto['Emissions'].values[0][0]
     elif criteria1==criteria1.OPEX:
-      data_pareto=optimize(criteria2,Max_Opcost=crit1_span[j])
+      data_pareto=optimize(criteria2,Max_Opcost=crit1_span[j],TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit2_pareto_min_crit2[j]=data_pareto['object1']
       crit1_pareto_min_crit2[j]=data_pareto['OpCost'].values[0][0]
     elif criteria1==criteria1.CAPEX:
-      data_pareto=optimize(criteria2,Max_Invcost=crit1_span[j])
+      data_pareto=optimize(criteria2,Max_Invcost=crit1_span[j],TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit2_pareto_min_crit2[j]=data_pareto['object1']
       crit1_pareto_min_crit2[j]=data_pareto['InvCost'].values[0][0]
     elif criteria1==criteria1.TOTEX:
-      data_pareto=optimize(criteria2,Max_Totalcost=crit1_span[j])
+      data_pareto=optimize(criteria2,Max_Totalcost=crit1_span[j],TAX=TAX_pareto,Max_Emissions=Max_Emissions_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit2_pareto_min_crit2[j]=data_pareto['object1']
       crit1_pareto_min_crit2[j]=data_pareto['Totalcost'].values[0][0]
   
@@ -265,17 +277,20 @@ if __name__ == '__main__':
   # I want to optimize the operational cost, and I know that NatGas will 0.32. 
   # What will be the Investment costs? and what technology will be used
   # Uncomment lines below:
-  data=optimize(criteria=criteria.OPEX,NatGasGrid=0.32)
-  print(data['use'][data['use']!=0].dropna())
-  print(data['InvCost'].values[0][0])
+  # data=optimize(criteria=criteria.OPEX,NatGasGrid=0.32)
+  # print(data['use'][data['use']!=0].dropna())
+  # print(data['InvCost'].values[0][0])
+
 
   ### Example 2 ###
   # I want to draw the pareto front between TOTEX and Emissions
-  # Uncomment lines below:
-  #TOTEX,EMISSIONS=get_pareto(criteria1.TOTEX,criteria2.Emissions,n=6)
-  #draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+  # # Uncomment lines below:
+  # TOTEX,EMISSIONS=get_pareto(criteria1.TOTEX,criteria2.Emissions,n=14)
+  # draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 
-  
+  data=optimize(criteria=criteria.TOTEX)
+  print(data['use'][data['use']!=0].dropna())
+  print(data['InvCost'].values[0][0])
 
 
 

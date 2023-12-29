@@ -6,6 +6,9 @@ model moes.mod;
 include objective_TOTEX.mod;
 #include objective_Emissions.mod;
 data moes.dat;
+
+
+data moesClusters.dat;# Now culsters data are specified separately.
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Including all technologies files 
 ---------------------------------------------------------------------------------------------------------------------------------------*/ 
@@ -55,7 +58,6 @@ display use;
 # display Emissions;
 # display Totalcost;
 # display c_spec;
-
 
 #display usedroofAreaSTC;
 #display Edemand;
