@@ -22,85 +22,85 @@ Sets
 # 7
 # ;
 
-set Technologies := 													# set of technologies
-Boiler 
-PV 
-SOFC 
-STC
-R1270_LT
-R1270_MT
-R290_LT
-R290_MT
-;			
+# set Technologies := 													# set of technologies
+# Boiler 
+# PV 
+# SOFC 
+# STC
+# R1270_LT
+# R1270_MT
+# R290_LT
+# R290_MT
+# ;			
 
-set Grids :=															# set of grid units
-ElecGridBuy 
-ElecGridSell 
-NatGasGrid
-HydrogenGrid
-;	
+# set Grids :=															# set of grid units
+# ElecGridBuy 
+# ElecGridSell 
+# NatGasGrid
+# HydrogenGrid
+# ;	
 
-set Layers :=															# set of layers (resources)
-Natgas
-Electricity
-Hydrogen
-;	
+# set Layers :=															# set of layers (resources)
+# Natgas
+# Electricity
+# Hydrogen
+# ;	
 
-set HeatingLevel :=														# set of heating levels
-LowT 
-MediumT
-;										
+# set HeatingLevel :=														# set of heating levels
+# LowT 
+# MediumT
+# ;										
 
-set UtilityType :=														# set of utility type
-Heating 
-ElectricitySup
-ElectricityCons
-;
+# set UtilityType :=														# set of utility type
+# Heating 
+# ElectricitySup
+# ElectricityCons
+# ;
 
-set UtilitiesOfType[Heating] :=											# set to assign utilities to utility type
-Boiler
-SOFC
-STC
-R1270_LT
-R1270_MT
-R290_LT
-R290_MT
-;
+# set UtilitiesOfType[Heating] :=											# set to assign utilities to utility type
+# Boiler
+# SOFC
+# STC
+# R1270_LT
+# R1270_MT
+# R290_LT
+# R290_MT
+# ;
 
-set UtilitiesOfType[ElectricitySup] :=
-SOFC
-PV
-ElecGridBuy
-;
+# set UtilitiesOfType[ElectricitySup] :=
+# SOFC
+# PV
+# ElecGridBuy
+# ;
 
-set UtilitiesOfType[ElectricityCons] :=
-R1270_LT
-R1270_MT
-R290_LT
-R290_MT
-ElecGridSell
-;
+# set UtilitiesOfType[ElectricityCons] :=
+# R1270_LT
+# R1270_MT
+# R290_LT
+# R290_MT
+# ElecGridSell
+# ;
 
-set UtilitiesOfLayer[Electricity] := 
-SOFC 
-PV 
-R1270_LT
-R1270_MT
-R290_LT
-R290_MT
-ElecGridBuy 
-ElecGridSell 
-;
+# set UtilitiesOfLayer[Electricity] := 
+# SOFC 
+# PV 
+# R1270_LT
+# R1270_MT
+# R290_LT
+# R290_MT
+# ElecGridBuy 
+# ElecGridSell 
+# ;
 
-set UtilitiesOfLayer[Natgas] :=
-Boiler 
-NatGasGrid 
-;
+# set UtilitiesOfLayer[Natgas] :=
+# Boiler 
+# NatGasGrid 
+# ;
 
-set UtilitiesOfLayer[Hydrogen] :=
-SOFC
-HydrogenGrid
-;
+# set UtilitiesOfLayer[Hydrogen] :=
+# SOFC
+# HydrogenGrid
+# ;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Generic Parameters
@@ -115,10 +115,10 @@ Generic Parameters
 # 7    1
 # ;
 
-param Theating :=														# temperature of heating demand
-MediumT 65
-LowT 50
-;
+# param Theating :=														# temperature of heating demand
+# MediumT 65
+# LowT 50
+# ;
 
 # param irradiation :=													# irradiation at each typical period
 # 1    0.28557
@@ -128,6 +128,13 @@ LowT 50
 # 5    0.56462
 # 6    0.27901
 # 7    0.00000
+# ;
+
+# # set HP2 :=
+# R290_LT
+# R290_MT
+# R1270_LT
+# R1270_MT
 # ;
 
 

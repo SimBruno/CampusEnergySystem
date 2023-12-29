@@ -12,8 +12,11 @@ data moesClusters.dat;# Now culsters data are specified separately.
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Including all technologies files 
 ---------------------------------------------------------------------------------------------------------------------------------------*/ 
-include moesSolar.mod;
-include moesSolar.dat;
+include moesPV.mod;
+include moesPV.dat;
+
+include moesSTC.mod;
+include moesSTC.dat;
 
 include moesSOFC.dat;
 

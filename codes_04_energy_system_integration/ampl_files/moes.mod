@@ -25,6 +25,7 @@ set low_T_id = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
 for {n in {low_T_id}}{let LowTempBuildings:= LowTempBuildings union {'Building'&n};}
 
 
+
 set Time default {1..7}; 											# time segments of the problem 
 set Technologies default {};									# technologies to provide heating cooling and elec
 set Grids default {};											# grid units to buy resources (fuel, electricity etc.)
@@ -34,6 +35,7 @@ set HeatingLevel default {};									# low and medium temlerature levels
 set UtilityType default {};										# type of the utility: heating, cooling, elec	
 set UtilitiesOfType{UtilityType} default {};					# utilities assigned to their respective utility type
 set UtilitiesOfLayer{Layers} default {};
+set HP2 default {};
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Generic Parameters
@@ -150,7 +152,7 @@ subject to size_cstr6{u in Utilities}: 				# limitzing the binary variable use
 	use[u] <= sum{t in Time} use_t[u,t];	
 
 subject to Not_all_HP:
- 	use['R1270_LT']+use['R1270_MT']+use['R290_LT']+use['R290_MT']<=1;
+ 	sum{hp in HP2} (use[hp])<=1;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Heating balance constraints: demand = supply
@@ -241,7 +243,7 @@ param cinv2{t in Technologies} default 0.001;						# variable investment cost of
 
 param c_elec default 75.3; #electricity emissions in Switzerland 13/12/2023[gCO2/kWh] --> https://www.horocarbon.ch/mix.php
 param c_gas default 228; #natural gas emissions in Switzerland 2018[gCO2/kWh] --> https://www.wwf.ch/sites/default/files/doc-2018-10/2018-06-Factsheet-NaturalGas-Biogas-PtG.pdf
-param CO2tax default 120e-6; #CO2 tax in Switzerland 2022 [CHF/tCO2] --> https://www.iea.org/policies/17762-swiss-carbon-tax#
+param CO2tax default 120e-6; #CO2 tax in Switzerland 2022 [CHF/gCO2] --> https://www.iea.org/policies/17762-swiss-carbon-tax#
 
 #param eff{Technologies diff {"Cogen","SOFC","HP1stageLT","HP1stageMT"}} default 0.9;		# efficiency of each technology, these values are not definitive ones. 
 #param cop{{"HP1stageLT","HP1stageMT"}, Time} default 3;		# efficiency of each technology, these values are not definitive ones. 
@@ -281,6 +283,14 @@ subject to max_invcost_cstr:
 subject to max_Opcost_cstr:
 	OpCost<=Max_Opcost;
 
+# PV et STC
+
+var usedroofAreaPV >= 0;
+var usedroofAreaSTC{Time};
+var max_usedroofAreaSTC >=0;
+
+subject to roof_cstr:
+	roofArea >= usedroofAreaPV + max_usedroofAreaSTC;
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Objective function
 ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -295,5 +305,6 @@ Objective function
 
 # subject to test_cstr3:
 # 	use['SOFC']=1;
+
 
 
