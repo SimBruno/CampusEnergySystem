@@ -7,6 +7,7 @@ library(reticulate)
 use_virtualenv('./venv', required=FALSE)
 ```
 
+
 ```{python, echo=F, results='hide', label='load data'}
 import matplotlib
 matplotlib.use('Agg')
@@ -78,7 +79,10 @@ For this exercise, we're provided with 5 sets of possible tag arrangement. To go
 
 ## Unit models
 
-### Compressor
+For the sake of completeness, we present here the general unit models composing the system. 
+
+::: {.panel-tabset}
+## Compressor
 Stating the unit model for a single compressor with one inlet stream and one outlet stream yields:
 
 | Type  | Variables                                      | #        |
@@ -99,7 +103,7 @@ Stating the unit model for a single compressor with one inlet stream and one out
 
 And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a compressor.
 
-### Evaporator
+## Evaporator
 For the evaporator, we proceed the same way. We model the heat exchange of the lake as a constant heat transfer, allowing to simplify the equation statement since only our main flow has to be considered. In the general case, the fluid enters the evaporator with a vapor quality $x_{in}<1$, but based on the assumption that the entering flow is purely gaseous allows to further simplify the modelisation. 
 
 | Type  | Variables                                      | #        |
@@ -120,7 +124,7 @@ For the evaporator, we proceed the same way. We model the heat exchange of the l
 
 And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a compressor.
 
-### Condensor
+## Condensor
 The VALI model suggest to model the condensor in two part: one taking care of the change of temperature (sensible), the second one modelling the phase change (latent). Using the same logic as the evaporator, only the main flow is considered and the other flows are modeled as heat transfer. The unit model equation will be the same for both condensor, and only the heat transfer model will vary. The base variables are the following:
 
 | Type  | Variables                                      | #        |
@@ -131,7 +135,9 @@ The VALI model suggest to model the condensor in two part: one taking care of th
 | $n_t$ |                                                | 0        |
 | $n_v$ |                                                | 8        |
 
-#### Sensible condensor
+::: {.panel-tabset}
+
+### Sensible condensor
 The model equation for the sensible condensor is to assume a constant pressure during the heat transfer:
 
 | Type  | Equations                                        | #        |
@@ -144,7 +150,8 @@ The model equation for the sensible condensor is to assume a constant pressure d
 
 And thus $n_s = n_x-n_e = 2$, meaning that we need 2 specifications to characterize the sensible condensor.
 
-#### Latent condensor
+
+### Latent condensor
 The model equation for the latent condensor is to assume a constant temperature during the heat transfer:
 
 | Type  | Equations                                        | #        |
@@ -156,8 +163,9 @@ The model equation for the latent condensor is to assume a constant temperature 
 | $n_e$ |                                                  | 4        |
 
 And thus $n_s = n_x-n_e = 2$, meaning that we need 2 specifications to characterize the latent condensor.
+:::
 
-### Expansion valve
+## Expansion valve
 
 Assuming the expansion valves are not going through a phase change allows to ignore the vapor quality for both valves. The model implies an isenthalpic pressure drop.
 
@@ -180,7 +188,7 @@ Assuming the expansion valves are not going through a phase change allows to ign
 And thus $n_s = n_v-n_e= 3$, meaning we need 3 specifications to characterize a pressure valve.
 
 
-### Flash tank
+## Flash tank
 
 The flash tank involves a little bit more of complexity due to the multiple flows mixing. 
 
@@ -205,6 +213,7 @@ The flash tank involves a little bit more of complexity due to the multiple flow
 
 And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a flash tank.
 
+:::
 
 ## VALI Tags selection
 Now that all the types of unit models are characterized, it should be possible to determine the minimum number of measurements needed to make the system fully determined. 
