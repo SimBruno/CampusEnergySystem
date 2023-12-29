@@ -53,7 +53,7 @@ def run_ampl(data_file, model_directory, model_file, buildings_required=False):
     # if buildings properties are needed, load them
     if buildings_required==True:
         ampl.getParameter("Text").setValues(data['Temp'])
-        ampl.getParameter("irradiation").setValues(data['Irr'])
+        ampl.getParameter("irradiation").setValues(data['Irr']/1000)
 
         buildings_file  = "thermal_properties.csv"
         buildings_path  = os.path.join(os.getcwd(),"codes_01_energy_demand", buildings_file)

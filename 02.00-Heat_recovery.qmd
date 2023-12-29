@@ -79,7 +79,7 @@ from codes_02_heat_recovery.helper import save_ampl_results, run_ampl
 # Read data from CSV
 data_file = "clusters_data.csv"
 model_file = "NLP_ref.mod"
-model_directory = "1.Reference_case_Mirco"
+model_directory = "1.Reference_case"
 
 run_ampl(data_file, model_directory, model_file)
 
@@ -171,7 +171,7 @@ from codes_02_heat_recovery.helper import run_ampl
 # Read data from CSV
 data_file   = "clusters_data.csv"
 model_file = "NLP_DC.mod"
-model_directory = "2.DC_recovery_Mirco"
+model_directory = "2.DC_recovery"
 
 run_ampl(data_file, model_directory, model_file)
 
@@ -259,7 +259,7 @@ data_path   = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
 data        = pd.read_csv(data_path)
 
 model_file      = "NLP_vent.mod"
-model_directory = "3.Ventilation_AL"
+model_directory = "3.Ventilation"
 
 run_ampl(data_file, model_directory, model_file, True)
 
@@ -347,7 +347,7 @@ The resolution of this optimization problem returns:
 # Read data from CSV
 data_file       = "clusters_data.csv"
 model_file      = "NLP_vent_HP.mod"
-model_directory = "4.Ventilation_HP_SAL"
+model_directory = "4.Ventilation_HP"
 
 run_ampl(data_file, model_directory, model_file, True)
 
