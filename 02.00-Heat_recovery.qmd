@@ -178,12 +178,19 @@ run_ampl(data_file, model_directory, model_file)
 DC_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_DC.pkl')
 print("The objective for DC case is:", round(DC_data['obj'],2), "CHF.\n")
 
+DC_TOTEX    = round(DC_data['obj'],2)
+DC_OPEX     = round(DC_data['OPEX'].values[0][0],2)
+DC_CAPEX    = round(DC_data['CAPEX'].values[0][0],2)
+DC_AHEDC    = round(DC_data['AHEDC'].values[0][0],2)
+
 html_table_dc_data = "<h5 style='text-align:center;'>DC optimization results</h2>\n\n"
 html_table_dc_data += "<table border='1' style='border-collapse: collapse;'>\n"
 html_table_dc_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
-html_table_dc_data += f"<tr><td>Objective</td><td>{round(DC_data['obj'],2)} CHF</td></tr>\n"
-html_table_dc_data += f"<tr><td>HEX Area</td><td>{round(DC_data['AHEDC'],2)} m<sup>2</sup></td></tr>\n"
-html_table_dc_data += f"<tr><td>&Delta;T</td><td>{round(DC_data['delta_T'],2)} K</td></tr>\n"
+html_table_dc_data += f"<tr><td>TOTEX</td><td>{DC_TOTEX} CHF</td></tr>\n"
+html_table_dc_data += f"<tr><td>OPEX</td><td>{DC_OPEX} CHF</td></tr>\n"
+html_table_dc_data += f"<tr><td>CAPEX</td><td>{DC_CAPEX} CHF</td></tr>\n"
+html_table_dc_data += f"<tr><td>HEX Area</td><td>{DC_AHEDC} m<sup>2</sup></td></tr>\n"
+#html_table_dc_data += f"<tr><td>&Delta;T</td><td>{round(DC_data['delta_T'],2)} K</td></tr>\n"
 html_table_dc_data += "</table>"
 
 HTML(html_table_dc_data)
@@ -267,13 +274,18 @@ vent_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_vent.pkl')
 
 print("The objective for vent case is:", round(vent_data['obj'],2), "CHF.\n")
 
+vent_TOTEX    = round(vent_data['obj'],2)
+vent_OPEX     = round(vent_data['OPEX'].values[0][0],2)
+vent_CAPEX    = round(vent_data['CAPEX'].values[0][0],2)
+vent_AHEDC    = round(vent_data['Area_Vent'].values[0][0],2)
+
 html_table_vent_data = "<h5 style='text-align:center;'>Ventilation optimization results</h2>\n\n"
 html_table_vent_data += "<table border='1' style='border-collapse: collapse;'>\n"
 html_table_vent_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
-html_table_vent_data += f"<tr><td>TOTEX</td><td>{round(vent_data['obj'],2)} CHF</td></tr>\n"
-html_table_vent_data += f"<tr><td>OPEX</td><td>{round(vent_data['OPEX'],2)} CHF</td></tr>\n"
-html_table_vent_data += f"<tr><td>CAPEX</td><td>{round(vent_data['CAPEX'],2)} CHF</td></tr>\n"
-html_table_vent_data += f"<tr><td>A<sub>vent</sub></td><td>{round(vent_data['Area_Vent'],2)} m<sup>2</sup></td></tr>\n"
+html_table_vent_data += f"<tr><td>TOTEX</td><td>{vent_TOTEX} CHF</td></tr>\n"
+html_table_vent_data += f"<tr><td>OPEX</td><td>{vent_OPEX} CHF</td></tr>\n"
+html_table_vent_data += f"<tr><td>CAPEX</td><td>{vent_CAPEX} CHF</td></tr>\n"
+html_table_vent_data += f"<tr><td>A<sub>vent</sub></td><td>{vent_AHEDC } m<sup>2</sup></td></tr>\n"
 html_table_vent_data += "</table>"
 
 HTML(html_table_vent_data)
@@ -355,13 +367,19 @@ vent_HP_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_vent_HP.pkl
 
 print("The objective for vent HP case is:", round(vent_HP_data['obj'],2), "CHF.\n")
 
+vent_HP_TOTEX    = round(vent_HP_data['obj'],2)
+vent_HP_OPEX     = round(vent_HP_data['OPEX'].values[0][0],2)
+vent_HP_CAPEX    = round(vent_HP_data['CAPEX'].values[0][0],2)
+vent_HP_AHEDC    = round(vent_HP_data['Area_Vent'].values[0][0],2)
+
+
 html_table_vent_HP_data = "<h5 style='text-align:center;'>Ventilation with HP optimization results</h2>\n\n"
 html_table_vent_HP_data += "<table border='1' style='border-collapse: collapse;'>\n"
 html_table_vent_HP_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
-html_table_vent_HP_data += f"<tr><td>TOTEX</td><td>{round(vent_HP_data['obj'],2)} CHF</td></tr>\n"
-html_table_vent_HP_data += f"<tr><td>OPEX</td><td>{round(vent_HP_data['OPEX'],2)} CHF</td></tr>\n"
-html_table_vent_HP_data += f"<tr><td>CAPEX</td><td>{round(vent_HP_data['CAPEX'],2)} CHF</td></tr>\n"
-html_table_vent_HP_data += f"<tr><td>A<sub>vent</sub></td><td>{round(vent_HP_data['Area_Vent'],2)} m<sup>2</sup></td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>TOTEX</td><td>{vent_HP_TOTEX} CHF</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>OPEX</td><td>{vent_HP_OPEX } CHF</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>CAPEX</td><td>{vent_HP_CAPEX} CHF</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>A<sub>vent</sub></td><td>{vent_HP_AHEDC} m<sup>2</sup></td></tr>\n"
 html_table_vent_HP_data += "</table>"
 
 HTML(html_table_vent_HP_data)

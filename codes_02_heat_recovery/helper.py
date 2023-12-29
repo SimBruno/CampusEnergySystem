@@ -33,7 +33,7 @@ def run_ampl(data_file, model_directory, model_file, buildings_required=False):
 
     # Read data from CSV
     # data_file = "clusters_data.csv"
-    data_path = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
+    data_path = os.path.join(".","codes_01_energy_demand", data_file)
     data = pd.read_csv(data_path)
 
     # model_file = "NLP_ref.mod"
@@ -72,7 +72,7 @@ def run_ampl(data_file, model_directory, model_file, buildings_required=False):
 
     # Solve the model
     ampl.setOption('solver', 'snopt')
-    ampl.setOption('presolve_eps', 8.53e-15)
+    #ampl.setOption('presolve_eps', 8.53e-15)
     #ampl.setOption('omit_zero_rows', 1)
     #ampl.setOption('omit_zero_cols', 1)
     ampl.solve()
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # Read data from CSV
     data_file = "clusters_data.csv"
     model_file = "NLP_vent.mod"
-    model_directory = "3.Ventilation_AL"
+    model_directory = "3.Ventilation"
 
     run_ampl(data_file, model_directory, model_file,True)
 

@@ -32,7 +32,6 @@ param HeatDC 		:= 574; #amount of heat to be removed from data center (kW)
 param Tret 			:= 17; #temperature of air entering DC
 param MassDC 		:= HeatDC/(TDCin-Tret); #[KJ/(s degC)] MCp of air in DC
 param Cpwater		:= 4.18; #[kJ/kgC]
-param delta_T		:= 1;
 ################################
 ##Variables
 
@@ -59,7 +58,6 @@ var THPin{Time} 	>= 7;
 var Qfree{Time} 	>= 0.001; #free cooling heat; makes sure DC air is cooled down.
 var Flow{Time} 		>= 0.001; #lake water entering free coling HEX
 var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s degC)]
-#var delta_T			>= 0.001;
 
 ################################
 # Constraints
@@ -71,7 +69,7 @@ subject to Tcontrol1{t in Time}: TDCin>=TRadin[t]+0.1;
 subject to Tcontrol2 {t in Time}: TDCout[t]>=EPFLMediumOut+0.1;
 
 
-subject to Tcontrol3 {t in Time}: TDCout[t] >= THPin[t]+delta_T;
+subject to Tcontrol3 {t in Time}: TDCout[t] >= THPin[t]+5;
 
 
 
