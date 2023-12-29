@@ -50,7 +50,6 @@ def run_ampl(data_file, model_directory, model_file, buildings_required=False):
     ampl.set['Time']=set(data.index)
     ampl.getParameter("top").setValues(data['Hours'])
 
-
     # if buildings properties are needed, load them
     if buildings_required==True:
         ampl.getParameter("Text").setValues(data['Temp'])
@@ -61,20 +60,21 @@ def run_ampl(data_file, model_directory, model_file, buildings_required=False):
         buildings       = pd.read_csv(buildings_path)
         buildings.index = [f'Building{i}' for i in range(1,len(buildings)+1)]
 
-        ampl.getParameter("k_th").setValues(buildings['k_th'])
-        ampl.getParameter("k_sun").setValues(buildings['k_sun'])
-        ampl.getParameter("FloorArea").setValues(buildings['FloorArea'])
-        ampl.getParameter("specElec").setValues(buildings['specElec'])
-        ampl.getParameter("specQ_people").setValues(buildings['specQ_people'])
+        #drop specQ_people col
+        buildings.drop(columns= "specQ_people", inplace=True)
+
+        for col in buildings.columns:
+            ampl.getParameter(col).setValues(buildings[col])
+      
     else: 
         ampl.getParameter("Qheating").setValues(data['Q_th'])
 
 
     # Solve the model
     ampl.setOption('solver', 'snopt')
-    ampl.setOption('presolve_eps', 5e-05)
-    ampl.setOption('omit_zero_rows', 1)
-    ampl.setOption('omit_zero_cols', 1)
+    ampl.setOption('presolve_eps', 8.53e-15)
+    #ampl.setOption('omit_zero_rows', 1)
+    #ampl.setOption('omit_zero_cols', 1)
     ampl.solve()
     #assert ampl.solve_result == "solved"
 
@@ -100,3 +100,6 @@ if __name__ == "__main__":
     print("Script executed successfully.")
 
     data = pd.read_pickle(r'C:\Users\maj\Desktop\report-group-3\codes_02_heat_recovery\results\NLP_vent.pkl')
+    print(data['OPEX'])
+
+    print(data['CAPEX'])

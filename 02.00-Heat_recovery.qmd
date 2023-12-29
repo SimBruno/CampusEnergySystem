@@ -64,13 +64,15 @@ Let's solve the following optimization problem, in order to obtain the less expa
 Where $\dot{M}Cp_{Lake}$ and $\dot{M}Cp_{EPFL}$ are the flow of the lake and the EPFL supply system respectively. Note that $E$ is the heat pump electricity in [kW], $Q_{cond,ref}$ and $Q_{evap,ref}$ are the heat power in [kW] flowing through the condenser and the evaporator respectively, $Q_{heating}(t)$ is the EPFL medium heat consumption. Data is clustered using the clusters produced before. $t_{op}$ is the operational time for each cluster. $T_{LM,cond,ref}$, $T_{LM,evap,ref}$ are the logarithmic mean temperatures at the condenser and the evaporator respectively. Finally, $\epsilon$ is the Carnot efficiency of the heat pump.
 
 
-```{python, eval = T, echo = F, results='show'}
+```{python, eval = T, echo = F, results='hide'}
 #| label: ampl-ref
 
 from amplpy import AMPL
 import pandas as pd
 import os
 import pickle
+import tabulate
+from IPython.display import display, HTML
 from codes_02_heat_recovery.helper import save_ampl_results, run_ampl
 
 
@@ -79,17 +81,25 @@ data_file = "clusters_data.csv"
 model_file = "NLP_ref.mod"
 model_directory = "1.Reference_case_Mirco"
 
-totopex = run_ampl(data_file, model_directory, model_file)
+run_ampl(data_file, model_directory, model_file)
 
-#ref_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_ref.pkl')
+ref_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_ref.pkl')
+print("The TOTOPEX for reference case is:", round(ref_data['Totopex'],2), "CHF.\n")
 
-print(totopex)
+html_table_ref_data = "<h5 style='text-align:center;'>Reference case optimization results</h2>\n\n"
+html_table_ref_data += "<table border='1' style='border-collapse: collapse;'>\n"
+html_table_ref_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
+html_table_ref_data += f"<tr><td>Objective</td><td>{round(ref_data['Totopex'],2)} CHF</td></tr>\n"
+html_table_ref_data += "</table>"
+
+HTML(html_table_ref_data)
 
 ```
 
 
 Using AMPL, the problem is solved and the OPEX is 635641.3566 [CHF/y]
-##  Data Center heat recovery {#subsec:case-2}
+
+## Data Center heat recovery {#subsec:case-2}
 
 ```{r task-2-case-2, out.width='100%', fig.align='center', fig.cap='Case 2: Heat recovery from data center', echo=F, fig.show='hold'}
 #| label: fig-task-2-case-2
@@ -147,61 +157,36 @@ Where $\Delta T$ is the temperature difference between flows in the HEX. As the 
 The resolution of this optimization problem returns:
 
 
-```{python, eval = T, echo = F, results='show'}
+```{python, eval = T, echo = F, results='hide'}
 #| label: ampl-DC
 
 from amplpy import AMPL
 import pandas as pd
 import os
 import pickle
-#from codes_02_heat_recovery.helper import run_ampl
+from codes_02_heat_recovery.helper import run_ampl
 
 ##Build model for DC model
-def run_ampl(data_file, model_directory, model_file):
-
-    # Read data from CSV
-    # data_file = "clusters_data.csv"
-    data_path = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
-    data = pd.read_csv(data_path)
-
-    # model_file = "NLP_ref.mod"
-    # model_directory = "1.Reference_case_Mirco"
-    model_path = os.path.join(os.getcwd(),"codes_02_heat_recovery",model_directory, model_file)
-
-    # Create an AMPL instance
-    ampl = AMPL()
-
-    # Load the model
-    ampl.read(model_path)
-
-    # Pass data to AMPL
-    ampl.set['Time']=set(data.index)
-    ampl.getParameter("top").setValues(data['Hours'])
-    ampl.getParameter("Qheating").setValues(data['Q_th'])
-
-    # Solve the model
-    ampl.option["solver"] = "snopt"
-    ampl.solve()
-    #assert ampl.solve_result == "solved"
-
-    
-
-    #return totopex
-
-    return 
 
 # Read data from CSV
 data_file   = "clusters_data.csv"
 model_file = "NLP_DC.mod"
 model_directory = "2.DC_recovery_Mirco"
 
-TC = run_ampl(data_file, model_directory, model_file)
+run_ampl(data_file, model_directory, model_file)
 
-#totalcost = ampl.getVariable("TC")
-#capex_value = ampl.getVariable("CAPEX").value()
+DC_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_DC.pkl')
+print("The objective for DC case is:", round(DC_data['obj'],2), "CHF.\n")
 
-print(f'TOTEX = {TC}')
+html_table_dc_data = "<h5 style='text-align:center;'>DC optimization results</h2>\n\n"
+html_table_dc_data += "<table border='1' style='border-collapse: collapse;'>\n"
+html_table_dc_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
+html_table_dc_data += f"<tr><td>Objective</td><td>{round(DC_data['obj'],2)} CHF</td></tr>\n"
+html_table_dc_data += f"<tr><td>HEX Area</td><td>{round(DC_data['AHEDC'],2)} m<sup>2</sup></td></tr>\n"
+html_table_dc_data += f"<tr><td>&Delta;T</td><td>{round(DC_data['delta_T'],2)} K</td></tr>\n"
+html_table_dc_data += "</table>"
 
+HTML(html_table_dc_data)
 
 ```
 
@@ -262,15 +247,10 @@ All constraint equations from reference case (MASS BALANCE and MEETING HEATING D
 
 The resolution of this optimization problem returns:
 
-```{python, eval = F, echo = F, results = 'show'}
+```{python, eval = T, echo = F, results = 'hide'}
 #| label: ampl-vent
 
 from IPython.display import display, HTML
-from amplpy import AMPL
-import pandas as pd
-import os
-#from codes_02_heat_recovery.helper import run_ampl
-
 ##Build model for vent case
 
 # Read data from CSV
@@ -278,55 +258,26 @@ data_file   = "clusters_data.csv"
 data_path   = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
 data        = pd.read_csv(data_path)
 
-buildings_file  = "thermal_properties.csv"
-buildings_path  = os.path.join(os.getcwd(),"codes_01_energy_demand", buildings_file)
-buildings       = pd.read_csv(buildings_path)
-
-buildings.index = [f'Building{i}' for i in range(1,len(buildings)+1)]
-
 model_file      = "NLP_vent.mod"
 model_directory = "3.Ventilation_AL"
-model_path      = os.path.join(os.getcwd(),"codes_02_heat_recovery", model_directory, model_file)
 
-# Create an AMPL instance
-ampl = AMPL()
+run_ampl(data_file, model_directory, model_file, True)
 
-# Load the model
-ampl.read(model_path)
+vent_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_vent.pkl')
 
-# Pass data to AMPL
-ampl.set['Time']=set(data.index)
-ampl.getParameter("top").setValues(data['Hours'])
-ampl.getParameter("Text").setValues(data['Temp'])
-ampl.getParameter("irradiation").setValues(data['Irr'])
+print("The objective for vent case is:", round(vent_data['obj'],2), "CHF.\n")
 
+html_table_vent_data = "<h5 style='text-align:center;'>Ventilation optimization results</h2>\n\n"
+html_table_vent_data += "<table border='1' style='border-collapse: collapse;'>\n"
+html_table_vent_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
+html_table_vent_data += f"<tr><td>TOTEX</td><td>{round(vent_data['obj'],2)} CHF</td></tr>\n"
+html_table_vent_data += f"<tr><td>OPEX</td><td>{round(vent_data['OPEX'],2)} CHF</td></tr>\n"
+html_table_vent_data += f"<tr><td>CAPEX</td><td>{round(vent_data['CAPEX'],2)} CHF</td></tr>\n"
+html_table_vent_data += f"<tr><td>A<sub>vent</sub></td><td>{round(vent_data['Area_Vent'],2)} m<sup>2</sup></td></tr>\n"
+html_table_vent_data += "</table>"
 
-ampl.getParameter("k_th").setValues(buildings['k_th'])
-ampl.getParameter("k_sun").setValues(buildings['k_sun'])
-ampl.getParameter("FloorArea").setValues(buildings['FloorArea'])
-ampl.getParameter("specElec").setValues(buildings['specElec'])
-ampl.getParameter("specQ_people").setValues(buildings['specQ_people'])
+HTML(html_table_vent_data)
 
-# Solve the model
-ampl.option["solver"] = "snopt"
-ampl.solve()
-
-total_cost_value = ampl.getVariable('TC').value()
-opex_value = ampl.getVariable('OPEX').value()
-capex_value = ampl.getVariable('CAPEX').value()
-
-# Create a Pandas DataFrame
-vent_df = pd.DataFrame({
-    'Variable': ['Total Cost', 'OPEX', 'CAPEX'],
-    'Value': [total_cost_value, opex_value, capex_value]
-})
-
-print(vent_df)
-
-html_vent = vent_df.to_html()
-title_html = '<h2 style="text-align:center;">Test HTML</h2>'
-html_vent_final = title_html +html_vent
-HTML(html_vent_final)
 
 ```
 
@@ -390,63 +341,31 @@ But the optimization problem is also following new constraints specific to the a
 All constraint equations from reference case (Mass Balance and EPFL Heat/Elec Demand) are not repeated here but must also be considered as constraints.
 
 The resolution of this optimization problem returns:
-```{python, eval = F, echo = F}
+```{python, eval = T, echo = F, results='hide'}
 #| label: ampl-vent-HP
-
-from amplpy import AMPL
-import pandas as pd
-import os
-#from codes_02_heat_recovery.helper import run_ampl
-
-##Build model for vent case
 
 # Read data from CSV
 data_file       = "clusters_data.csv"
-data_path       = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
-data            = pd.read_csv(data_path)
-
-buildings_file  = "thermal_properties.csv"
-buildings_path  = os.path.join(os.getcwd(),"codes_01_energy_demand", buildings_file)
-buildings       = pd.read_csv(buildings_path)
-
-buildings.index = [f'Building{i}' for i in range(1,len(buildings)+1)]
-
 model_file      = "NLP_vent_HP.mod"
 model_directory = "4.Ventilation_HP_SAL"
-model_path      = os.path.join(os.getcwd(),"codes_02_heat_recovery", model_directory, model_file)
 
-# Create an AMPL instance
-ampl            = AMPL()
+run_ampl(data_file, model_directory, model_file, True)
 
-# Load the model
-ampl.read(model_path)
+vent_HP_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_vent_HP.pkl')
 
-# Pass data to AMPL
-ampl.set['Time']= set(data.index)
-ampl.getParameter("top").setValues(data['Hours'])
-ampl.getParameter("Text").setValues(data['Temp'])
-ampl.getParameter("irradiation").setValues(data['Irr'])
+print("The objective for vent HP case is:", round(vent_HP_data['obj'],2), "CHF.\n")
 
+html_table_vent_HP_data = "<h5 style='text-align:center;'>Ventilation with HP optimization results</h2>\n\n"
+html_table_vent_HP_data += "<table border='1' style='border-collapse: collapse;'>\n"
+html_table_vent_HP_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
+html_table_vent_HP_data += f"<tr><td>TOTEX</td><td>{round(vent_HP_data['obj'],2)} CHF</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>OPEX</td><td>{round(vent_HP_data['OPEX'],2)} CHF</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>CAPEX</td><td>{round(vent_HP_data['CAPEX'],2)} CHF</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>A<sub>vent</sub></td><td>{round(vent_HP_data['Area_Vent'],2)} m<sup>2</sup></td></tr>\n"
+html_table_vent_HP_data += "</table>"
 
-ampl.getParameter("k_th").setValues(buildings['k_th'])
-ampl.getParameter("k_sun").setValues(buildings['k_sun'])
-ampl.getParameter("FloorArea").setValues(buildings['FloorArea'])
-ampl.getParameter("specElec").setValues(buildings['specElec'])
-ampl.getParameter("specQ_people").setValues(buildings['specQ_people'])
+HTML(html_table_vent_HP_data)
 
-# Solve the model
-ampl.option["solver"] = "snopt"
-ampl.solve()
-
-total_cost_value = ampl.getVariable('TC').value()
-print(f"Total Cost: {total_cost_value}")
-
-opex_value = ampl.getVariable('OPEX').value()
-capex_value = ampl.getVariable('CAPEX').value()
-
-# Print the values
-print(f"OPEX: {opex_value}")
-print(f"CAPEX: {capex_value}")
 ```
 
 - $OPEX=.........$ [CHF/y]
