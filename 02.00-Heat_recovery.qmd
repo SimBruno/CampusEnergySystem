@@ -371,7 +371,7 @@ vent_HP_TOTEX    = round(vent_HP_data['obj'],2)
 vent_HP_OPEX     = round(vent_HP_data['OPEX'].values[0][0],2)
 vent_HP_CAPEX    = round(vent_HP_data['CAPEX'].values[0][0],2)
 vent_HP_AHEDC    = round(vent_HP_data['Area_Vent'].values[0][0],2)
-
+vent_HP_HPcost   = round(vent_HP_data['Cost_HP'].values[0][0],2)
 
 html_table_vent_HP_data = "<h5 style='text-align:center;'>Ventilation with HP optimization results</h2>\n\n"
 html_table_vent_HP_data += "<table border='1' style='border-collapse: collapse;'>\n"
@@ -379,6 +379,7 @@ html_table_vent_HP_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
 html_table_vent_HP_data += f"<tr><td>TOTEX</td><td>{vent_HP_TOTEX} CHF</td></tr>\n"
 html_table_vent_HP_data += f"<tr><td>OPEX</td><td>{vent_HP_OPEX } CHF</td></tr>\n"
 html_table_vent_HP_data += f"<tr><td>CAPEX</td><td>{vent_HP_CAPEX} CHF</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>CAPEX<sub>HP</sub></td><td>{vent_HP_HPcost} CHF</td></tr>\n"
 html_table_vent_HP_data += f"<tr><td>A<sub>vent</sub></td><td>{vent_HP_AHEDC} m<sup>2</sup></td></tr>\n"
 html_table_vent_HP_data += "</table>"
 

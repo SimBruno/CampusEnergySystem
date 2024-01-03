@@ -64,10 +64,10 @@ var TC 				>= 0.001; #[CHF/year] total cost
 
 var TLMEvapHP 		>= 0.001; #[K] logarithmic mean temperature in the evaporator of the heating HP (not using pre-heated lake water
 
-var Heat_Vent{Time} >= 0; #[kW]
+var Heat_Vent{Time} >= 0; 	  #[kW]
 var DTLNVent{Time} 	>= 0.001; #[degC]
 var Area_Vent 		>= 0.001; #[m2]
-var DTminVent 		>= 2; #[degC]
+var DTminVent 		>= 2;     #[degC]
 
 var Flow{Time} 		>= 0.001; #lake water entering free coling HEX
 var MassEPFL{Time} 	>= 0.001; # MCp of EPFL heating system [KJ/(s degC)]
@@ -83,26 +83,27 @@ param MS2000				:= 400;
 param MS2017				:= 562;
 
 var Trelease_2{Time}     	>=0.001; #release temperature (check drawing);    
-var Tair_in{Time}        	<= 40; #lets assume EPFL cannot take ventilation above 40 degrees (safety)
+var Tair_in{Time}        	<= 40;   #lets assume EPFL cannot take ventilation above 40 degrees (safety)
 var Cost_HP       		 	>=0.001; #HP cost 
 
-var E_2{Time} 				>= 0.00001; # kW] Electricity used in the Air-Air HP
-var TLMCond_2{Time} 		>= 273; #[K] logarithmic mean temperature in the condensor of the new HP 
-var TLMEvapHP_2{Time} 		>= 200; # K] logarithmic mean temperature in the evaporator of the new HP 
-var Qevap_2{Time} 			>= 0.0001; #[kW] heat extracted in the evaporator of the new HP 
-var Qcond_2{Time} 			>= 0.0001; #[kW] heat delivered in the condensor of the new HP 
-var COP_2{Time} 			>= 0.0001; #coefficient of performance of the new HP 
+var E_2{Time} 				>= 0.00001; # [kW] Electricity used in the Air-Air HP
+var TLMCond_2{Time} 		>= 273; 	#[K] logarithmic mean temperature in the condensor of the new HP 
+var TLMEvapHP_2{Time} 		>= 200; 	# K] logarithmic mean temperature in the evaporator of the new HP 
+var Qevap_2{Time} 			>= 0.0001;  #[kW] heat extracted in the evaporator of the new HP 
+var Qcond_2{Time} 			>= 0.0001;  #[kW] heat delivered in the condensor of the new HP 
+var COP_2{Time} 			>= 0.0001;  #coefficient of performance of the new HP 
 
 
 #### new code
 
-param irradiation{Time};# solar irradiation [kW/m2] at each time step									
-param specElec{Buildings} default 0;
-param FloorArea{Buildings} default 0; #area [m2]
-param k_th{Buildings} default 0; # thermal losses and ventilation coefficient in (kW/m2/K)
-param k_sun{Buildings} default 0;# solar radiation coefficient [−]
-param share_q_e default 0.8; # share of internal gains from electricity [-]
-param specQ_people{Buildings} default 0.00226;# specific average internal gains from people [kW/m2]
+param irradiation{Time};				 # solar irradiation [kW/m2] at each time step									
+param specElec{Buildings} default 0.04;  #electricity consumption of buildings [kW/m2]{Buildings}
+param FloorArea{Buildings} default 1000; #area [m2]{Buildings}
+param k_th{Buildings} default 0.006;	 # thermal losses and ventilation coefficient in (kW/m2/K)
+param k_sun{Buildings} default 0.10;	 # solar radiation coefficient [−]{Buildings}
+param share_q_e default 0.8; 			 # share of internal gains from electricity [-]{Buildings}
+param specQ_people{Buildings} default 0.00226; # specific average internal gains from people [kW/m2]{Buildings}
+
 param eps := 0.001;
 
 ################################
@@ -113,8 +114,8 @@ param eps := 0.001;
 subject to overallHeatTransfer{b in MediumTempBuildings}: # Uenv calculation for each building based on k_th and mass of air used
 	Uenv[b] = k_th[b] - mair*Cpair/3600;
 
-subject to VariableHeatdemand {t in Time} : #Heat demand calculated as the sum of all buildings -> medium temperature
-Qheating[t] >= sum{b in MediumTempBuildings} max(FloorArea[b]*(Uenv[b]*(Tint-Text[t]+eps) + mair*Cpair/3600*(Tint-Tair_in[t]+eps) - k_sun[b]*irradiation[t]-specQ_people[b]- share_q_e*specElec[b]),0);
+subject to VariableHeatdemand {t in Time}: #Heat demand calculated as the sum of all buildings -> medium temperature
+	Qheating[t] >= sum{b in MediumTempBuildings} max(FloorArea[b]*(Uenv[b]*(Tint-Text[t]+eps) + mair*Cpair/3600*(Tint-Tair_in[t]+eps) - k_sun[b]*irradiation[t]-specQ_people[b]- share_q_e*specElec[b]),0);
 
 subject to Heat_Vent1 {t in Time}: #HEX heat load from one side;
 	Heat_Vent[t] = sum{b in MediumTempBuildings} (Text_new[t]-Text[t])*(mair/3600)*Cpair*FloorArea[b];
@@ -136,7 +137,6 @@ subject to DTminVent2 {t in Time}: #DTmin needed on the other side of HEX
 
 subject to ventilation_trivial {t in Time}: #relation between Text_new and Text (initialization purposes)
 	Text_new[t] >= Text[t]+eps;
-
 
 ################################
 # Constraints
@@ -169,7 +169,6 @@ subject to dTLMCondensor{t in Time}: #the logarithmic mean temperature on the co
 
 subject to dTLMEvaporatorHP{t in Time}: #the logarithmic mean temperature can be computed using the inlet and outlet temperatures, Note: should be in K (Reference case)
 	TLMEvapHP = (THPhighin - THPhighout)/log((THPhighin+273.15)/(THPhighout+273.15));
-
 
 ## Air Air HP
 
@@ -208,7 +207,6 @@ subject to dTLMCondensor_2{t in Time}: #the logarithmic mean temperature in the 
 
 subject to dTLMEvaporatorHP_2{t in Time}: #the logarithmic mean temperature in the new Evaporator, Note: should be in K
 	TLMEvapHP_2[t]*log((Trelease[t]+273.15)/(Trelease_2[t]+273.15)) = (Trelease[t] - Trelease_2[t]);
-
 
 ## COST CONSIDERATIONS
 
