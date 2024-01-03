@@ -34,14 +34,12 @@ display E;
 #display TLMCond;
 #display Qevap;
 #display Qcond;
-#display COP;
+display COP;
 #display MassEPFL;
 #display MassDC;
 #display Qfree;
 #display THPin;
-#display Flow;
+display Flow;
 
 display OPEX;
 display CAPEX;
-display delta_T;
-

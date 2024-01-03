@@ -20,7 +20,7 @@ for {n in {low_T_id}}{let LowTempBuildings:= LowTempBuildings union {'Building'&
 param Text{t in Time};  		  #external temperature - Part 1
 param top{Time}; 				  #your operating time from the MILP part
 
-param Tint 				:= 21;    #internal set point temperature [C]
+param Tint 				:= 21;    #internal set point temperature [degC]
 param mair 				:= 2.5;   #m3/m2/h
 param mair_out 			:= 2; 	  #m3/m2/h
 param Cpair 			:= 1.152; #kJ/m3K
@@ -33,8 +33,8 @@ param EPFLMediumOut 	:= 30;    #[degC]
 param CarnotEff 		:= 0.55;  #assumption: carnot efficiency of heating heat pumps
 param Cel 				:= 0.20;  #[CHF/kWh] operating cost for buying electricity from the grid
 
-param THPhighin 		:= 7; 	  #[deg C] temperature of water coming from lake into the evaporator of the HP
-param THPhighout 		:= 3; 	  #[deg C] temperature of water coming from lake into the evaporator of the HP
+param THPhighin 		:= 7; 	  #[degC] temperature of water coming from lake into the evaporator of the HP
+param THPhighout 		:= 3; 	  #[degC] temperature of water coming from lake into the evaporator of the HP
 param Cpwater			:= 4.18;  #[kJ/kgC]
 #param TLMEvapHP 	:= (THPhighin - THPhighout)/log((THPhighin+273.15)/(THPhighout+273.15)); #[K] logarithmic mean temperature in the evaporator of the heating HP (not using pre-heated lake water
 
@@ -49,13 +49,13 @@ param bHE 				:= 0.6;   #HE cost parameter
 ################################
 # Variables
 
-var Text_new{Time} 	;#>= 0; #[degC]
-var Trelease{Time}	>= 0; #[degC]
-var Qheating{Time} 	>= 0; #your heat demand from the MILP part, is now a variable.
+var Text_new{Time} 	;   	  #[degC]
+var Trelease{Time}	>= 0; 	  #[degC]
+var Qheating{Time} 	>= 0; 	  #your heat demand from the MILP part, is now a variable.
 
-var E{Time} 		>= 0; # [kW] electricity consumed by the heat pump (using pre-heated lake water)
+var E{Time} 		>= 0; 	  # [kW] electricity consumed by the heat pump (using pre-heated lake water)
 var TLMCond 	 	>= 0.001; #[K] logarithmic mean temperature in the condensor of the heating HP (using pre-heated lake water)
-var TLMEvap 		>= 0.001; # K] logarithmic mean temperature in the evaporator of the heating HP (using pre-heated lake water)
+var TLMEvap 		>= 0.001; #[K] logarithmic mean temperature in the evaporator of the heating HP (using pre-heated lake water)
 var Qevap{Time} 	>= 0.001; #[kW] heat extracted in the evaporator of the heating HP (using pre-heated lake water)
 var Qcond{Time} 	>= 0.001; #[kW] heat delivered in the condensor of the heating HP (using pre-heated lake water)
 var COP{Time} 		>= 0.001; #coefficient of performance of the heating HP (using pre-heated lake water)
@@ -65,15 +65,15 @@ var CAPEX 			>= 0.001; #[CHF/year] annualized investment cost
 var TC 				>= 0.001; #[CHF/year] total cost
 
 
-var Heat_Vent{Time} >= 0; #[kW]
+var Heat_Vent{Time} >= 0;     #[kW]
 var DTLNVent{Time} 	>= 0.001; #[degC]
 var Area_Vent 		>= 0.001; #[m2]
-var DTminVent 		>= 2; #[degC]
+var DTminVent 		>= 2; 	  #[degC]
 
-var Flow{Time} 		>= 0; #lake water entering free coling HEX
-var MassEPFL{Time} 	>= 0; # MCp of EPFL heating system [KJ/(s degC)]
+var Flow{Time} 		>= 0; 	  #lake water entering free coling HEX
+var MassEPFL{Time} 	>= 0; 	  #MCp of EPFL heating system [KJ/(s degC)]
 
-var Uenv{Buildings} >= 0; # overall heat transfer coefficient of the building envelope 
+var Uenv{Buildings} >= 0; 	  #overall heat transfer coefficient of the building envelope 
 
 #### Building dependent parameters
 

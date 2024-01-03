@@ -84,12 +84,12 @@ model_directory = "1.Reference_case"
 run_ampl(data_file, model_directory, model_file)
 
 ref_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_ref.pkl')
-print("The TOTOPEX for reference case is:", round(ref_data['Totopex'],2), "CHF.\n")
+print("The TOTOPEX for reference case is:", round(ref_data['obj'],2), "CHF.\n")
 
 html_table_ref_data = "<h5 style='text-align:center;'>Reference case optimization results</h2>\n\n"
 html_table_ref_data += "<table border='1' style='border-collapse: collapse;'>\n"
 html_table_ref_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
-html_table_ref_data += f"<tr><td>Objective</td><td>{round(ref_data['Totopex'],2)} CHF</td></tr>\n"
+html_table_ref_data += f"<tr><td>Objective</td><td>{round(ref_data['obj'],2)} CHF</td></tr>\n"
 html_table_ref_data += "</table>"
 
 HTML(html_table_ref_data)
