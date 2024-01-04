@@ -56,7 +56,11 @@ buildings <- read.csv("codes_01_energy_demand\\Buildings.csv")
 
 library(DT)
 
-datatable(buildings, options = list(pageLength = 5,scrollX = TRUE)            
+col_names<- c("Building", "Constr. year", "Heated surf. [m²]", "Heat cons. [kWh]","Elec cons. [kWh]")
+
+datatable(buildings,
+            colnames = col_names,
+            options = list(pageLength = 5,scrollX = TRUE)            
 )
 ```
 
@@ -141,7 +145,7 @@ Combining equations @eq-heat-demand and @eq-switch-off allows constructing a sys
 
 
 <!--Generate k_th and k_th -->
-```{python, echo=F, results='show', label='generate kth and ksun'}
+```{python, echo=F, results='hide', label='generate kth and ksun'}
 #Run the NR algorithm to produce the k_th and k_sun for every building
 thermal_properties  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_sun', 'specQ_people'])
 Q_th = pd.DataFrame(columns=buildings['Name']) 
@@ -180,7 +184,15 @@ thermal_properties <- read.csv("codes_01_energy_demand/thermal_properties.csv")
 
 library(DT)
 
-datatable(thermal_properties, options = list(pageLength = 5, scrollX=TRUE)            
+col_names <- c("FloorArea [m²]","specElec [kW/m²]", "k_th [kW/m²]","k_sun [-]","specQ_people [kW/m²]")
+
+datatable(
+  round(thermal_properties, digits=5),
+  options = list(
+    pageLength = 5,
+    scrollX = TRUE
+  ),
+  colnames = col_names
 )
 ```
 
@@ -293,13 +305,12 @@ fct1.elbow_method(weather_clustering.data,15)
 ### Clustering results
 The result of the clustering are shown below. 
 
-```{python, echo=F, eval=T, results = 'show'}
+```{python, echo=F, eval=T, results = 'hide'}
 #| label: perform clustering
 
 weather, cluster = fct1.clusteringCorentin(weather,n_clusters=6)
 
 Q_th_cluster = pd.DataFrame(columns=buildings.Name)
-print(cluster)
 # Extract thermal_properties of buildings
 A_th            = thermal_properties['FloorArea']    # m^2
 k_th            = thermal_properties['k_th']         # kW/m^2 K
@@ -318,8 +329,6 @@ Q_th_cluster[Q_th_cluster < 0]  = 0                                             
 Q_th_cluster                    = Q_th_cluster[buildings['Name'].loc[buildings.Year == 1]]  # Select only medium temp buildings
 Q_th_cluster                    = Q_th_cluster.sum(axis=1)                                  # Get total hourly demand per cluster
 Q_th_cluster                    = Q_th_cluster*cluster['Hours']                             # Get annual demand
-
-print(Q_th_cluster)
 
 cluster['Q_th'] = Q_th_cluster
 
@@ -343,12 +352,12 @@ fig.add_trace(cluster_trace)
 
 cluster.rename(columns={
     'Temp': 'Temperature [°C]',
-    'Irr': 'Irradiance [W/m2]',
-    'hours': 'Operating time [h]'
+    'Irr': 'Irradiance [W/m²]',
+    'Hours': 'Operating time [h]',
+    'Q_th' : 'Heat load [kWh/year]'
 }, inplace=True)
-cluster = cluster.round(2)
-html_table = cluster.to_html()
-title_html = '<h2 style="text-align:center;">Cluster Centroids</h2>'
+html_table = cluster.round(2).to_html()
+title_html = '<h4 style="text-align:center;">Cluster Centroids</h4>'
 final_html = title_html + html_table
 HTML(final_html)
 ```

@@ -63,7 +63,7 @@ subject to Flows{t in Time}: #MCp of EPFL heating fluid calculation.
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
 
 subject to QEvaporator{t in Time}: #water side of evaporator that takes flow from lake
-    Qevap[t] = Flow[t]*4.18*(THPhighin-THPhighout); # [kW] = [kg/s]*[kJ/(kg degC)]*[degC]
+    Qevap[t] = Flow[t]*(THPhighin-THPhighout); # [kW] = [kg/s]*[kJ/(kg degC)]*[degC]
 
 subject to QCondensator{t in Time}: #EPFL side of condenser delivering heat to EFPL
     Qcond[t] = MassEPFL[t] * (EPFLMediumT-EPFLMediumOut); # [kW] = [kJ/(s degC)]*[degC]

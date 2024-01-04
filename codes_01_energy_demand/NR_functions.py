@@ -140,7 +140,9 @@ def solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec, 
     q_people_mean = q_people[cutoff_indicator].mean()
     irr_mean = irr[cutoff_indicator].mean()
 
-    specQ_people = q_people.mean()
+    #specQ_people = q_people.mean()
+    specQ_people = q_people.sum()/profile_elec.sum()
+    specElec     = q_elec.sum()/profile_elec.sum()
     # Newton Raphson method
     
     alpha = 0.7 # relaxation factor
@@ -181,7 +183,7 @@ def solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec, 
             break  # Converged, exit the loop
         iteration += 1     
     # k_th [W/(m^2 K)], k_sun [-], number of iterations, error1, error2, A_th [m^2], specQ_people [W/m^2], q_elec_mean [W/m^2], heating_indicator [bool]
-    return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, q_elec.mean(), heating_indicator 
+    return k_th, k_sun, iteration, e_th, e_sun, A_th, specQ_people, specElec, heating_indicator 
 
 ######################################################
 #### Function for clustering ####
@@ -351,11 +353,11 @@ if __name__ == '__main__':
     for building_id in buildings['Name']:
         q_people = people_gains(profile_class, profile_rest, profile_off)
         q_elec = elec_gains(building_id, buildings, profile_elec)
-        [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, q_elec_mean, heating_indic] = solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
-        solution.loc[building_id] = pd.Series({'k_sun': k_sun, 'k_th': k_th/1000, 'specQ_people': specQ_people/1000, 'specElec': q_elec_mean/1000, 'FloorArea': A_th})
+        [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, specElec, heating_indic] = solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
+        solution.loc[building_id] = pd.Series({'k_sun': k_sun, 'k_th': k_th/1000, 'specQ_people': specQ_people/1000, 'specElec': specElec/1000, 'FloorArea': A_th})
         # Recompute hourly energy demands
         Q_temp= A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000
-        Q_extreme.append(A_th*(k_th*(T_int-(273-9.2)) - specQ_people - q_elec_mean*f_el)/1000)
+        Q_extreme.append(A_th*(k_th*(T_int-(273-9.2)) - specQ_people - specElec*f_el)/1000)
         Q_temp[heating_indic==False]=0
         Q_th[building_id]=Q_temp
         #for i in cluster_df['cluster'].unique():

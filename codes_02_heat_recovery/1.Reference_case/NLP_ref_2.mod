@@ -14,8 +14,9 @@ param EPFLMediumOut := 30; #temperature of return low temperature loop [degC]
 param CarnotEff 	:= 0.55; #assumption: carnot efficiency of heating heat pumps
 param Cel 			:= 0.20; #[CHF/kWh] operating cost for buying electricity from the grid
 
-param THPhighin 	:= 7; #[degC] temperature of water coming from lake into the evaporator of the HP
-param THPhighout 	:= 3; #[degC] temperature of water coming from lake into the evaporator of the HP
+param THPhighin 	:= 7;   #[degC] temperature of water coming from lake into the evaporator of the HP
+param THPhighout 	:= 3;   #[degC] temperature of water coming from lake into the evaporator of the HP
+param Cpwater       := 4.18;#[kJ/(kg degC)]
 
 ################################
 # Variables
@@ -40,12 +41,12 @@ var MassEPFL{Time} 	>= 0.001; #[KJ/(s degC)] MCp of EPFL heating system
 ## MASS BALANCE
 
 subject to Flows{t in Time}: #MCp of EPFL heating fluid calculation.
-   MassEPFL[t]*(EPFLMediumT-EPFLMediumOut) = Qheating[t]/top[t]; #[KJ/(s degC)]*[degC] = [kWh/h]
+   MassEPFL[t]*(EPFLMediumOut-EPFLMediumT) = Qheating[t]/top[t]; #[KJ/(s degC)]*[degC] = [kWh/h]
 
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
 
 subject to QEvaporator{t in Time}: #water side of evaporator that takes flow from lake
-    Qevap[t] = Flow[t]*4.18*(THPhighin-THPhighout); # [kW] = [kg/s]*[kJ/(kg degC)]*[degC]
+    Qevap[t] = Flow[t]*Cpwater*(THPhighin-THPhighout); # [kW] = [kg/s]*[kJ/(kg degC)]*[degC]
 
 subject to QCondensator{t in Time}: #EPFL side of condenser delivering heat to EFPL
     Qcond[t] = MassEPFL[t] * (EPFLMediumT-EPFLMediumOut); # [kW] = [kJ/(s degC)]*[degC]

@@ -84,7 +84,6 @@ model_directory = "1.Reference_case"
 run_ampl(data_file, model_directory, model_file)
 
 ref_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_ref.pkl')
-print("The TOTOPEX for reference case is:", round(ref_data['obj'],2), "CHF.\n")
 
 html_table_ref_data = "<h5 style='text-align:center;'>Reference case optimization results</h2>\n\n"
 html_table_ref_data += "<table border='1' style='border-collapse: collapse;'>\n"
@@ -93,6 +92,8 @@ html_table_ref_data += f"<tr><td>Objective</td><td>{round(ref_data['obj'],2)} CH
 html_table_ref_data += "</table>"
 
 HTML(html_table_ref_data)
+
+print("The OPEX for reference case is:", round(ref_data['obj'],2), "CHF.\n")
 
 ```
 
@@ -176,7 +177,6 @@ model_directory = "2.DC_recovery"
 run_ampl(data_file, model_directory, model_file)
 
 DC_data = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_DC.pkl')
-print("The objective for DC case is:", round(DC_data['obj'],2), "CHF.\n")
 
 DC_TOTEX    = round(DC_data['obj'],2)
 DC_OPEX     = round(DC_data['OPEX'].values[0][0],2)
@@ -194,6 +194,9 @@ html_table_dc_data += f"<tr><td>HEX Area</td><td>{DC_AHEDC} m<sup>2</sup></td></
 html_table_dc_data += "</table>"
 
 HTML(html_table_dc_data)
+print("The objective for DC case is:", round(DC_data['obj'],2), "CHF.\n")
+print("The objective for DC case is:", round(DC_TOTEX,2), "CHF.\n")
+
 
 ```
 
