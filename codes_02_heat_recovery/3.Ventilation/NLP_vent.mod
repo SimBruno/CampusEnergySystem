@@ -83,7 +83,7 @@ param FloorArea{Buildings} default 1000; #area [m2]{Buildings}
 param k_th{Buildings} default 0.006;	 # thermal losses and ventilation coefficient in (kW/m2/K)
 param k_sun{Buildings} default 0.10;	 # solar radiation coefficient [−]{Buildings}
 param share_q_e default 0.8; 			 # share of internal gains from electricity [-]{Buildings}
-param specQ_people{Buildings} default 0.00226; # specific average internal gains from people [kW/m2]{Buildings}
+param specQ_people{Buildings} default 0.00544; # specific average internal gains from people [kW/m2]{Buildings}
 
 ################################
 # Constraints

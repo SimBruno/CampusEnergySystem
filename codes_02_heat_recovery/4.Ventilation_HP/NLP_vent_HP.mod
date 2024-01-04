@@ -93,7 +93,6 @@ var Qevap_2{Time} 			>= 0.0001;  #[kW] heat extracted in the evaporator of the n
 var Qcond_2{Time} 			>= 0.0001;  #[kW] heat delivered in the condensor of the new HP 
 var COP_2{Time} 			>= 0.0001;  #coefficient of performance of the new HP 
 
-
 #### new code
 
 param irradiation{Time};				 # solar irradiation [kW/m2] at each time step									
@@ -102,7 +101,7 @@ param FloorArea{Buildings} default 1000; #area [m2]{Buildings}
 param k_th{Buildings} default 0.006;	 # thermal losses and ventilation coefficient in (kW/m2/K)
 param k_sun{Buildings} default 0.10;	 # solar radiation coefficient [−]{Buildings}
 param share_q_e default 0.8; 			 # share of internal gains from electricity [-]{Buildings}
-param specQ_people{Buildings} default 0.00226; # specific average internal gains from people [kW/m2]{Buildings}
+param specQ_people{Buildings} default 0.00544; # specific average internal gains from people [kW/m2]{Buildings}
 
 param eps := 0.001;
 

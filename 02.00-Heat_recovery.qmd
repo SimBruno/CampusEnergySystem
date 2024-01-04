@@ -21,7 +21,7 @@ knitr::include_graphics('Figures/task_2_case_1.png')
 
 For the reference case, heat is only supplied by the heat pumps for buildings at $T_{EPFL,medium}=338$ [K]. Considering heat pumps are already installed, there is no CAPEX. The only operational costs are the electricity cost for running the heat pumps. EPFL heat pumps take as cold source lake geneva which is at $T_{HP,high-in}=280 [K]$. The fixed return temperature to the lake is at $T_{HP,high-in}=276 [K]$. The fixed return temperature from the buildings is at $T_{EPFL,medium-out}=303$ [K]. The heat-pump is assumed to have a second law (exergetic) efficiency of $\epsilon=55\%$. Finally, the electricity cost is considered fixed at $C_{el}=0.2$ $[\dfrac{CHF}{kWh}]$.
 
-Let's solve the following optimization problem, in order to obtain the less expansive solution:
+Let's solve the following optimization problem, in order to obtain the less expensive solution:
 \begin{array}{l}
 \min{OPEX} \\
 \text{ s.t.}\\
@@ -78,7 +78,7 @@ from codes_02_heat_recovery.helper import save_ampl_results, run_ampl
 
 # Read data from CSV
 data_file = "clusters_data.csv"
-model_file = "NLP_ref.mod"
+model_file = "NLP_ref_2.mod"
 model_directory = "1.Reference_case"
 
 run_ampl(data_file, model_directory, model_file)

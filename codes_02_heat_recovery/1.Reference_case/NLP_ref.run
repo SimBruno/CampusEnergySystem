@@ -22,14 +22,14 @@ solve;
 Display commands
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 #These variables might be interest to print. Feel free to choose new ones!
-display E;
-display TLMCond;
-display TLMEvapHP;
-display Qevap;
-display Qcond;
-display COP;
-display MassEPFL;
-display Flow;
+#display E;
+#display TLMCond;
+#display TLMEvapHP;
+#display Qevap;
+#display Qcond;
+#display COP;
+#display MassEPFL;
+#display Flow;
 
 display OPEX;
 

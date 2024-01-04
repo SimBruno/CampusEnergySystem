@@ -1,33 +1,33 @@
-set Time := 1 2 3 4 5 6 7;
+set Time := 0 1 2 3 4 5 6;
 
 param irradiation :=													# irradiation at each typical period
-1    0.28557
-2    0.03245
-3    0.03776
-4    0.03761
-5    0.56462
-6    0.27901
-7    0.00000
+0    0.03776
+1   0.51981
+2    0.27000
+3    0.03033
+4    0.26986
+5    0.04159
+6    0.00000
 ;
 
 param Text := 															# external temperature [C] at each typical period
-1    13.05
-2    6.3
-3    -0.22
-4    12.28
-5    12.38
-6    6.04
-7    -9.2
+0    6.39
+1    12.68
+2    5.37
+3    -0.08
+4    12.52
+5    12.66
+6    -9.2
 ;
 
 param top :=															# operating time of each typical period
-1    640
-2    164
-3    515
-4    444
-5    312
-6    340
-7    1
+0    607
+1    186
+2    303
+3    367
+4    347
+5    382
+6    1
 ;
 
 param k_th :=
@@ -112,28 +112,28 @@ Building24	17674.0
 ;
 
 param specElec := 
-Building1	0.010502766
-Building2	 0.003901092
-Building3	 0.008229027
-Building4	0.018580789
-Building5	 0.008285948
-Building6	 0.008493673
-Building7	 0.009292788
-Building8	0.045044581
-Building9	0.020753087
-Building10	0.021464097
-Building11	0.010472477
-Building12	 0.009051583
-Building13	 0.007554575
-Building14	0.038726162
-Building15	 0.008959762
-Building16	 0.002271109
-Building17	 0.007647598
-Building18	 0.007465672
-Building19	 0.000000
-Building20	0.016955707
-Building21	0.012499391
-Building22	0.013977287
-Building23	 0.000000
-Building24	0.025177621
+Building1	0.02528
+Building2	0.00939
+Building3	0.0198
+Building4	0.04472
+Building5	0.01994
+Building6	0.02044
+Building7	0.02236
+Building8	0.1084
+Building9	0.04994
+Building10	0.05166
+Building11	0.0252
+Building12	0.02178
+Building13	0.01818
+Building14	0.0932
+Building15	0.02156
+Building16	0.00547
+Building17	0.0184
+Building18	0.01797
+Building19	0.000000
+Building20	0.04081
+Building21	0.03008
+Building22	0.03364
+Building23	0.000000
+Building24	0.06059
 ;

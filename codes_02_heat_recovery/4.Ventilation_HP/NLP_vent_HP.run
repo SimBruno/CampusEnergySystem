@@ -27,24 +27,24 @@ display OPEX;
 display CAPEX;
 
 display Area_Vent;
-display Qheating;
-display Heat_Vent;
-display Trelease;
+# display Qheating;
+# display Heat_Vent;
+# display Trelease;
 
 
-display E;
-display E_2;
+# display E;
+# display E_2;
 
-display Text;
-display Text_new;
-display Tair_in;
-display Trelease;
-display Trelease_2;
+# display Text;
+# display Text_new;
+# display Tair_in;
+# display Trelease;
+# display Trelease_2;
 
-display Qevap_2;
-display Qcond_2;
-display COP_2;
-display TLMCond_2;
-display TLMEvapHP_2;
+# display Qevap_2;
+# display Qcond_2;
+# display COP_2;
+# display TLMCond_2;
+# display TLMEvapHP_2;
 display Cost_HP;
 

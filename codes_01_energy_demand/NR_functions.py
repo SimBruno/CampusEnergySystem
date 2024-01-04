@@ -318,76 +318,75 @@ def clustering_error(Qth_base, Qth_cluster, heat, heatcluster):
 
 if __name__ == '__main__': 
     # the code below will be executed only if you run the NR_function.py file as main file, not if you import the functions from another file (another .py or .qmd)
-    
+    PATH = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
+
+    # Compute k_th and k_sun
+
     # Load data
     weather, buildings = load_data_weather_buildings()
 
     # Compute gains and profile
     profile_off, profile_class, profile_rest, profile_elec = occupancy_profile()
 
-    # Compute typical operating conditions  with clustering
-
-    n_clusters = 6
-    #weatherCluster, model = weather_clustering(n_clusters)
-
     # State required tolerances and maximum number of iterations
-    tol=1e-6
-    max_iteration=1000
+    tol           = 1e-6
+    max_iteration = 1000
 
     # State initial guesses for k_th and k_sun
-    k_th_guess=5
-    k_sun_guess=1
+    k_th_guess    = 5
+    k_sun_guess   = 1
 
     # Initialize array to record values for each building
-    solution  = pd.DataFrame(columns=['k_sun', 'k_th', 'specQ_people', 'specElec', 'FloorArea'])
-    Q_th = pd.DataFrame(columns=buildings['Name']) 
-    #Q_th_cluster = pd.DataFrame(columns=model.get_feature_names_out())
+    thermal_properties  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_sun', 'specQ_people'])
+    Q_th                = pd.DataFrame(columns=buildings['Name'])
 
-    T_ext = weather.Temp + 273 # K
-    irr = weather.Irr # W/m2
+    T_ext        = weather.Temp + 273 # K
+    irr          = weather.Irr # W/m2
 
-    PATH = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
-    cluster_df=pd.read_csv(os.path.join(PATH,'clusters_dissaggregated.csv')).rename(columns={'Unnamed: 0':'Time'})
+    #Precompute q_people since it's constant across all buildings
+    q_people = people_gains(profile_class, profile_rest, profile_off)
 
-    Q_extreme=[]
     for building_id in buildings['Name']:
-        q_people = people_gains(profile_class, profile_rest, profile_off)
+        #Estimate k_th and k_sun for each building
         q_elec = elec_gains(building_id, buildings, profile_elec)
-        [k_th, k_sun, number_iteration, error1,error2, A_th, specQ_people, specElec, heating_indic] = solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
-        solution.loc[building_id] = pd.Series({'k_sun': k_sun, 'k_th': k_th/1000, 'specQ_people': specQ_people/1000, 'specElec': specElec/1000, 'FloorArea': A_th})
-        # Recompute hourly energy demands
-        Q_temp= A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000
-        Q_extreme.append(A_th*(k_th*(T_int-(273-9.2)) - specQ_people - specElec*f_el)/1000)
-        Q_temp[heating_indic==False]=0
-        Q_th[building_id]=Q_temp
-        #for i in cluster_df['cluster'].unique():
-    
-    Q_th.to_csv(os.path.join(PATH, "Q_th_test.csv"),index=True)
+        [k_th, k_sun, number_iteration, error1, error2, A_th, specQ_people, specElec, heating_indicator] = solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
+        thermal_properties.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': specElec/1000, 'k_th': k_th/1000, 'k_sun': k_sun,'specQ_people': specQ_people/1000})
 
-    # Concatenate into clusters
-    Q_th_cluster=pd.concat([pd.DataFrame(data=Q_th.iloc[cluster_df['Time']].assign(cluster=cluster_df['cluster'].astype(int)).groupby('cluster').apply(lambda x: x.sum(axis=0)).values, columns=buildings['Name'].tolist()+['cluster']).drop('cluster',axis=1),pd.DataFrame(data=np.reshape(np.array(Q_extreme),(1,len(buildings))),columns=buildings['Name'].tolist())],ignore_index=True)
-   
-    Q_th_cluster
-    # Save The DFs in csv
-    Q_th_cluster.drop(columns=buildings.query('Year==1')['Name'].values).to_csv(os.path.join(PATH, "Q_cluster_medium.csv"),index=True)
-    print(Q_th_cluster.drop(columns=buildings.query('Year==1')['Name']).sum(axis=1))
-    
-    solution.to_csv(os.path.join(PATH, "data_MOES.csv"),index=False)
+        #Compute Q_th for each hour
+        Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000 # Wh--> kWh
+        Q_th[heating_indicator==0] = 0 # Set Q_th to be only heat demand
 
-    #heating_indicator = (((Q_th >= 0).all(axis=1)) & (T_ext <= T_th) & (profile_elec > 0)) # filter heat demands only
-    #Q_th = Q_th[heating_indicator]/1000 # convert to kWh
-    #Q_th_cluster = Q_th.groupby(weather['Cluster'].loc[weather['Cluster']< n_clusters]).sum() # sum heat demands for each cluster
-    
-    #Saving dataframe in thermal_properties.csv
-    
-    
-    #Q_typical.sum(axis=1).to_csv(os.path.join(PATH, "Q_typical.csv"),index=False)
-    
-    #solution.to_csv(os.path.join(PATH, "thermal_properties.csv"),index=False)
 
-    #Printing solutions
-    print('Solution = \n', solution)
-    
-    print('Q_th = \n', Q_th)
+    print('Thermal properties of the buildings: \n', thermal_properties)
 
-    #print('Q_th_cluster = \n', Q_th_cluster)
+    print('Total Q_th recomputed = ', Q_th.sum().sum(),'.\n')
+
+    # Compute typical operating conditions  with clustering
+    n_clusters         = 6
+    weather = preprocess_data(weather, profile_elec)
+    weather, cluster = clusteringCorentin(weather,n_clusters=6)
+
+    Q_th_cluster        = pd.DataFrame(columns=buildings.Name)
+    T_cluster    = cluster['Temp'] + 273              # C° --> K
+    irr_cluster  = cluster['Irr']/1000                # W/m^2 --> kW/m^2 
+  
+    # Extract thermal_properties of buildings
+    A_th            = thermal_properties['FloorArea']    # m^2
+    k_th            = thermal_properties['k_th']         # kW/m^2 K
+    k_sun           = thermal_properties['k_sun']        # -
+    specQ_people    = thermal_properties['specQ_people'] # kW/m^2
+    specElec        = thermal_properties['specElec']     # kW/m^2
+
+
+    # Recompute thermal load for each cluster using cluster centers
+    for building_id in buildings['Name']:
+        Q_th_cluster[building_id] = A_th[building_id]*(k_th[building_id]*(T_int-T_cluster) - k_sun[building_id]*irr_cluster - specQ_people[building_id] - specElec[building_id]*f_el) # [kWh]
+
+    Q_th_cluster[Q_th_cluster < 0]  = 0                                                         # Set negative values to 0
+    Q_th_cluster                    = Q_th_cluster[buildings['Name'].loc[buildings.Year == 1]]  # Select only medium temp buildings
+    Q_th_cluster                    = Q_th_cluster.sum(axis=1)                                  # Get total hourly demand per cluster
+    Q_th_cluster                    = Q_th_cluster*cluster['Hours']                             # Get annual demand
+
+    cluster['Q_th'] = Q_th_cluster        
+    
+    print('Cluster values: \n', cluster)
