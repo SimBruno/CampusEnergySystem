@@ -144,7 +144,7 @@ subject to ventilation_trivial {t in Time}: #relation between Text_new and Text 
 ## MASS BALANCE
 
 subject to Flows{t in Time}: #MCp of EPFL heating fluid calculation.
-	MassEPFL[t] = (Qheating[t])/(EPFLMediumT-EPFLMediumOut);	
+	MassEPFL[t]*(EPFLMediumT-EPFLMediumOut) = (Qheating[t]);	
 
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
 

@@ -2,7 +2,7 @@
 Load the main model and its data
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 reset;
-model NLP_DC.mod;
+model NLP_DC_2.mod;
 data NLP_DC.dat;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
@@ -22,24 +22,24 @@ solve;
 Display commands
 ---------------------------------------------------------------------------------------------------------------------------------------*/
 #These variables might be interest to print. Feel free to choose new ones!
-display TC;
 
 #display TRadin;
 #display TDCout;
 display AHEDC;
 #display dTLMDC;
 
-display Qrad;
-display E;
+#display Qrad;
+#display E;
 #display TLMCond;
 #display Qevap;
 #display Qcond;
-display COP;
+#display COP;
 #display MassEPFL;
 #display MassDC;
 #display Qfree;
 #display THPin;
-display Flow;
+#display Flow;
 
 display OPEX;
 display CAPEX;
+display TC;
