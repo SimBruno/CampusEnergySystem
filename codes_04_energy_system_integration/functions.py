@@ -172,7 +172,7 @@ def optimize(criteria,result_file="optimize_dump",remove_tech=[],TAX=120e-6,Max_
   ampl.set_data(data_cluster, "Time")
 
   # Read data from task 1
-  data=pd.read_csv("./codes_01_energy_demand/data_MOES.csv")
+  data=pd.read_csv("./codes_01_energy_demand/thermal_properties.csv")
   data.index = ["Building" + str(i) for i in range(1,len(data)+1)] # the index of the dataframe has to match the values of the set "Buildings" in ampl
 
   # Set Buildings parameter

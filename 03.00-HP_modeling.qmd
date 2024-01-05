@@ -65,7 +65,7 @@ For this analysis, we'll consider the steady-state operation of the system.
 
 A simple preliminary analysis allows to determine the overall minimum DOF of the system, giving a lower bound of measurements necessary to make it solvable. Representing the system as a flowsheet allows to retrieve the number of variables and equations. The variables consists of all the material flows, the electricity flows and the heat flows, assuming that each material flows bring 3 variables. The equations are one mass balance and one energy balance per unit in the system, the isentropic efficiencies for both compressor as well as the isenthalpic expansions in the valves. Finally, having 9 flows, all of them having 1 phase, and 8 units yields:
 
-$ n_s = n_v - n_e =  (27+4+2)- (8+8+2+2) = 13$
+$n_s = n_v - n_e =  (27+4+2)- (8+8+2+2) = 13$
 
 And thus $n_s = 13$, meaning that we need at least 13 specifications to characterize the whole system. 
 
@@ -216,18 +216,15 @@ And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a 
 :::
 
 ## VALI Tags selection
-Now that all the types of unit models are characterized, it should be possible to determine the minimum number of measurements needed to make the system fully determined. 
-<!-- Summing all corresponding DOF with the number of units and substracting the links yields: -->
+Now that all the types of unit models are characterized, it should be possible to determine the minimum number of measurements needed to make the system fully determined. While it should be possible to analytically compute the required number of DOF by summing the units models and substracting the links between them, it's also possible to discard a some options by looking at redundancies/overspecifications, which will prevent VALI from running:
 
-Let's discard a some options by looking at redundancies/overspecifications, which will prevent VALI from running:
+- `Option 2`: All values are specified in the following equation $\Delta T_{min}=T_6-T_{out,bis}$, which makes the model overspecified.
 
-- Option 2: All values are specified in the following equation $\Delta T_{min}=T_6-T_{out,bis}$, which makes the model overspecified.
+- `Option 3`: All values are specified in the following equation $Q_{cond,load}=Q_{cond,sens}+Q_{cond,lat}$, which makes the model overspecified.
 
-- Option 3: All values are specified in the following equation $Q_{cond,load}=Q_{cond,sens}+Q_{cond,lat}$, which makes the model overspecified.
+- `Option 5`: All values are specified in the following equation $COP_{real}=\dfrac{Q_{cond,load}}{Q_{cond,load}-Q_{evap}}$, which makes the model overspecified.
 
-- Option 5: All values are specified in the following equation $COP_{real}=\dfrac{Q_{cond,load}}{Q_{cond,load}-Q_{evap}}$, which makes the model overspecified.
-
-Add working model of the 2-stage HP for the working fluid R290.
+Doing that only leaves us with one viable options, which is `Option 4`. Using that set of inputs indeed let VALI run and reconcile data. Now that the model is running with our default fluid, we can inquire for other working fluids. 
 
 ### Model adjustment to a second working fluid 
 
@@ -266,23 +263,12 @@ $$\text{s.t. } F(X,Y)=0$$
 
 
 Vali is able to perform data reconciliation when a measurement file is provided. Therefore, reconciled files are generated for both fluids and for both temperature supplies.
-<!-- **Given**
-
-Measurements for 7 working fluids, each with 2 temperature levels (low-temperature and medium-temperature) and between 6 and 11 periods.
-
-**Task**
-
-Run the VALI model with the corresponding measurements.
-
-**Result**
-
-Obtain the reconciled files.
-
+<!--
 *Hint*:
 Note that the measurement file indicates where the reconciled file should be saved. For instance, for the *R-290_LT_1.txt* file, the location is defined by the command `ARCHIVE -T Reconciled/reconc_R-290_LT_1.txt`. Make sure to have a folder named *Reconciled* in the same folder as the Vali model. -->
 
 ## Performance and cost evaluation
-The purpose of this section is to evaluate the performance of the double stage heat pump and the cost of the equipments. The performance is evaluated for low temperature supply ($50°C$) and high temperature supply ($65°C$) for both fluids. The goal is to perform a regression on the second law efficiency to model it's evolution with the external ambient temperature. In the last section,  data was measured on the heat pump for both fluids and both temperature levels at different external temperatures. Data reconciliation was performed with the model in order to minimize the measurements error. These results will now be used to evaluate the heat pump performance at different temperatures, and fit these measurements on a regression model. The following model will be used:
+The purpose of this section is to evaluate the performance of the double stage heat pump and the cost of the equipments. The performance is evaluated for low temperature supply ($50°C$) and high temperature supply ($65°C$) for both fluids. The goal is to perform a regression on the second law efficiency to model its evolution with the external ambient temperature. In the last section,  data was measured on the heat pump for both fluids and both temperature levels at different external temperatures. Data reconciliation was performed with the model in order to minimize the measurements error. These results will now be used to evaluate the heat pump performance at different temperatures, and fit these measurements on a regression model. The following model will be used:
 $$ C_{carnot}=a\cdot T_{ext}^2- b\cdot T_{ext}+c$$
 
 with $T_{ext}$ the external ambient temperature. Regression is performed using AMPL, which allows to simultaneously get the equipment price. First, let's write the optimization problem for regression:

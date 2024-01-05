@@ -356,3 +356,10 @@ title_html = '<h4 style="text-align:center;">Cluster Centroids</h4>'
 final_html = title_html + html_table
 HTML(final_html)
 ```
+
+```{python, echo=F, eval = T}
+#| label: compute clustering error
+clustering_error = (buildings['Heat'].loc[buildings.Year == 1].sum()-Q_th_cluster.sum())/buildings['Heat'].loc[buildings.Year == 1].sum()*100
+```
+
+Computing the sum of the type 1 heat demands and the sum of the cluster heat loads allows to compute the relative error we've made on the total heat demand reconstruction, which is `r reticulate::py_eval("f'{clustering_error:.4}'")`%.
