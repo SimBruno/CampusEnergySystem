@@ -77,9 +77,18 @@ param k_th{Buildings} default 0.006;								# thermal losses and ventilation coe
 param k_sun{Buildings} default 0.10;								# solar radiation coefficient [−]
 param share_q_e default 0.8; 										# share of internal gains from electricity [-]
 param specQ_people{Buildings} default 0.007;						# specific average internal gains from people [kW/m2]
+param Qheating_diff4{Time} :=
+1	0.79
+2   0.0217
+3	0.678
+4	0.829
+5	0.024
+6	0.649
+7	0.887
+;
 param Qheating{b in Buildings, t in Time} :=
 		if Text[t] < 16  then 
-			max(FloorArea[b]*(k_th[b]*(Tint-Text[t]) - k_sun[b]*irradiation[t]-specQ_people[b] - share_q_e*specElec[b]),0)
+			max(Qheating_diff4[t]*FloorArea[b]*(k_th[b]*(Tint-Text[t]) - k_sun[b]*irradiation[t]-specQ_people[b] - share_q_e*specElec[b]),0)
 		else
 			0
 ;
@@ -255,8 +264,9 @@ subject to oc_cstr:
 
 # variable and constraint for investment cost calculation [CHF/year]
 var InvCost;
+param CAPEX4 := 2910.64;
 subject to ic_cstr:
-	InvCost = sum{tc in Technologies} (cinv1[tc] * use[tc] + cinv2[tc] * mult[tc]);
+	InvCost = sum{tc in Technologies} (cinv1[tc] * use[tc] + cinv2[tc] * mult[tc]) + CAPEX4;
 
 #variable and constraint for emissions calculation [gCO2/year]
 var Emissions;
