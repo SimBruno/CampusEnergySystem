@@ -168,7 +168,17 @@ def optimize(criteria,result_file="optimize_dump",remove_tech=[],TAX=120e-6,Max_
   data_cluster=pd.read_csv("./codes_01_energy_demand/clusters_data.csv").drop(columns='Q_th').reset_index().rename(columns={'Temp':'Text', 'Irr':'irradiation', 'Hours':'top','index':'Time'}).set_index('Time')
   data_cluster['irradiation']=data_cluster['irradiation']/1000
   
-  # Set cluster data
+  # Import heat recovery
+  ref_data_heating = pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_ref.pkl')
+  recovery_data_heating=pd.read_pickle(r'.\codes_02_heat_recovery\results\NLP_vent_HP.pkl')
+
+  ampl.get_parameter("InvCost_recovery").set(recovery_data_heating['CAPEX'].values[0][0])
+
+
+  # Add recovery percentage to cluster data
+  data_cluster['Heating_perc']=recovery_data_heating['Qheating'].values.ravel()*recovery_data_heating['top'].values.ravel()/ref_data_heating['Qheating'].values.ravel()
+
+  # Set all cluster data
   ampl.set_data(data_cluster, "Time")
 
   # Read data from task 1
@@ -215,6 +225,8 @@ def optimize(criteria,result_file="optimize_dump",remove_tech=[],TAX=120e-6,Max_
 
   # Set heating level
   ampl.set_data(Theating, "HeatingLevel")
+    
+  
 
   # Solve
   ampl.solve()
@@ -350,8 +362,8 @@ if __name__ == '__main__':
   # What will be the Investment costs? and what technology will be used
   # Uncomment lines below:
   # data=optimize(criteria=criteria.OPEX,NatGasGrid=0.32,remove_tech=['SOFC','R290_MT'])
-  print(data['use'][data['use']!=0].dropna())
-  print(data['InvCost'].values[0][0])
+  # print(data['use'][data['use']!=0].dropna())
+  # print(data['InvCost'].values[0][0])
 
   
   ### Example 2 ###
@@ -360,11 +372,12 @@ if __name__ == '__main__':
   # TOTEX,EMISSIONS=get_pareto(criteria1.TOTEX,criteria2.Emissions,n=14)
   # draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 
-  # data=optimize(criteria=criteria.TOTEX)
-  # print(data['use'][data['use']!=0].dropna())
-  # print(data['InvCost'].values[0][0])
+  data=optimize(criteria=criteria.TOTEX)
+  print(data['use'][data['use']!=0].dropna())
+  print(data['InvCost'].values[0][0])
+  print(data['use_recovery'].values[0][0])
+  
  
-
 
 
 

@@ -37,6 +37,8 @@ set UtilitiesOfType{UtilityType} default {};					# utilities assigned to their r
 set UtilitiesOfLayer{Layers} default {};
 set HP2 default {};
 
+
+
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Generic Parameters
 ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -69,6 +71,12 @@ param TLMCondMedium := (EPFLMediumOut-EPFLMediumT)/(log(EPFLMediumOut/EPFLMedium
 param TLMCondLow := (EPFLMediumOut-EPFLLowT)/(log(EPFLMediumOut/EPFLLowT)); #Assume cste
 param TLMEvapHP := (THPhighin-THPhighout)/(log((THPhighin)/(THPhighout))); 
 
+# Heat recovery
+
+param Heating_perc{Time} default 0;
+param InvCost_recovery default 0;
+
+var use_recovery binary;
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Calculation of heating demand
 ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -83,12 +91,16 @@ param Qheating{b in Buildings, t in Time} :=
 		else
 			0
 ;
-param Qheatingdemand{h in HeatingLevel, t in Time} :=
-	if h == 'MediumT' then
-		sum{b in MediumTempBuildings} Qheating[b,t]
-	else
-		sum{b in LowTempBuildings} Qheating[b,t]
-	;
+
+var Qheatingdemand{HeatingLevel,Time}>=0;
+
+subject to  Qheatingdemand_cstr{h in HeatingLevel, t in Time}:
+	h == 'MediumT' ==> Qheatingdemand[h,t]=(1-use_recovery*Heating_perc[t])*sum{b in MediumTempBuildings} Qheating[b,t] else Qheatingdemand[h,t]=sum{b in LowTempBuildings} Qheating[b,t]
+;
+
+# subject to force_heat_recov:
+# 	use_recovery==1
+# ;
 
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Calculation of electricity demand
@@ -256,7 +268,7 @@ subject to oc_cstr:
 # variable and constraint for investment cost calculation [CHF/year]
 var InvCost;
 subject to ic_cstr:
-	InvCost = sum{tc in Technologies} (cinv1[tc] * use[tc] + cinv2[tc] * mult[tc]);
+	InvCost = InvCost_recovery*use_recovery + sum{tc in Technologies} (cinv1[tc] * use[tc] + cinv2[tc] * mult[tc]);
 
 #variable and constraint for emissions calculation [gCO2/year]
 var Emissions;
