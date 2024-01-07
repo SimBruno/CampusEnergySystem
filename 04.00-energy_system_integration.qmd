@@ -145,7 +145,7 @@ y_def = y_def_data['Totalcost'].values[0][0]
 
 fig = go.Figure(data=go.Scatter(x=x, y=price, mode='markers'))
 fig = fig.add_trace(go.Scatter(x=[x_def], y=[y_def], mode='markers', marker=dict(color='red')))
-fig = fig.update_layout(title='Price Vector Plot with TOTEX objective', xaxis_title='Gas price (CHF/kWh)', yaxis_title='TOTEX (CHF/y)', showlegend = False)
+fig = fig.update_layout(title='Natural Gas Price Plot with TOTEX objective', xaxis_title='Gas price (CHF/kWh)', yaxis_title='TOTEX (CHF/y)', showlegend = False)
 fig.show()
 ```
 
@@ -158,5 +158,94 @@ TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, NatGas
 ```{python, echo=F, eval=T,label= draw_pareto_ng}
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 ```
+
+
+### Variation in the Electricity cost
+
+0.06 c'est le prix de vente de l'electricité
+
+```{python, echo=F, eval=T,label= sensitivity_elec, results='hide'}
+import plotly.graph_objects as go
+import pandas as pd
+import numpy as np
+
+price = []
+x = np.arange(0.06, 0.5, 0.01)
+for gas_price in x:
+    data = fct3.optimize(criteria=criteria.TOTEX,ElecGridBuy=gas_price)
+    #df = pd.read_pickle('./optimize_dump.pkl')
+    #df.head()
+    price.append(data['Totalcost'].values[0][0])
+
+x_def = 0.0916
+y_def_data = fct3.optimize(criteria=criteria.TOTEX,ElecGridBuy=x_def)
+y_def = y_def_data['Totalcost'].values[0][0]
+
+fig = go.Figure(data=go.Scatter(x=x, y=price, mode='markers'))
+fig = fig.add_trace(go.Scatter(x=[x_def], y=[y_def], mode='markers', marker=dict(color='red')))
+fig = fig.update_layout(title='Electricity Price Plot with TOTEX objective', xaxis_title='Electricity Price (CHF/kWh)', yaxis_title='TOTEX (CHF/y)', showlegend = False)
+fig.show()
+```
+
+pareto if elec price at 0.49 CHF/kWh
+
+```{python, echo=F, eval=T,label= get_pareto_elec, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, ElecGridBuy_pareto=0.49)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_elec}
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+
+### Variation in the Electricity carbon footprint
+
+```{python, echo=F, eval=T,label= sensitivity_elec_carb, results='hide'}
+import plotly.graph_objects as go
+import pandas as pd
+import numpy as np
+
+price = []
+x = np.arange(30, 100, 1)
+for gas_price in x:
+    data = fct3.optimize(criteria=criteria.TOTEX,c_elec=gas_price)
+    #df = pd.read_pickle('./optimize_dump.pkl')
+    #df.head()
+    price.append(data['Totalcost'].values[0][0])
+
+x_def = 75.3
+y_def_data = fct3.optimize(criteria=criteria.TOTEX,c_elec=x_def)
+y_def = y_def_data['Totalcost'].values[0][0]
+
+fig = go.Figure(data=go.Scatter(x=x, y=price, mode='markers'))
+fig = fig.add_trace(go.Scatter(x=[x_def], y=[y_def], mode='markers', marker=dict(color='red')))
+fig = fig.update_layout(title='Electricity Carbon Footprint Plot with TOTEX objective', xaxis_title='Electricity carbon footprint (gCO2/kWh)', yaxis_title='TOTEX (CHF/y)', showlegend = False)
+fig.show()
+```
+
+pareto if elec price at 30 gCO2/kWh
+
+```{python, echo=F, eval=T,label= get_pareto_elec_carb, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, c_elec_pareto=30)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_elec_carb}
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+
+### Optimization without considering Boiler
+
+pareto without Boiler
+
+```{python, echo=F, eval=T,label= get_pareto_woboiler, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, remove_tech_pareto=["Boiler"])
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_woboiler}
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+results en 10^-8 !
 
 <!-- Here you report about your energy systems optimization. This is the last part of the discussion where you wrap-up everything you did. -->
