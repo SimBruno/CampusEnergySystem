@@ -43,7 +43,7 @@ class criteria(Enum):
     parametric = 'parametric'
 
 
-def optimize(criteria,result_file="optimize_dump",remove_tech=[],TAX=120e-6,Max_Emissions=1e30, Max_Totalcost=1e30, Max_Invcost=1e30,Max_Opcost=1e30,NatGasGrid=0.0303,ElecGridSell=-0.06,ElecGridBuy=0.0916,HydrogenGrid=0.3731, c_gas=228, c_elec=75.3):
+def optimize(criteria,result_file="optimize_dump",remove_tech=[],TAX=120e-6,Max_Emissions=1e30, Max_Totalcost=1e30, Max_Invcost=1e30,Max_Opcost=1e30,Max_Totenvcost=1e30,NatGasGrid=0.0303,ElecGridSell=-0.06,ElecGridBuy=0.0916,HydrogenGrid=0.3731, c_gas=228, c_elec=75.3):
   """Optimize the EPFL energy system.
   
   First specifiy criteria by writing for example criteria.OPEX, criteria.parametric, or criteria.Emissions.
@@ -199,6 +199,7 @@ def optimize(criteria,result_file="optimize_dump",remove_tech=[],TAX=120e-6,Max_
   ampl.get_parameter("Max_Totalcost").set(Max_Totalcost)
   ampl.get_parameter("Max_Invcost").set(Max_Invcost)
   ampl.get_parameter("Max_Opcost").set(Max_Opcost)
+  ampl.get_parameter("Max_Totenvcost").set(Max_Totenvcost)
 
   # Construct resources price dataframe, in order to send it to ampl
   resources=pd.DataFrame(
@@ -255,7 +256,7 @@ class criteria2(Enum):
     parametric = 'parametric'
 
 
-def get_pareto(criteria1, criteria2,n=10,remove_tech_pareto=[],TAX_pareto=120e-6,Max_Emissions_pareto=1e30, Max_Totalcost_pareto=1e30, Max_Invcost_pareto=1e30,Max_Opcost_pareto=1e30,NatGasGrid_pareto=0.0303,ElecGridSell_pareto=-0.06,ElecGridBuy_pareto=0.0916,HydrogenGrid_pareto=0.3731, c_elec_pareto=75.3, c_gas_pareto=228):
+def get_pareto(criteria1, criteria2,n=10,remove_tech_pareto=[],TAX_pareto=120e-6,Max_Emissions_pareto=1e30, Max_Totalcost_pareto=1e30, Max_Invcost_pareto=1e30,Max_Opcost_pareto=1e30,Max_Totenvcost_pareto=1e30,NatGasGrid_pareto=0.0303,ElecGridSell_pareto=-0.06,ElecGridBuy_pareto=0.0916,HydrogenGrid_pareto=0.3731, c_elec_pareto=75.3, c_gas_pareto=228):
   # Check that two different criterias are selected
   if criteria1==criteria2:
     print("You must select differents criterias for pareto optimization")
@@ -269,7 +270,7 @@ def get_pareto(criteria1, criteria2,n=10,remove_tech_pareto=[],TAX_pareto=120e-6
 
   # Get bounds for optimization
   # Optimize unbounded on first criteria
-  data_crit_1=optimize(criteria1,TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+  data_crit_1=optimize(criteria1,TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
   crit1_min=data_crit_1['object1']
   if criteria2==criteria2.Emissions:
     crit2_max=data_crit_1['Emissions'].values[0][0]
@@ -279,9 +280,11 @@ def get_pareto(criteria1, criteria2,n=10,remove_tech_pareto=[],TAX_pareto=120e-6
     crit2_max=data_crit_1['InvCost'].values[0][0]
   elif criteria2==criteria2.TOTEX:
     crit2_max=data_crit_1['Totalcost'].values[0][0]
+  elif criteria2==criteria2.parametric:
+    crit2_max=data_crit_1['TotEnvCost'].values[0][0]
 
   # Optimize unbounded on second criteria
-  data_crit_2=optimize(criteria2,TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+  data_crit_2=optimize(criteria2,TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
   crit2_min=data_crit_2['object1']
   if criteria1==criteria1.Emissions:
     crit1_max=data_crit_2['Emissions'].values[0][0]
@@ -291,6 +294,8 @@ def get_pareto(criteria1, criteria2,n=10,remove_tech_pareto=[],TAX_pareto=120e-6
     crit1_max=data_crit_2['InvCost'].values[0][0]
   elif criteria1==criteria1.TOTEX:
     crit1_max=data_crit_2['Totalcost'].values[0][0]
+  elif criteria1==criteria1.parametric:
+    crit1_max=data_crit_2['TotEnvCost'].values[0][0]
   
   # Now that global bounds are known, let's discretize them in order to bound the optimization at different levels and retrieve the pareto curve
   crit1_span=np.linspace(crit1_min,crit1_max,n)
@@ -300,39 +305,47 @@ def get_pareto(criteria1, criteria2,n=10,remove_tech_pareto=[],TAX_pareto=120e-6
   for j in range(0,n):
     # Get pareto curve by optimizing criteria 1 and constraining criteria 2
     if criteria2==criteria2.Emissions:
-      data_pareto=optimize(criteria1,Max_Emissions=crit2_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      data_pareto=optimize(criteria1,Max_Emissions=crit2_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit1_pareto_min_crit1[j]=data_pareto['object1']
       crit2_pareto_min_crit1[j]=data_pareto['Emissions'].values[0][0]
     elif criteria2==criteria2.OPEX:
-      data_pareto=optimize(criteria1,Max_Opcost=crit2_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      data_pareto=optimize(criteria1,Max_Opcost=crit2_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit1_pareto_min_crit1[j]=data_pareto['object1']
       crit2_pareto_min_crit1[j]=data_pareto['OpCost'].values[0][0]
     elif criteria2==criteria2.CAPEX:
-      data_pareto=optimize(criteria1,Max_Invcost=crit2_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      data_pareto=optimize(criteria1,Max_Invcost=crit2_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit1_pareto_min_crit1[j]=data_pareto['object1']
       crit2_pareto_min_crit1[j]=data_pareto['InvCost'].values[0][0]
     elif criteria2==criteria2.TOTEX:
-      data_pareto=optimize(criteria1,Max_Totalcost=crit2_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      data_pareto=optimize(criteria1,Max_Totalcost=crit2_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit1_pareto_min_crit1[j]=data_pareto['object1']
       crit2_pareto_min_crit1[j]=data_pareto['Totalcost'].values[0][0]
+    elif criteria2==criteria2.parametric:
+      data_pareto=optimize(criteria1,Max_Totenvcost=crit2_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totalcost=Max_Totalcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      crit1_pareto_min_crit1[j]=data_pareto['object1']
+      crit2_pareto_min_crit1[j]=data_pareto['TotEnvCost'].values[0][0]
 
     # Get pareto curve by optimizing criteria 2 and constraining criteria 1
     if criteria1==criteria1.Emissions:
-      data_pareto=optimize(criteria2,Max_Emissions=crit1_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      data_pareto=optimize(criteria2,Max_Emissions=crit1_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit2_pareto_min_crit2[j]=data_pareto['object1']
       crit1_pareto_min_crit2[j]=data_pareto['Emissions'].values[0][0]
     elif criteria1==criteria1.OPEX:
-      data_pareto=optimize(criteria2,Max_Opcost=crit1_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      data_pareto=optimize(criteria2,Max_Opcost=crit1_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Invcost=Max_Invcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit2_pareto_min_crit2[j]=data_pareto['object1']
       crit1_pareto_min_crit2[j]=data_pareto['OpCost'].values[0][0]
     elif criteria1==criteria1.CAPEX:
-      data_pareto=optimize(criteria2,Max_Invcost=crit1_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      data_pareto=optimize(criteria2,Max_Invcost=crit1_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Totalcost=Max_Totalcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit2_pareto_min_crit2[j]=data_pareto['object1']
       crit1_pareto_min_crit2[j]=data_pareto['InvCost'].values[0][0]
     elif criteria1==criteria1.TOTEX:
-      data_pareto=optimize(criteria2,Max_Totalcost=crit1_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      data_pareto=optimize(criteria2,Max_Totalcost=crit1_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totenvcost=Max_Totenvcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
       crit2_pareto_min_crit2[j]=data_pareto['object1']
       crit1_pareto_min_crit2[j]=data_pareto['Totalcost'].values[0][0]
+    elif criteria1==criteria1.parametric:
+      data_pareto=optimize(criteria2,Max_Totenvcost=crit1_span[j],TAX=TAX_pareto,remove_tech=remove_tech_pareto,Max_Emissions=Max_Emissions_pareto,Max_Invcost=Max_Invcost_pareto,Max_Opcost=Max_Opcost_pareto,Max_Totalcost=Max_Totalcost_pareto,NatGasGrid=NatGasGrid_pareto,ElecGridSell=ElecGridSell_pareto,ElecGridBuy=ElecGridBuy_pareto,HydrogenGrid=HydrogenGrid_pareto, c_elec=c_elec_pareto,c_gas=c_gas_pareto)
+      crit2_pareto_min_crit2[j]=data_pareto['object1']
+      crit1_pareto_min_crit2[j]=data_pareto['TotEnvCost'].values[0][0]
   
   # Put results in 2 dataframes. One for optimization on criteria 1, and the other for optiimization on criteria 2
   crit1_opt=pd.DataFrame(data={str(criteria1.value):crit1_pareto_min_crit1,str(criteria2.value):crit2_pareto_min_crit1})
@@ -372,11 +385,13 @@ if __name__ == '__main__':
   # TOTEX,EMISSIONS=get_pareto(criteria1.TOTEX,criteria2.Emissions,n=14)
   # draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 
-  data=optimize(criteria=criteria.TOTEX)
-  print(data['use'][data['use']!=0].dropna())
-  print(data['InvCost'].values[0][0])
-  print(data['use_recovery'].values[0][0])
+  # data=optimize(criteria=criteria.TOTEX)
+  # print(data['use'][data['use']!=0].dropna())
+  # print(data['InvCost'].values[0][0])
+  # print(data['use_recovery'].values[0][0])
   
+  CAPEX,TOTENVEX=get_pareto(criteria1.CAPEX,criteria2.parametric,n=6)
+  draw_pareto(CAPEX,TOTENVEX,"CAPEX [CHF/yr]", "TOTEX + Emissions [CHF/yr]")
  
 
 

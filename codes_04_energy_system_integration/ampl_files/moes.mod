@@ -59,6 +59,7 @@ param Max_Emissions default 1e30;
 param Max_Totalcost default 1e30;
 param Max_Invcost default 1e30;
 param Max_Opcost default 1e30;
+param Max_Totenvcost default 1e30;
 
 # Heat pumps data
 
@@ -274,11 +275,19 @@ subject to ic_cstr:
 var Emissions;
 param technology_emission{tc in Technologies} default 0;
 var Totalcost;
+var TotEnvCost;
+
 subject to em_cstr:
 	Emissions = sum{u in Utilities, t in Time} (FlowInUnit['Electricity',u,t] * top[t] * c_elec)
 	+ sum{u in Utilities, t in Time} (FlowInUnit['Natgas',u,t] * top[t] * c_gas)
 	+ sum{u in UtilitiesOfType['Heating'],t in Time} (mult_t[u,t]*Qheatingsupply[u]*top[t]*technology_emission[u])
 	+ sum{tc in Technologies diff UtilitiesOfType['Heating'],t in Time,l in Layers} (mult_t[tc,t]*top[t]*technology_emission[tc]*FlowOutUnit[l,tc,t]);
+
+subject to TotEnvCost_def:
+	TotEnvCost=Totalcost+CO2tax*Emissions;
+
+subject to TotEnvCost_cstr:
+	TotEnvCost<= Max_Totenvcost;
 
 subject to max_emission_cstr:
 	Emissions <= Max_Emissions;
@@ -294,6 +303,9 @@ subject to max_invcost_cstr:
 
 subject to max_Opcost_cstr:
 	OpCost<=Max_Opcost;
+
+
+
 
 # PV et STC
 
