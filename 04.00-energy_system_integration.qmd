@@ -55,7 +55,7 @@ class criteria2(Enum):
     parametric = 'parametric'
 ```
 
-### Example 1 
+## Example 1 
 I want to optimize the operational cost, and I know that NatGas will cost 0.32. What will be the Investment costs? and what technology will be used?
 
 ```{python, echo=F, eval=T,label= optimize_OPEX, results='hide'}
@@ -70,14 +70,83 @@ print(data['use'][data['use']!=0].dropna().index.values)
 print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 ```
 
-### Example 2
+## Pareto Analysis
+
+### Pareto TOTEX-Emissions
 I want to draw the pareto front between TOTEX and Emissions
 
-```{python, echo=F, eval=T,label= get_pareto, results='hide'}
+```{python, echo=F, eval=T,label= get_pareto1, results='hide'}
 TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30)
 ```
 
-```{python, echo=F, eval=T,label= draw_pareto}
+```{python, echo=F, eval=T,label= draw_pareto1}
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 ```
+
+|                        | **Optimal TOTEX** | **Optimal TOTEX & GWP** | **Optimal GWP** |
+|:----------------------:|:-----------------:|:-----------------------:|:---------------:|
+|   **TOTEX [MCHF/y]**   |         3         |            5            |        20       |
+| **Emissions [tCO2/y]** |        4300       |           950           |       100       |
+
+The most optimized point is the one at (950tCO2/yr;5MCH/yr). Indeed, it gives the lowest TOTEX for a reasonable low emissions. Emissions could be reduced by almost 10 but then TOTEX would be multiplied by 4 and reached 20MCHF/yr. If it is assumed TOTEX can’t be too high, then 950tCO2/yr is deemed acceptable. On contrary, if EPFL was not willing to invest on emission reduction it could select the solution on the far right where TOTEX is reduced by 1.5 to reach 3MCHF/yr but emissions would then be at 4000tCO2/yr.
+
+```{r CO2_EPFL_real_data, out.width='100%', fig.align='center', fig.cap='Carbon footprint of EPFL', echo=F}
+#| label: fig-git-login
+knitr::include_graphics('Figures/BILANCO2EPFLFR-1.png')
+```
+
+By comparing with values directly measured by EPFL @EPFL_emissions, the optimization done gives results in the same order of magnitude. If it is indeed assumed that Electricity emission on campus are not for heating then only 4ktCO2/yr are emitted for heating, which is really close to the 1ktCO2/yr found after the optimization.
+
+### Pareto OPEX-Emissions
+I want to draw the pareto front between OPEX and Emissions
+
+```{python, echo=F, eval=T,label= get_pareto2, results='hide'}
+OPEX,EMISSIONS=fct3.get_pareto(criteria1.OPEX,criteria2.Emissions,n=30)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto2}
+fct3.draw_pareto(OPEX,EMISSIONS,"OPEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+### Pareto CAPEX-Emissions
+I want to draw the pareto front between CAPEX and Emissions
+
+```{python, echo=F, eval=T,label= get_pareto3, results='hide'}
+CAPEX,EMISSIONS=fct3.get_pareto(criteria1.CAPEX,criteria2.Emissions,n=30)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto3}
+fct3.draw_pareto(CAPEX,EMISSIONS,"CAPEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+
+## Sensitivity Analysis
+
+### Variation in the Natural Gas cost
+
+With the current geopolitical tension between western countries and Russia, the natural gas price is very sensitive.
+
+```{python, echo=F, eval=T,label= sensitivity_gas, results='hide'}
+import plotly.graph_objects as go
+import pandas as pd
+import numpy as np
+
+price = []
+x = np.arange(0.001, 0.3, 0.01)
+for gas_price in x:
+    data = fct3.optimize(criteria=criteria.TOTEX,NatGasGrid=gas_price)
+    #df = pd.read_pickle('./optimize_dump.pkl')
+    #df.head()
+    price.append(data['Totalcost'].values[0][0])
+
+x_def = 0.0303
+y_def_data = fct3.optimize(criteria=criteria.TOTEX,NatGasGrid=x_def)
+y_def = y_def_data['Totalcost'].values[0][0]
+
+fig = go.Figure(data=go.Scatter(x=x, y=price, mode='markers'))
+fig = fig.add_trace(go.Scatter(x=[x_def], y=[y_def], mode='markers', marker=dict(color='red')))
+fig = fig.update_layout(title='Price Vector Plot with TOTEX objective', xaxis_title='Gas price', yaxis_title='TOTEX', showlegend = False)
+fig.show()
+```
+
 <!-- Here you report about your energy systems optimization. This is the last part of the discussion where you wrap-up everything you did. -->

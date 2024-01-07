@@ -95,7 +95,7 @@ param Qheating{b in Buildings, t in Time} :=
 var Qheatingdemand{HeatingLevel,Time}>=0;
 
 subject to  Qheatingdemand_cstr{h in HeatingLevel, t in Time}:
-	h == 'MediumT' ==> Qheatingdemand[h,t]=(1-use_recovery*Heating_perc[t])*sum{b in MediumTempBuildings} Qheating[b,t] else Qheatingdemand[h,t]=sum{b in LowTempBuildings} Qheating[b,t]
+	h == 'MediumT' ==> Qheatingdemand[h,t]=(use_recovery*Heating_perc[t])*sum{b in MediumTempBuildings} Qheating[b,t] else Qheatingdemand[h,t]=sum{b in LowTempBuildings} Qheating[b,t]
 ;
 
 # subject to force_heat_recov:
