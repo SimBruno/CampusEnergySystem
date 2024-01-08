@@ -97,8 +97,8 @@ knitr::include_graphics('Figures/BILANCO2EPFLFR-1.png')
 
 By comparing with values directly measured by EPFL @EPFL_emissions, the optimization done gives results in the same order of magnitude. If it is indeed assumed that Electricity emission on campus are not for heating then only 4ktCO2/yr are emitted for heating, which is really close to the 1ktCO2/yr found after the optimization.
 
-### Pareto OPEX-Emissions
-I want to draw the pareto front between OPEX and Emissions
+### Pareto OPEX-Emissions and CAPEX-Emissions
+Here are other Pareto between OPEX and Emissions and CAPEX and Emissions 
 
 ```{python, echo=F, eval=T,label= get_pareto2, results='hide'}
 OPEX,EMISSIONS=fct3.get_pareto(criteria1.OPEX,criteria2.Emissions,n=30)
@@ -107,9 +107,6 @@ OPEX,EMISSIONS=fct3.get_pareto(criteria1.OPEX,criteria2.Emissions,n=30)
 ```{python, echo=F, eval=T,label= draw_pareto2}
 fct3.draw_pareto(OPEX,EMISSIONS,"OPEX [CHF/yr]", "Emissions [gCO2/yr]")
 ```
-
-### Pareto CAPEX-Emissions
-I want to draw the pareto front between CAPEX and Emissions
 
 ```{python, echo=F, eval=T,label= get_pareto3, results='hide'}
 CAPEX,EMISSIONS=fct3.get_pareto(criteria1.CAPEX,criteria2.Emissions,n=30)
@@ -149,7 +146,9 @@ fig = fig.update_layout(title='Natural Gas Price Plot with TOTEX objective', xax
 fig.show()
 ```
 
-pareto if ng price at 0.291 CHF/kWh
+On this plot it is possible to observe how TOTEX increases with an increase of the gas price. The red dot correspond to the price of gas used to performed the first Pareto curves presented above. 
+The goal of this first sensitity analysis is thus to replot another Pareto curve TOTEX-Emissions but this time with a higher gas price. 
+Let's choose a price of 0.29CHF/kWh (highest point on the graph)
 
 ```{python, echo=F, eval=T,label= get_pareto_ng, results='hide'}
 TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, NatGasGrid_pareto=0.291)
@@ -158,11 +157,15 @@ TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, NatGas
 ```{python, echo=F, eval=T,label= draw_pareto_ng}
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 ```
+Now the Pareto is different from the original case. Because gas price has been increased, it is not anymore optimal to choose utilities which require use of gas. 
+That's why if we retake our first optimal point at 950tCO2/yr, this time it is not anymore be in the optimal part of the graph. Instead, it is located in the rigth tail of the Pareto curve. This means the optimal point is now to lower emissions values. More precisely, a relevant optimal point could be at 400tCO2/yr for a TOTEX of 8MCHF/yr. 
+Thus increasing the gas price by almost 10, only increases the optimal TOTEX by 60% but enables to reduce emissions by 60%.
+Let's note that only optimal values found on the Pareto are compared. The TOTEX vs gas price curve was only used to select a relevant gas price to perform the Multi-objective optimisation and the plot the Pareto curve.
 
 
 ### Variation in the Electricity cost
 
-0.06 c'est le prix de vente de l'electricité
+This time let's see what happen when the price of bought electricity changes.
 
 ```{python, echo=F, eval=T,label= sensitivity_elec, results='hide'}
 import plotly.graph_objects as go
@@ -187,7 +190,9 @@ fig = fig.update_layout(title='Electricity Price Plot with TOTEX objective', xax
 fig.show()
 ```
 
-pareto if elec price at 0.49 CHF/kWh
+It appears TOTEX increases lineraly with electricity prices. The red dot is again corresponding to the price of electricity used in the orignal TOTEX-Emissions Pareto.
+It can be noticed the plot starts at 0.06CHF/kWh. Indeed at lower buying prices, it would be more interesting to sell electricity since $BuyPrice < SellPrice$.
+Let's see how the optimal point from Multi-objective optimisation changes when electricity is now bought at 0.49CHF/kWh.
 
 ```{python, echo=F, eval=T,label= get_pareto_elec, results='hide'}
 TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, ElecGridBuy_pareto=0.49)
@@ -197,6 +202,8 @@ TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, ElecGr
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 ```
 
+This time the original optimal point of 950tCO2/yr is lying below the optimal region of the obtained Pareto. This means that for the same emissions, the TOTEX is now increased. 
+By selecting on the obtained Pareto the optimal point located at 1000tCO2/yr, the TOTEX is now 17.5MCHF/yr. This is a price increase of 350% compared to the original optimal point (with a minor emission increase of 5%). Thus if electricity prices increase, the optimal solution would be far more expensive than if gas prices are increased. 
 
 ### Variation in the Electricity carbon footprint
 
@@ -236,7 +243,7 @@ fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 
 ### Optimization without considering Boiler
 
-pareto without Boiler
+Finally, let's see how preventing the optimizer to select a certain technology will impact the optimal TOTEX-Emissions point. 
 
 ```{python, echo=F, eval=T,label= get_pareto_woboiler, results='hide'}
 TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, remove_tech_pareto=["Boiler"])
@@ -246,6 +253,12 @@ TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, remove
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 ```
 
-results en 10^-8 !
+Here Boiler has been removed. It means EPFL would not be allowed to use a boiler to answer the heating demand of the campus.
+Emissions are drastically reduced. Indeed, the optimal point is now inferior to 40tCO2/yr. 
+It makes sense since Boiler was the main user of NatGas so by removing it, the emissions are reduced and mainly due to electricity generation. 
+However, the TOTEX is now increased around 15 to 17.5MCHF/yr. Such price increase is high and thus compared to the original Pareto or the other sensitivity analysis, it is always a question on what is the target for the EPFL. 
+
+Do they have unlimited founding to reduce their emissions? In that case removing boiler and other equipment requiring use of gas would be the best solution. 
+Or instead, is the budget limited and in that case it would be better to assume gas price are higher like in the first sensitivity analysis to reduce emissions while keeping a reasonable TOTEX. 
 
 <!-- Here you report about your energy systems optimization. This is the last part of the discussion where you wrap-up everything you did. -->
