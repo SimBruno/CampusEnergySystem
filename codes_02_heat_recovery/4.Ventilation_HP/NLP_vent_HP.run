@@ -14,6 +14,7 @@ option solver snopt;
 #option omit_zero_cols 1;
 option presolve_eps 8.53e-15;
 
+
 /*---------------------------------------------------------------------------------------------------------------------------------------
 Solve the problem
 ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -47,4 +48,7 @@ display Area_Vent;
 # display TLMCond_2;
 # display TLMEvapHP_2;
 display Cost_HP;
-
+# display Trelease;
+# display Trelease_2;
+# display Text_new;
+# display DTLNVent;

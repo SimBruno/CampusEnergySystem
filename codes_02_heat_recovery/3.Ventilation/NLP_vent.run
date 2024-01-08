@@ -35,3 +35,6 @@ display Area_Vent;
 #display Uvent;
 #display Uenv;
 #display Text_new;
+display Flow;
+display MassEPFL;
+display Text_new-Text;

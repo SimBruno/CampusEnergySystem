@@ -57,7 +57,7 @@ var Qrad{Time} 		>= 0.001; #[kW] DC heat recovered;
 var THPin{Time} 	>= 7;     #[degC] ?
 var Qfree{Time} 	>= 0.001; #[kW] free cooling heat; makes sure DC air is cooled down.
 var Flow{Time} 		>= 0.001; #[kg/s] lake water entering free cooling HEX
-var MassEPFL{Time} 	>= 0.001; #[kJ/(s degC)] MCp of EPFL heating system 
+var MassEPFL{Time} 	>= 0;#0.001; #[kJ/(s degC)] MCp of EPFL heating system 
 
 ################################
 # Constraints

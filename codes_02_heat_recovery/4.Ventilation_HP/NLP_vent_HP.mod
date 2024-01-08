@@ -110,6 +110,9 @@ param eps := 0.001;
 ################################
 ## VENTILATION
 
+subject to la_contrainte_a_la_con:
+	Area_Vent<=1500;
+
 subject to overallHeatTransfer{b in MediumTempBuildings}: # Uenv calculation for each building based on k_th and mass of air used
 	Uenv[b] = k_th[b] - mair*Cpair/3600;
 
@@ -122,11 +125,16 @@ subject to Heat_Vent1 {t in Time}: #HEX heat load from one side;
 subject to Heat_Vent2 {t in Time}: #HEX heat load from the other side;
 	Heat_Vent[t] = sum{b in MediumTempBuildings} (Tint-Trelease[t])*(mair/3600)*Cpair*FloorArea[b]; #CHANGED
 
-subject to DTLNVent1 {t in Time}: #DTLN ventilation
-	DTLNVent[t] * log((Tint-Text_new[t]+eps)/(Trelease[t]-Text[t]+eps)) = ((Tint-Text_new[t]+eps)-(Trelease[t]-Text[t]+eps)) ; #CHANGED
+# subject to DTLNVent1 {t in Time}: #DTLN ventilation
+# 	DTLNVent[t] * log((Tint-Text_new[t]+eps)/(Trelease[t]-Text[t]+eps)) = ((Tint-Text_new[t]+eps)-(Trelease[t]-Text[t]+eps)) ; #CHANGED
+subject to DTLNVent1 {t in Time}:
+	DTLNVent[t]=((Tint-Text_new[t])+(Trelease[t]-Text[t]))/2
+;
+
 
 subject to Area_Vent1 {t in Time}: #Area of ventilation HEX
 	Area_Vent >= Heat_Vent[t]/(Uvent*DTLNVent[t]);
+
 
 subject to DTminVent1 {t in Time}: #DTmin needed on one side of HEX
 	Trelease[t] >= DTminVent+Text[t];
