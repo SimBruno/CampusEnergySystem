@@ -31,14 +31,15 @@ def save_ampl_results(ampl, pkl_name="results"):
 
 def run_ampl(data_file, model_directory, model_file, buildings_required=False):
 
+    PATH = os.path.dirname( __file__ )
     # Read data from CSV
     # data_file = "clusters_data.csv"
-    data_path = os.path.join(".","codes_01_energy_demand", data_file)
+    data_path = os.path.join(PATH, "..","codes_01_energy_demand", data_file)
     data = pd.read_csv(data_path)
 
     # model_file = "NLP_ref.mod"
     # model_directory = "1.Reference_case_Mirco"
-    model_path = os.path.join(os.getcwd(),"codes_02_heat_recovery",model_directory, model_file)
+    model_path = os.path.join(PATH, "..","codes_02_heat_recovery",model_directory, model_file)
 
     # Create an AMPL instance
     ampl = AMPL()
@@ -56,7 +57,7 @@ def run_ampl(data_file, model_directory, model_file, buildings_required=False):
         ampl.getParameter("irradiation").setValues(data['Irr']/1000)
 
         buildings_file  = "thermal_properties.csv"
-        buildings_path  = os.path.join(os.getcwd(),"codes_01_energy_demand", buildings_file)
+        buildings_path  = os.path.join(PATH, "..","codes_01_energy_demand", buildings_file)
         buildings       = pd.read_csv(buildings_path)
         buildings.index = [f'Building{i}' for i in range(1,len(buildings)+1)]
 
@@ -67,19 +68,18 @@ def run_ampl(data_file, model_directory, model_file, buildings_required=False):
             ampl.getParameter(col).setValues(buildings[col])
       
     else: 
-        ampl.getParameter("Qheating").setValues(data['Q_th'])
+        ampl.getParameter("Qheating").setValues(data['Q_th']+500)
 
 
     # Solve the model
     ampl.setOption('solver', 'snopt')
-    #ampl.setOption('presolve_eps', 8.53e-15)
+    ampl.setOption('presolve_eps', 8.53e-15)
     #ampl.setOption('omit_zero_rows', 1)
     #ampl.setOption('omit_zero_cols', 1)
     ampl.solve()
     #assert ampl.solve_result == "solved"
 
     results_name = model_file[:-4]
-    print(results_name)
 
     save_ampl_results(ampl, pkl_name=results_name)
 
@@ -87,19 +87,20 @@ def run_ampl(data_file, model_directory, model_file, buildings_required=False):
 
     return
 
+
 if __name__ == "__main__":
     # Code to be executed when the script is run directly
 
     # Read data from CSV
     data_file = "clusters_data.csv"
-    model_file = "NLP_vent.mod"
-    model_directory = "3.Ventilation"
+    model_file = "NLP_DC_2.mod"
+    model_directory = "2.DC_recovery"
 
-    run_ampl(data_file, model_directory, model_file,True)
+    run_ampl(data_file, model_directory, model_file)
 
     print("Script executed successfully.")
 
-    data = pd.read_pickle(r'C:\Users\maj\Desktop\report-group-3\codes_02_heat_recovery\results\NLP_vent.pkl')
-    print(data['OPEX'])
+    data = pd.read_pickle(r'C:\Users\maj\Desktop\report-group-3\codes_02_heat_recovery\results\NLP_DC_2.pkl')
+    print(data['TC'])
 
     print(data['CAPEX'])
