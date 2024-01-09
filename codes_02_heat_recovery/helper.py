@@ -62,7 +62,7 @@ def run_ampl(data_file, model_directory, model_file, buildings_required=False):
         buildings.index = [f'Building{i}' for i in range(1,len(buildings)+1)]
 
         #drop specQ_people col
-        buildings.drop(columns= "specQ_people", inplace=True)
+        #buildings.drop(columns= "specQ_people", inplace=True)
 
         for col in buildings.columns:
             ampl.getParameter(col).setValues(buildings[col])
@@ -93,14 +93,14 @@ if __name__ == "__main__":
 
     # Read data from CSV
     data_file = "clusters_data.csv"
-    model_file = "NLP_DC_2.mod"
-    model_directory = "2.DC_recovery"
+    model_file = "NLP_vent_2.mod"
+    model_directory = "3.Ventilation"
 
-    run_ampl(data_file, model_directory, model_file)
+    run_ampl(data_file, model_directory, model_file,True)
 
     print("Script executed successfully.")
 
-    data = pd.read_pickle(r'C:\Users\maj\Desktop\report-group-3\codes_02_heat_recovery\results\NLP_DC_2.pkl')
+    data = pd.read_pickle(r'C:\Users\maj\Desktop\report-group-3\codes_02_heat_recovery\results\NLP_vent_2.pkl')
     print(data['TC'])
 
     print(data['CAPEX'])

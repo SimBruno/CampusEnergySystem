@@ -117,10 +117,10 @@ subject to Area_Vent1 {t in Time}:
 	Area_Vent*Uvent*DTLNVent[t]>=Heat_Vent[t]; #Area of ventilation HEX
 	
 subject to DTminVent1 {t in Time}: 
-	Trelease[t]>=DTminVent+Text[t]; #DTmin needed on one side of HEX
+	Trelease[t]>=Text[t] + DTminVent; #DTmin needed on one side of HEX
 	
 subject to DTminVent2 {t in Time}: 
-	Tint>=DTminVent+Text_new[t]; #DTmin needed on the other side of HEX 
+	Tint>= Text_new[t]+DTminVent; #DTmin needed on the other side of HEX 
 	
 subject to ventilation_trivial {t in Time}: #relation between Text_new and Text (initialization purposes)
 	Text_new[t] >= Text[t]+0.01;

@@ -27,13 +27,6 @@ Let's solve the following optimization problem, in order to obtain the less expe
 \text{ s.t.}\\
 \end{array}
 
-```{js, echo=FALSE}
- 
-function toggleTable() {
-  var table = document.getElementById("foldable-table");
-  table.style.display = table.style.display === "none" ? "table" : "none";
-}
-```
 <details>
 <summary>Display all the constraints</summary>
 
@@ -203,6 +196,8 @@ html_table_dc_data += "</table>"
 
 HTML(html_table_dc_data)
 
+print("The TOTEX for DC case is:", DC_TOTEX, "CHF.\n")
+
 ```
 
 The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-DC_TOTEX:.2f}'")` [CHF/y].
@@ -268,7 +263,7 @@ data_file   = "clusters_data.csv"
 data_path   = os.path.join(os.getcwd(),"codes_01_energy_demand", data_file)
 data        = pd.read_csv(data_path)
 
-model_file      = "NLP_vent.mod"
+model_file      = "NLP_vent_2.mod"
 model_directory = "3.Ventilation"
 
 pkl_path = os.path.join(os.getcwd(),"codes_02_heat_recovery","results", model_file[:-4] + ".pkl")
@@ -297,6 +292,10 @@ html_table_vent_data += f"<tr><td>Payback time</td><td>{vent_payback} years</td>
 html_table_vent_data += "</table>"
 
 HTML(html_table_vent_data)
+
+print("The TOTEX for vent case is:", vent_CAPEX, "CHF.\n")
+
+
 ```
 
 ## Air ventilation with Heat pump integration {#subsec:case-4}
