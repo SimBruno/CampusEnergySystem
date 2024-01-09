@@ -53,12 +53,12 @@ var Text_new{Time} 	;   	  #[degC]
 var Trelease{Time}	>= 0; 	  #[degC]
 var Qheating{Time} 	>= 0; 	  #your heat demand from the MILP part, is now a variable.
 
-var E{Time} 		>= 0; 	  # [kW] electricity consumed by the heat pump (using pre-heated lake water)
+var E{Time} 		>= 0; 	  #[kW] electricity consumed by the heat pump (using pre-heated lake water)
 var TLMCond 	 	>= 0.001; #[K] logarithmic mean temperature in the condensor of the heating HP (using pre-heated lake water)
 var TLMEvap 		>= 0.001; #[K] logarithmic mean temperature in the evaporator of the heating HP (using pre-heated lake water)
 var Qevap{Time} 	>= 0.001; #[kW] heat extracted in the evaporator of the heating HP (using pre-heated lake water)
 var Qcond{Time} 	>= 0.001; #[kW] heat delivered in the condensor of the heating HP (using pre-heated lake water)
-var COP{Time} 		>= 0.001; #coefficient of performance of the heating HP (using pre-heated lake water)
+var COP{Time} 		>= 0.001; #[-] coefficient of performance of the heating HP (using pre-heated lake water)
 
 var OPEX 			>= 0.001; #[CHF/year] operating cost
 var CAPEX 			>= 0.001; #[CHF/year] annualized investment cost
@@ -77,13 +77,13 @@ var Uenv{Buildings} >= 0; 	  #overall heat transfer coefficient of the building 
 
 #### Building dependent parameters
 
-param irradiation{Time};				 # solar irradiation [kW/m2] at each time step									
-param specElec{Buildings} default 0.04;  #electricity consumption of buildings [kW/m2]{Buildings}
-param FloorArea{Buildings} default 1000; #area [m2]{Buildings}
-param k_th{Buildings} default 0.006;	 # thermal losses and ventilation coefficient in (kW/m2/K)
-param k_sun{Buildings} default 0.10;	 # solar radiation coefficient [−]{Buildings}
-param share_q_e default 0.8; 			 # share of internal gains from electricity [-]{Buildings}
-param specQ_people{Buildings} default 0.00544; # specific average internal gains from people [kW/m2]{Buildings}
+param irradiation{Time} default 0.1; 	 #[kW/m2] solar irradiation at each time step									
+param specElec{Buildings} default 0.04;  #[kW/m2] electricity consumption of buildings {Buildings}
+param FloorArea{Buildings} default 1000; #[m2] area {Buildings}
+param k_th{Buildings} default 0.006;	 #[kW/m2/K] thermal losses and ventilation coefficient
+param k_sun{Buildings} default 0.10;	 #[-] solar radiation coefficient{Buildings}
+param share_q_e default 0.8; 			 #[-] share of internal gains from electricity{Buildings}
+param specQ_people{Buildings} default 0.00544; #[kW/m2] specific average internal gains from people {Buildings}
 
 ################################
 # Constraints
@@ -97,15 +97,15 @@ subject to Uenvbuilding{b in MediumTempBuildings}:
 subject to VariableHeatdemand {t in Time} : 
 	Text[t]<16 ==> Qheating[t]=sum{b in MediumTempBuildings} max(FloorArea[b]*(Uenv[b]*(Tint-Text[t])+(mair/3600)*Cpair*(Tint-Text_new[t])-k_sun[b]*irradiation[t]-specQ_people[b]-share_q_e*specElec[b]),0) else Qheating[t]=0; #Heat demand calculated as the sum of all buildings -> medium temperature sum{b in MediumTempBuildings}
 	
-
-subject to Heat_Vent1 {t in Time}: 
-	Heat_Vent[t]=sum{b in MediumTempBuildings} ((mair/3600)*FloorArea[b]*Cpair*(Text_new[t]-Text[t])); #HEX heat load from one side;
+subject to Heat_Vent1 {t in Time}: #HEX heat load from one side;
+	Heat_Vent[t]=sum{b in MediumTempBuildings} ((mair/3600)*FloorArea[b]*Cpair*(Text_new[t]-Text[t]));
 	
-subject to Heat_Vent2 {t in Time}: 
-	Heat_Vent[t]=sum{b in MediumTempBuildings} ((mair_out/3600)*FloorArea[b]*Cpair*(Tint-Trelease[t])); #HEX heat load from the other side;
+subject to Heat_Vent2 {t in Time}: #HEX heat load from the other side;
+	Heat_Vent[t]=sum{b in MediumTempBuildings} ((mair_out/3600)*FloorArea[b]*Cpair*(Tint-Trelease[t]));
 	
 subject to DTLNVent1 {t in Time}: 
 	DTLNVent[t] * log((Tint-Text_new[t])/(Trelease[t]-Text[t])) = ((Tint-Text_new[t])-(Trelease[t]-Text[t])); #DTLN ventilation -> pay attention to this value: why is it special?
+	#DTLNVent[t] = (((Tint-Text_new[t])*(Text[t]-Trelease[t])^2+(Trelease[t]-Text[t])*(Tint-Text_new[t])^2)/2)^1/3;
 
 #subject to dTLNVent_rule{t in Time}: DTLNVent[t]<=((Text_new[t]-Tint+0.001)+273+(Text[t]-Trelease[t]+0.001)+273)/2; # One of inequalities for Condenser
 
@@ -161,9 +161,9 @@ subject to QEPFLausanne{t in Time}:
 subject to OPEXcost:
 	OPEX = sum{t in Time}(Cel*top[t]*E[t]); #the operating cost can be computed using the electricity consumed in the HP.
 	
-subject to CAPEXcost: CAPEX*IRef=((i*(1+i)^n)/((1+i)^n-1))*(INew)*FBMHE*aHE*Area_Vent^bHE; #the investment cost can be computed using the area of the ventilation heat exchanegr
+subject to CAPEXcost: #the investment cost can be computed using the area of the ventilation heat exchanger
+	CAPEX*IRef=((i*(1+i)^n)/((1+i)^n-1))*(INew)*FBMHE*aHE*Area_Vent^bHE; 
 	
-
 subject to TCost: 
 	TC=OPEX+CAPEX; #the total cost can be computed using the operating and investment cost
 	

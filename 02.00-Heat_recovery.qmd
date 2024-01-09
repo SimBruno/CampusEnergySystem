@@ -28,6 +28,7 @@ Let's solve the following optimization problem, in order to obtain the less expe
 \end{array}
 
 ```{js, echo=FALSE}
+ 
 function toggleTable() {
   var table = document.getElementById("foldable-table");
   table.style.display = table.style.display === "none" ? "table" : "none";
@@ -188,7 +189,7 @@ DC_OPEX     = round(DC_data['OPEX'].values[0][0],2)
 DC_CAPEX    = round(DC_data['CAPEX'].values[0][0],2)
 DC_AHEDC    = round(DC_data['AHEDC'].values[0][0],2)
 
-DC_payback  = round(DC_CAPEX/(ref_OPEX-DC_OPEX),2)
+DC_payback  = round(DC_CAPEX/(ref_TOTEX-DC_OPEX),2)
 
 html_table_dc_data = "<h5 style='text-align:center;'>DC optimization results</h5>\n\n"
 html_table_dc_data += "<table border='1' style='border-collapse: collapse;'>\n"
@@ -198,25 +199,13 @@ html_table_dc_data += f"<tr><td>OPEX</td><td>{DC_OPEX} CHF</td></tr>\n"
 html_table_dc_data += f"<tr><td>CAPEX</td><td>{DC_CAPEX} CHF</td></tr>\n"
 html_table_dc_data += f"<tr><td>HEX Area</td><td>{DC_AHEDC} m<sup>2</sup></td></tr>\n"
 html_table_dc_data += f"<tr><td>Payback time</td><td>{DC_payback} years</td></tr>\n"
-
-#html_table_dc_data += f"<tr><td>&Delta;T</td><td>{round(DC_data['delta_T'],2)} K</td></tr>\n"
 html_table_dc_data += "</table>"
 
 HTML(html_table_dc_data)
-print("The objective for DC case is:", round(DC_data['obj'],2), "CHF.\n")
-print("The objective for DC case is:", round(DC_TOTEX,2), "CHF.\n")
 
 ```
 
-
-
-$$
-TOTEX=631756 \text{ [CHF/y], } A_{HE,DC}=188.07 \text{ [m$^2$] and } \Delta T=3.79 \text{ [K]}
-$$
-
-The cost reduction is really small: 3885 [CHF/y]. Therefore, this solution may not be the best one.
-
-
+The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-DC_TOTEX:.2f}'")` [CHF/y].
 
 ## Air ventilation heat recovery {#subsec:case-3}
 
@@ -263,7 +252,6 @@ The optimization problem still search to minimize the TOTEX. The problem is as f
 | Temperature check at cold side                          | $T_{ext,new}(t) \geqslant T_{ext}(t)~\forall t$                                                              |
 
 Where $\Delta T_{min}$ is the minimum temperature difference between hot and cold flows in the HEX. As the increase in $\Delta T$ reduces the OPEX, but increases the CAPEX (and vice-versa),$\Delta T_{min}$ is the optimal value to reach. Also in this scenario COP is constant. 
-
 </details>
 
 All constraint equations from reference case (MASS BALANCE and MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION) are not repeated here but must also be considered as constraints.
@@ -310,14 +298,6 @@ html_table_vent_data += "</table>"
 
 HTML(html_table_vent_data)
 ```
-
-
-
-- $OPEX=680761$ [CHF/y]
-- $CAPEX=15844.7$ [CHF/y]
-- $TOTEX=696606$ [CHF/y]
-- $A_{vent}=157.176$ [m$^2$]
-
 
 ## Air ventilation with Heat pump integration {#subsec:case-4}
 
@@ -368,7 +348,6 @@ But the optimization problem is also following new constraints specific to the a
 | $COP_{HP}$                | $COP_{HP} = \epsilon \dfrac{T_{LM,HP,cond}(t)}{T_{LM,HP,cond}(t)-T_{LM,HP,evap}(t)}~\forall t$                                  |
 | Mean temperature in HP condenser   | $T_{LM,HP,cond}(t)=\dfrac{T_{air,in}-T_{ext,new}(t)}{log(\dfrac{T_{air,in}}{T_{ext,new}})}~\forall t$ |
 | Mean temperature in HP evaporator  | $T_{LM,HP,evap}(t)=\dfrac{T_{release}-T_{release,2}(t)}{log(\dfrac{T_{release}}{T_{release,2}})}~\forall t$           |
-
 </details>
 
 All constraint equations from reference case (Mass Balance and EPFL Heat/Elec Demand) are not repeated here but must also be considered as constraints.
@@ -413,14 +392,7 @@ HTML(html_table_vent_HP_data)
 
 ```
 
-- $OPEX=.........$ [CHF/y]
-- $CAPEX=.........$ [CHF/y]
-- $TOTEX=.........$ [CHF/y]
-- $A_{vent}=.......$ [m$^2$]
-
-
 ## Conclusion: which scenario enables a higher cost savings?
-
 
 TBCompleted when we have data from the last scenario but we have a tiny error in our code which prevents from having a relevant result. We are working on it.
 
@@ -440,33 +412,3 @@ html_table_summary += "</table>"
 
 HTML(html_table_summary)
 ```
-
-
-## Foldable table tests
-
-```{js, echo=FALSE}
-function toggleTable() {
-  var table = document.getElementById("foldable-table");
-  table.style.display = table.style.display === "none" ? "table" : "none";
-}
-```
-
-
-<details>
-<summary>Display all the constraints</summary>
-
-| Constraint type                            | Equation                                                                                                                   |
-|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| COST CONSTRAINTS                 |                                        |
-| OPEX calculation                           | $OPEX=\sum_{t} C_{el} \cdot E(t) \cdot t_{op}(t)$                                                                          |
-| MASS BALANCE                     |                                    |
-| Heat supply to EPFL                        | $\dot{M}Cp_{EPFL}(t)\cdot (T_{EPFL,medium}-T_{EPFL,medium-out}) = \dfrac{Q_{heating}(t)}{t_{op}(t)} ~\forall t$            |
-| MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION                 |                                        |
-| Heat transfer on lake side                 | $Q_{evap,ref}(t) = \dot{M}Cp_{Lake}(t) \cdot (T_{HP,high-in}-T_{HP,high-out})~\forall t$                                       |
-| Heat transfer on EPFL side                 | $Q_{cond,ref}(t) = \dot{M}Cp_{EPFL}(t) \cdot (T_{EPFL,medium}-T_{EPFL,medium-out})~\forall t$                                  |
-| Energy balance of heat pump                | $E(t) + Q_{evap,ref}(t) = Q_{cond,ref}(t) ~\forall t$                                                                              |
-| First law efficiency of heat pump          | $E(t) = \dfrac{Q_{cond,ref}(t)}{COP}~\forall t$                                                                                |
-| Heat supply to EPFL                        | $\dot{M}Cp_{EPFL}(t)\cdot (T_{EPFL,medium}-T_{EPFL,medium-out}) = \dfrac{Q_{heating}(t)}{t_{op}(t)} ~\forall t$            |
-| Log mean temperature in condenser for COP  | $T_{LM,cond,ref}=\dfrac{T_{EPFL,medium}-T_{EPFL,medium-out}}{\ln{\left( \dfrac{T_{EPFL,medium}}{T_{EPFL,medium-out}}\right)}}$ |
-| log mean temperature in evaporator for COP | $T_{LM,evap,ref}=\dfrac{T_{HP,high-in}-T_{HP,high-out}}{\ln{\left( \dfrac{T_{HP,high-in}}{T_{HP,high-out}}\right)}}$           |
-| Definition of COP                          | $COP=\epsilon \dfrac{T_{LM,cond,ref}}{(T_{LM,cond,ref}-T_{LM,evap,ref})}$ 

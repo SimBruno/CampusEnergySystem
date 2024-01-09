@@ -32,6 +32,7 @@ param HeatDC 		:= 574;  #[kW] amount of heat to be removed from data center
 param Tret 			:= 17;   #[degC] temperature of air entering DC
 param MassDC 		:= HeatDC/(TDCin-Tret); #[KJ/(s degC)] MCp of air in DC
 param Cpwater		:= 4.18; #[kJ/(kg degC)]
+
 ################################
 ##Variables
 
@@ -59,29 +60,25 @@ var Qfree{Time} 	>= 0.001; #[kW] free cooling heat; makes sure DC air is cooled 
 var Flow{Time} 		>= 0.001; #[kg/s] lake water entering free cooling HEX
 var MassEPFL{Time} 	>= 0;#0.001; #[kJ/(s degC)] MCp of EPFL heating system 
 
+var DTmin           >= 0.001; 
+
 ################################
 # Constraints
 ####### Direct Heat Exchanger;
 
 ## TEMPERATURE CONTROL CONSTRAINS exist to be sure the temperatures in the HEX do not cross, meaning to make sure there is a certain DTmin. (3 are recommended, but you can have more or less)
 subject to Tcontrol1{t in Time}: 
-    TDCin>=TRadin[t]+0.1; #[degC]=[degC]
+    TDCin>=TRadin[t]+DTmin; #[degC]=[degC]
 
 subject to Tcontrol2 {t in Time}:
-    TDCout[t]>=EPFLMediumOut+0.1; #[degC]=[degC]
+    TDCout[t] >=EPFLMediumOut+DTmin; #[degC]=[degC]
 
-subject to Tcontrol3 {t in Time}:
- 	TDCin>=TDCout[t]+0.1; #[degC]=[degC]
-
-subject to Tcontrol4 {t in Time}:
- 	TRadin[t]>=EPFLMediumOut+0.1; #[degC]=[degC]
-
-subject to Tcontrol5 {t in Time}: 
-    TDCout[t] >= THPin[t]+5;
+subject to Tcontrol3 {t in Time}: 
+    TDCout[t] >= THPin[t]+DTmin;
 
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
 subject to dTLMDataCenter {t in Time}: #the logarithmic mean temperature difference in the heat recovery HE can be computed
-    dTLMDC[t]*log((TDCin-TRadin[t])/(TDCout[t]-EPFLMediumOut))=((TDCin-TRadin[t])-(TDCout[t]-EPFLMediumOut)); #[K]*[-] = [K]
+    dTLMDC[t]*log((TDCout[t]-EPFLMediumOut)/(TDCin-TRadin[t]))=((TDCout[t]-EPFLMediumOut)-(TDCin-TRadin[t])); #[K]*[-] = [K]
 
 subject to HeatBalance1{t in Time}: #Heat balance in DC HEX from DC side
     Qrad[t]=MassDC*(TDCin-TDCout[t]); #[kW] = [kJ/(s degC)]*[degC]
@@ -99,7 +96,7 @@ subject to AreaHEDC{t in Time}: #the area of the heat recovery HE can be compute
     AHEDC>=Qrad[t]/(UDC*(dTLMDC[t])); #[m2]=[kW]/[kW/(m2 K)]/[K]
 
 subject to balancemax{t in Time}: # the maximum heat extracted is for sure lower than the total heating demand; pay attention to the units!
-	Qrad[t] = MassEPFL[t]*(TRadin[t]-EPFLMediumOut); #[kW]=[kJ/(s degC)]*[degC]
+	Qrad[t] >= MassEPFL[t]*(TRadin[t]-EPFLMediumOut); #[kW]=[kJ/(s degC)]*[degC]
 	
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
 
