@@ -148,13 +148,10 @@ Combining equations @eq-heat-demand and @eq-switch-off allows constructing a sys
 ```{python, echo=F, results='hide', label='generate kth and ksun'}
 #Run the NR algorithm to produce the k_th and k_sun for every building
 thermal_properties  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_sun', 'specQ_people'])
+NR_info             = pd.DataFrame(columns=['error_k_th','error_k_sun','number_iteration'])
 Q_th = pd.DataFrame(columns=buildings['Name']) 
 T_ext = weather.Temp + 273 # K
 irr = weather.Irr # W/m2
-
-Q_extreme = []
-T_extreme = []
-irr_extreme = []
 
 q_people = fct1.people_gains(profile_class, profile_rest, profile_off)
 
@@ -163,14 +160,19 @@ for building_id in buildings['Name']:
     q_elec = fct1.elec_gains(building_id, buildings, profile_elec)
     [k_th, k_sun, number_iteration, error1, error2, A_th, specQ_people, specElec, heating_indicator] = fct1.solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
     thermal_properties.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': specElec/1000, 'k_th': k_th/1000, 'k_sun': k_sun,'specQ_people': specQ_people/1000})
+    NR_info.loc[building_id] = pd.Series({'error_k_th': error1,'error_k_sun':error2,'number_iteration':number_iteration})
+
 
     #Compute Q_th for each hour
     Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000 # Wh--> kWh
     Q_th[heating_indicator==0] = 0 # Set Q_th to be only heat demand
 
+print(NR_info)
+
 PATH = os.path.dirname(os.getcwd()) # the path to codes_01_energy_demand.py
 thermal_properties.to_csv(os.path.join(PATH,"report-group-3","codes_01_energy_demand", "thermal_properties.csv"),index=False)
 ```
+
 
 ```{r table-widget, echo=F, eval=T, fig.cap= 'Thermal properties of the buildings'}
 #| label: fig-thermalProp
@@ -191,6 +193,34 @@ datatable(
 )
 ```
 
+<details>
+<summary> Convergence info </summary>
+
+The maximum number of iteration of the NR algorithm is set to 1000 by default and its tolerance to 1e-6 by default. The error criterion is stated on both x and y variation and is based on the absolute distance between iterations. The technical algorithm outputs are stated hereafter.
+
+```{r table-widget, echo=F, eval=T, fig.cap= 'NR convergence info'}
+#| label: NR_convergence_info
+
+python_NR_info <- py$NR_info
+
+r_NR_info <- as.data.frame(python_NR_info)
+
+library(DT)
+
+col_names <- c("Error on kth","Error on ksun", "Number of iteration")
+
+datatable(
+  round(r_NR_info, digits=10),
+  options = list(
+    pageLength = 5,
+    scrollX = TRUE
+  ),
+  colnames=col_names
+)
+```
+
+</details>
+
 ## Impact of renovation and indoor temperature {#subsec:ksun}
 
 Having determined $k_\text{th}$ and $k_\text{sun}$, a sensitivity analysis can be performed to study their impact on the energy consumption of the buildings. On one hand, $k_\text{th}$, which represents the leakage losses, should be decreased and on the other hand, $k_\text{sun}$, which characterizes the solar gains, needs to be increased. The solar gains can be increased by changing the absorptivity of the building, i.e. either by replacing the building’s coating or using a different paint on the exterior façade. As for the constraint on $k_\text{th}$, it is the sum of the ventilation and the building losses : $k_\text{th}=U_\text{env}+\dot{m_\text{air}}Cp_\text{air}$. The air renewal rate meeting requirements to avoid high $CO_\text{2}$ concentration, it is difficult to change this value to decrease the leakage losses. Therefore, one must decrease the value of $U_\text{env}$. To do so, the building isolation can be improved by changing the thickness or the material of the walls and windows. However, this is linked to high renovation cost and to long labor duration compared to the possible gains by changing $k_\text{sun}$. Increasing $k_\text{sun}$ by 25, 50 and 75 $\%$, one can influence the evolution of the heat demand:
@@ -204,13 +234,13 @@ The figure shows, that during seasons when the irradiation is low (winter and fa
 
 ## Clustering {#subsec:clustering}
 
-Now that the buildings are physically characterized, it is possible to solve the energy demand equation @eq-building-balance. However, for a yearly optimization of this equation, this would mean optimizing for 8760 different demands. Reducing the data might help run a more efficient optimization. Clustering helps defining typical time periods that are representative enough of the heat loads. To do so, clustering of the weather data is performed and will be used to solve a reduced energy balance equation. 
+Now that the buildings are physically characterized, it is possible to solve the energy demand equation @eq-building-balance. However, for a yearly optimization of this equation, this would mean optimizing for 8760 different demands. Reducing the data might help run a more efficient optimization. Clustering helps defining typical time periods that are representative enough of the heat loads. To do so, clustering of the weather data is performed and will be used to solve a reduced number of energy balance equations. 
 
 ### Weather Data preprocessing
 
 Before starting the clustering, the temperature and irradiance data are split in three groups:
 
-- Type A: timesteps were the buildings are used (Monday to Friday 7am to 9pm) and the external
+- Type A: timesteps where the buildings are used (Monday to Friday 7am to 9pm) and the external
 temperature is below the cut off temperature of 16 °C.
 - Type B: the exact opposite of type A leaving the timesteps when the buildings are not used (night,
 weekend) and the external temperature is greater than 16 °C.
@@ -249,9 +279,9 @@ fig_weather.show()
 
 ### Method selection
 
-Clustering via Machine Learning is now widely spread and lot of tools allow for easy implementation. Using Sci-Kit, the weather data are clustered using unsepervised algorithm. Kmeans, Spectral clustering and agglomerate clustering are probed. A common metric used to asses of the relevancy of such clustering is the Sum of Squared Errore (SSE). The visualisation of the clustering for $k=10$ clusters is shown in the figure (@fig-clusteringComp). The SSE is summarized in the table (@tbl-clusteringSSE).
+Clustering via Machine Learning is now widely spread and lot of tools allow for easy implementation. Using Sci-Kit, the weather data are clustered using unsepervised algorithms. Kmeans, Spectral clustering and agglomerate clustering are probed. A common metric used to asses of the relevancy of such clustering is the Sum of Squared Errore (SSE). The visualisation of the clustering for $k=10$ clusters is shown in the figure (@fig-clusteringComp). The SSE is summarized in the table (@tbl-clusteringSSE).
 
-_Note:_ the data has been normalized to perform the clustering, and reversed to plot
+_Note:_ the data has been normalized to perform the clustering to improve perfomances, and reversed back to be plotted.
 
 ```{python, echo = F, eval=T}
 #| label: fig-clusteringComp
@@ -296,6 +326,8 @@ Choosing to work with Kmeans clustering still leaves room to fiddle with the num
 #| 
 fct1.elbow_method(weather_clustering.data,15)
 ```
+
+For the sake of completion, we mention that a Silhouette test has also been performed and returned an optimal $k=4$. However, the overall scores were all low, due to the metric's nature: since all the data points are lying in a region, data structure discovery is unlikely and clustering acts more as a way to split the space evenly. And since Silhouette score penalize intercluster closeness, all scores drops since no clear clusters are underyling the distribution. In the end, the error on the variable of interest, $Q_{th}$, is almost divided by two from $k=4$ to $k=6$, and is thus still a valid choice.
 
 ### Clustering results
 The result of the clustering are shown below. 
