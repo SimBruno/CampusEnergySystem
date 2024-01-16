@@ -1,18 +1,20 @@
-
-
-In part 4, we will follow the same methodology than in part 2. First, build your ampl models in VS code using the .run files. Once the models are stable, use .qmd or .py documents to send your parameters from part 1, solve and retrieve the data for your report.
-
-
-```{r}
-#path <- file.path('../venv/Scripts/python.exe')
-#path <- file.path('C:/Users/coren/AppData/Local/Programs/Python/Python310/python.exe')
-use_virtualenv('./venv', required=FALSE)
-library(reticulate)
-#use_python(path)
-```
-Load your .mod and .dat files, set solving options.
-
-```{python initialize ampl, echo=F, results='hide'}
+# type: ignore
+# flake8: noqa
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
 from amplpy import AMPL, Environment
 ampl = AMPL()
 
@@ -43,12 +45,12 @@ ampl.setOption('presolve_eps', 5e-05)
 ampl.setOption('omit_zero_rows', 1)
 ampl.setOption('omit_zero_cols', 1)
 
-```
-
-
-Load the data from part 1:
-
-```{python send data to ampl, echo=F, results='hide', eval=F}
+#
+#
+#
+#
+#
+#
 import pandas as pd
 import os
 
@@ -65,30 +67,30 @@ Max_Emissions=1e20
 Emissions_global_min=6859987172
 Emissions_global_max=9.200615e+09
 ampl.get_parameter("Max_Emissions").set(Max_Emissions)
-```
-
-Solve:
-
-```{python solve ampl, echo=F, results='hide'}
+#
+#
+#
+#
+#
 # Solve
 ampl.setOption('solver', 'gurobi')
 ampl.solve()
-```
-
-
-Save your data:
-
-```{python}
+#
+#
+#
+#
+#
+#
 import sys
 #sys.path.append('C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/')
 sys.path.append('./codes_04_energy_system_integration/')
 from functions import save_ampl_results
 save_ampl_results(ampl, pkl_name="scenario1")
-```
-
-Use your data:
-
-```{python}
+#
+#
+#
+#
+#
 import pandas as pd
 #myData = pd.read_pickle("C:/Users/coren/Desktop/report-group-3/codes_04_energy_system_integration/results/scenario1.pkl")
 myData = pd.read_pickle("./codes_04_energy_system_integration/results/scenario1.pkl")
@@ -101,47 +103,47 @@ myData["mult_t"].loc["NatGasGrid"]
 myData["mult_t"].loc["Boiler"]
 myData["mult_t"].loc["STC"]
 ```
-### Example 1 
-I want to optimize the operational cost, and I know that NatGas will cost 0.32. What will be the Investment costs? and what technology will be used?
-
-```{python, echo=F, eval=T,label= optimize_OPEX, results='hide'}
+#
+#
+#
+#
 import codes_04_energy_system_integration.functions as fct3
 import pandas as pd
 data=fct3.optimize(criteria=criteria.OPEX,NatGasGrid=0.32)
-```
-
-```{python, echo=F, eval=T,label= diplay_optimize_OPEX}
+#
+#
+#
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
 
 print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
-```
-
-### Example 2
-I want to draw the pareto front between TOTEX and Emissions
-
-```{python, echo=F, eval=T,label= get_pareto, results='hide'}
+#
+#
+#
+#
+#
+#
 import codes_04_energy_system_integration.functions as fct3
 import pandas as pd
 
 TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30)
-```
-
-```{python, echo=F, eval=T,label= draw_pareto}
+#
+#
+#
 import codes_04_energy_system_integration.functions as fct3
 import pandas as pd
 
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
-```
-
-### Scenario 1 CAPEX
-
-```{python, echo=F, eval=T,label= optimize_CAPEX, results='hide'}
+#
+#
+#
+#
+#
 
 data=fct3.optimize(criteria=criteria.CAPEX)
-```
-
-```{python, echo=F, eval=T,label= diplay_optimize_CAPEX}
+#
+#
+#
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
 print(data['mult_t'].loc["Boiler"])
@@ -151,16 +153,16 @@ print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
 print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
-```
-
-
-### Scenario 2 OPEX
-```{python, echo=F, eval=T,label= optimize_OPEX, results='hide'}
+#
+#
+#
+#
+#
 
 data=fct3.optimize(criteria=criteria.OPEX)
-```
-
-```{python, echo=F, eval=T,label= diplay_optimize_OPEX}
+#
+#
+#
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
 print(data['mult_t'].loc["Boiler"])
@@ -172,15 +174,15 @@ print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
 print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
-```
-
-### Scenario 3 Emissions
-```{python, echo=F, eval=T,label= optimize_Emissions, results='hide'}
+#
+#
+#
+#
 
 data=fct3.optimize(criteria=criteria.Emissions)
-```
-
-```{python, echo=F, eval=T,label= diplay_optimize_Emissions}
+#
+#
+#
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
 print(data['mult_t'].loc["STC"])
@@ -193,15 +195,15 @@ print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
 print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
-```
-
-### Scenario 4 TOTEX
-```{python, echo=F, eval=T,label= optimize_TOTEX, results='hide'}
+#
+#
+#
+#
 
 data=fct3.optimize(criteria=criteria.TOTEX)
-```
-
-```{python, echo=F, eval=T,label= diplay_optimize_TOTEX}
+#
+#
+#
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
 print(data['mult_t'].loc["STC"])
@@ -212,16 +214,16 @@ print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
 print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
-```
-
-### Scenario 5 TOTEX + CO2 tax : 120e-6 CHF/gCO2 #CO2 tax in Switzerland 2022 
-```{python, echo=F, eval=T,label= optimize_parametric, results='hide'}
+#
+#
+#
+#
 
 data=fct3.optimize(criteria=criteria.parametric)
-```
-
-
-```{python, echo=F, eval=T,label= diplay_optimize_paramteric}
+#
+#
+#
+#
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
 print(data['mult_t'].loc["STC"])
@@ -232,10 +234,13 @@ print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
 print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0])) 
-```
-
-
-
-
-
-
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#

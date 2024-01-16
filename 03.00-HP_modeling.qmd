@@ -234,9 +234,8 @@ Let's choose a new working fluid from @fig-working-fluid
 knitr::include_graphics('Figures/working_fluid.png')
 ```
 
-The modern challenge of working fluid selection resides in balancing good thermal properties, long lifetime and environmental friendliness. As the latter is one of the critical parameters for all the project, let's ensure to use a fluid with a small global warming potential. The choice restricts to either Ammonia or Propylene. Even though propylene is far more expansive, it has a better chemical stability, i.e. lifetime. For our application, this is quite important. Finally, let's review the thermal properties and safety guidelines of propylene, to make the final decision:
-
-FOR Louis: Add propylene thermal properties and compare with a basic common working fluid.
+The modern challenge of working fluid selection resides in balancing good thermal properties, long lifetime and environmental friendliness. As the latter is one of the critical parameters for all the project, let's ensure to use a fluid with a small global warming potential. The choice restricts to either Ammonia or Propylene when looking at the GWP. Even though propylene has a higher lifetime, it is considered as a safer fluid. In fact, ammonia is a very toxic chemical, being corrosive both to skin and eyes @Ammonia.  To be sure that propylene is a good choice, its thermal properties are studied in detail [propylene] (https://encyclopedia.airliquide.com/propene#safety-compatibility).
+Starting with the freezing point, it is at 87.96K, which is low enough to ensure that the propylene is not going to be solid in the heat pump. Its critical point is at 46 bar, which is high enough to avoid it, leading to good fluid stability within the heat pump. When working with propylene, it is important to pressurize it, to enable liquefication. Typical pressure values of propylene are around 2-9 bar. Hence, there is an increased risk when working with this gas. As for the latent heat of vaporization, it has a similar value than propane, i.e. 438.96 kJ/kg. Lastly, due to its high lifetime, it should be avoided to release propylene into the environment and its flammability should be considered when working with it.
 
 <!-- **Task**
 

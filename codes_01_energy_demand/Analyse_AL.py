@@ -10,7 +10,7 @@ def load_data_weather_buildings():
     
     path = os.path.dirname(__file__) # the path to codes_01_energy_demand.py
 
-    prop = pd.read_csv(os.path.join(path, "thermal_properties.csv"),header=0,encoding = 'unicode_escape')
+    prop = pd.read_csv(os.path.join(path, "thermal_properties_copy.csv"),header=0,encoding = 'unicode_escape')
     prop.columns = ['Name', 'Area', 'Elec_heat', 'k_th', 'k_sun', 'people_gain']
 
     weather = pd.read_csv(os.path.join(path, "Weather.csv"),header=0,encoding = 'unicode_escape')
@@ -80,7 +80,7 @@ def elec_gains(building_id: str,elec_profile):
     q_elec=elec_profile*buildings[buildings['Name']==building_id]['Elec'].to_numpy()/3654
     return q_elec
 
-def Q_th(prop_id):
+def Q_th_list(prop_id):
     T_cut=273+16
     T_int=273+21
     Q_th=np.zeros(8760)
@@ -117,18 +117,19 @@ for i in range(8760):
     
 
 
-Q=Q_th('BI') #### POUR Q_TH FAIRE Q[0]
-
+Q=Q_th_list('BI') #### POUR Q_TH FAIRE Q[0]
+#Q[1] = Q_thlist('BS')
 #print(Q_th('BI'))
 plt.figure()
 plt.yscale("log")
-plt.plot(h,Q[0],'b+')
-plt.plot(h,Q[1],'g.')
-plt.plot(h,Q[2],'r+')
-plt.plot(h,Q[3],'y+')
+plt.plot(h,Q[0],'b+', label="Reference case: k_sun")
+#plt.plot(h,Q[1],'g.')
+#plt.plot(h,Q[2],'r+')
+plt.plot(h,Q[3],'y+', label="Increase of 75%: k_sun")
 plt.xlabel('hours')
 plt.ylabel('Qheating [kW]')
 plt.title('Influence of ksun on Qheating')
+plt.legend()
 plt.figure()
 plt.yscale("log")
 plt.plot(h,Q[4],'b+')
