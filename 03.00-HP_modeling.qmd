@@ -1,5 +1,6 @@
 # Modelling of a heat pump and data reconciliation
 
+
 ```{r, echo=F, results='hide',label='activate venv'}
 #path <- file.path('./venv/bin/python')
 library(reticulate)
@@ -51,15 +52,16 @@ Activate the tags and make sure the model is running properly.
 
 ## Introduction
 
-In order to perform a DOF analysis, the needed ingredients are necessary: 
+
+The main heating utility at EPFL is an advanced two-stage heat pump. The importance of this equipment leads to an in detail investigation of its functioning. Hence, the goal of this section is to choose an appropriate working fluid for the heat pump based on environmental and economic characteristics. To do so, first a preliminary model in VALI, a process simulation software, is created. A degree of freedom (DOF) is conducted to find the necessary number of measurements. The following procedure is applied to perform the DOF analysis: 
 
 - The state variables of the flows
 - The balance equations, often being energy balance (EB), mass balance (MB), pressure drop (P) 
 - The model/performances equations, describing how the unit act on an engineering perspective.
 
-The state variables of the flows are characterized by a minimum number of state variables given by the Gibbs phase rule, i.e. for a stream of N compounds, N+2 variables are sufficient to fully characterize it, with at least one extensive variable. From that, all other properties can be derived, provided the right constitutive equations.
+The state variables of the flows are characterized by a minimum number of state variables given by the Gibbs phase rule, i.e. for a stream of N compounds, N+2 variables are sufficient to fully characterize it, with at least one extensive variable. From that, all other properties can be derived, provided the right constitutive equations. At the end, the found data is going to be reconciled to ensure its validity. This allows to ultimately provide economic and thermodynamic performances of the system.
 
-For this analysis, we'll consider the steady-state operation of the system.
+For this analysis, we'll consider the steady-state operation of the system, i.e. no accumulation.
 
 ## System DOF analysis
 

@@ -34,7 +34,6 @@ param MassDC 		:= HeatDC/(TDCin-Tret); #[KJ/(s degC)] MCp of air in DC
 param Cpwater		:= 4.18;  #[kJ/kgC]
 ################################
 ##Variables
-
 var TDCout{Time} 	>= 0.001; #[deg C] temperature of air coming from data center out of the heat recovery HE
 var AHEDC 			>= 0.001; #[m2] area of heat recovery heat exchanger
 var dTLMDC{Time} 	>= 0.001; #logarithmic mean temperature difference in the heat recovery heat exchanger
@@ -76,7 +75,7 @@ subject to Tcontrol3 {t in Time}:
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
 subject to dTLMDataCenter {t in Time}: 
 	dTLMDC[t]*log((TDCin-TRadin[t])/(TDCout[t]-EPFLMediumOut))=((TDCin-TRadin[t])-(TDCout[t]-EPFLMediumOut)); #the logarithmic mean temperature difference in the heat recovery HE can be computed
-
+	
 subject to HeatBalance1{t in Time}: 
 	Qrad[t]=MassDC*(TDCin-TDCout[t]); #Heat balance in DC HEX from DC side
 

@@ -1,16 +1,16 @@
 # Heat recovery {#sec:heat recovery}
-In this section, EPFL heat supply is investigated. At first, the reference case is presented where heat is provided to EPFL at $T=65°C$. In this reference, all the heat is provided by a HP which heats up the lake water thanks to EPFL exiting heat flow.
-Then in order to improve this system 3 scenarios are assessed:
 
-- The use of the adjacent DataCenter to recover heat from the data center and preheat the lake water for the HP (while cooling the datacenter itself). 
+## Introduction
 
-- The use of an air ventilation system to preheat the air entering the EPFL heating system thanks to exiting EPFL heat flow (still in adition to the HP used in the reference case).
+In this section, EPFL's current heat supply system an possible improvments are investigated. At first, the reference case is presented, where heat is provided to EPFL at $T=65°C$, using the lake water as cooling and a single heat pump to provide the necessary heating demand. Then in order to improve this system, 3 scenarios are assessed:
+
+- The use of the adjacent DataCenter, to recover its heat and preheat the lake water for the HP (while cooling the datacenter itself). 
+
+- The use of an air ventilation system to preheat the air entering the EPFL heating system, thanks to exiting EPFL heat flow (still in adition to the HP used in the reference case).
 
 - The combination of the ventilation system and an external Air-Air HP to preheat the flow before reaching the HP of the reference case.
 
-To summarize we can say each scenario is just a different way to preheat the water before reaching the HP of the reference case which itself is used to provide the heat flow at 65°C to the EPFL. 
-
-The goal will be to compute costs (OPEX, CAPEX and TOTEX) in each scenario to asssess the most relevant one for EPFL.
+These scenarios will decrease both the operating cost and the environmental impact of the process, but additional equipment has to be installed leading to higher capital expenditure (CAPEX). As the CAPEX of a heat exchanger depends on its area, the investigation of the temperature levels to determine the ∆Tmin and the necessary exchange area are computed. Finally, the costs (OPEX, CAPEX and TOTEX) in every scenario to find the most lucrative one for EPFL.
 
 ## Reference case {#subsec:case-1}
 

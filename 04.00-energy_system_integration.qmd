@@ -2,16 +2,36 @@
 
 ## Introduction
 
-In this section, the whole EPFL campus is going to be modelled. Different technologies, such as PV panels, boilers, heat pumps with different fluids and a double stage heat pump, solide oxyde fuel cells, and solar thermal collectors, are investigated to satisfy EPFL's needs in electricty and heat. The different technologies are integrated into the model, considering their performance, size and cost, enabling thereby to make projections on Capex, Opex and Envex. The goal of the section is to conclude the analysis, by giving a final scenario which can be optimized according to the given need. More precisely, a scenario investigating the lowest operating cost, one the lowest capital expenditure and one for the lowest environmental emissions. Finally, a sensitivity analysis on the ressource prices and environmental impacts is conducted to examine the influence of the different parameters on the solution.
+In this section, the whole EPFL campus is going to be modelled. Different technologies, such as PV panels, boilers, heat pumps with different fluids and a double stage heat pump, solide oxyde fuel cells, and solar thermal collectors, are investigated to satisfy EPFL's needs in electricty and heat. The different technologies are integrated into the model, considering their performance, size and cost, enabling thereby to make projections on Capex, Opex and Envex. The goal of the section is to conclude the analysis, by giving a final scenario which can be optimized according to the given need. More precisely, a scenario investigating the lowest operating cost, one the lowest capital expenditure and one for the lowest environmental emissions. Finally, a sensitivity analysis on the ressource prices and environmental impacts is conducted to examine the influence of the different parameters on the solution. 
+The system on which the study is conducted, is the on with the ... ?
 
 
 ## Scenario analysis
 
+The different scenarios are described in the following 
+### Scenario 1: CAPEX optimization
+
+The optimization of Capex lead the following result:
+TEchnologies used:
+
+### Scenario 2: OPEX optimization
+
+### Scenario 3: Emission optimization
+
+### Scenario 4: TOTEX optimization (without ENVEX)
+
+### Scenario 5: TOTEX optimization (with ENVEX)
 
 
+### Recapitulative table:
 
-
-
+| Scenario                         | CAPEX (CHF/year) | OPEX (CHF/year) | Emissions (tCO2/year) | TOTEX (no Envex) (CHF/year)| TOTEX (with ENVEX) (CHF/year)|
+|----------------------------------|------------------|-----------------|-----------------------|----------------------------|------------------------------|
+| Scenario 1 | 1 | 2| 3|4 |5|
+| Scenario 2 |  1 | 2| 3|4 |5|
+| Scenario 3 | 1 | 2| 3|4 |5|   
+| Scenario 3 | 1 | 2| 3|4 |5|  
+| Scenario 3 | 1 | 2| 3|4 |5|                   
 
 ```{r, echo=F, results='hide',label='activate venv'}
 #path <- file.path('./venv/bin/python')
@@ -159,7 +179,7 @@ fig = fig.update_layout(title='Natural Gas Price Plot with TOTEX objective', xax
 fig.show()
 ```
 
-On this plot it is possible to observe how TOTEX increases with an increase of the gas price. The red dot correspond to the price of gas used to performed the first Pareto curves presented above. 
+In this plot it is possible to observe how TOTEX increases with an increase of the gas price. The red dot corresponds to the price of gas used to performed the first Pareto curves presented above. 
 The goal of this first sensitity analysis is thus to replot another Pareto curve TOTEX-Emissions but this time with a higher gas price. 
 Let's choose a price of 0.29CHF/kWh (highest point on the graph)
 

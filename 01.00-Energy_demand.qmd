@@ -39,9 +39,17 @@ Vent = 0 # [...]
 f_el = 0.8 # Share of electricity demand which is converted to heat appliances
 ```
 
+
+
+## Introduction
+
+This first section aims to estimate the energy demand of the EPFL campus. The campus being divided into different buildings, with each its own thermal properties depending on the wall properties, window ratio, orientation, etc., it is important to consider them in the analysis. Analysing the buildings, the total yearly energy demand can be computed, considering the thermal gains from people and electronic appliances, as well as the gain from the sun and the external weather conditions. Finally, typical periods are regrouped into cluster according to temperature and radiation enabling a better data management for the next sections.
+
+
+
 ## Buildings Energy Balance {#subsec:building-energy-balance}
 
-This first section aims to estimate the energy demand of the EPFL campus. For this purpose, the annual energy consumption of the buildings is given, in the following format:
+To characterize the energy demand, the annual energy consumption of the buildings is needed, which is given in the following format:
 
 ```{python, echo=F, eval=F, results='show'}
 #| label: df preview

@@ -27,7 +27,6 @@ Display commands
 #display TDCout;
 display AHEDC;
 #display dTLMDC;
-
 #display Qrad;
 #display E;
 #display TLMCond;
@@ -39,6 +38,10 @@ display AHEDC;
 #display Qfree;
 #display THPin;
 #display Flow;
+display TDCin;
+display TRadin;
+display TDCout;
+display EPFLMediumOut;
 
 display OPEX;
 display CAPEX;
