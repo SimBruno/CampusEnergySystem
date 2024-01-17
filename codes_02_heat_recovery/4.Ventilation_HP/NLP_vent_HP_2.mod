@@ -127,8 +127,8 @@ subject to Heat_Vent2 {t in Time}: #HEX heat load from the other side;
     Heat_Vent[t] =sum{b in MediumTempBuildings} (FloorArea[b]*effvent*mair*Cpair*(Trelease[t]-Tint)); # [m/s]*[kJ/(m3 K)]*[K]*[m2] = [kW]
 
 subject to DTLNVent1 {t in Time}: #DTLN ventilation -> pay attention to this value: why is it special?
-	DTLNVent[t]*log((Tint-Text_new[t])/(Trelease[t]-Text[t])) = (Tint-Tair_in[t])-(Trelease[t]-Text[t]); # [K]
-
+	#DTLNVent[t]*log((Tint-Text_new[t])/(Trelease[t]-Text[t])) = (Tint-Text_new[t])-(Trelease[t]-Text[t]); # [K]
+    DTLNVent[t]=((Tint-Text_new[t])+(Trelease[t]-Text[t]))/2;
 subject to Area_Vent1 {t in Time}: #Area of ventilation HEX
     Area_Vent*Uvent*DTLNVent[t] >= Heat_Vent[t]; #Area of ventilation HEX [m2]*[kW/(m2 K)]*[K] = [kW]
 
@@ -182,7 +182,7 @@ subject to temperature_gap{t in Time}: #relation between Text and Text_new;
     Text_new[t]-Text[t] >= 0.01;
 
 subject to temperature_gap2{t in Time}: #relation between Trelease and Trelease2;
-    Trelease_2[t]-Trelease[t] >= 0.01;
+    Trelease[t]- Trelease_2[t] >= 0.01;
 
 subject to temperature_gap3{t in Time}: # relation between Tair_in and Text_new;
     Tair_in[t]-Text_new[t] >= 0.01;
