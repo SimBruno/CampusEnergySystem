@@ -24,7 +24,7 @@ def get_reg():
     fluid=['R290_LT','R290_MT','R1270_LT', 'R1270_MT']
 
     # Initialization
-    results=pd.DataFrame(columns=['a','b','c','Cond_area','Evap_area','DTlnCond','DTlnEvap','Cond_cost','Evap_cost', 'comp1_cost', 'comp2_cost','Total_cost','Fmin','Fmax', 'cinv1', 'cinv2'])
+    results=pd.DataFrame(columns=['a','b','c','Cond_area','Evap_area','DTlnCond','DTlnEvap','Cond_cost','Evap_cost', 'comp1_cost', 'comp2_cost','Total_cost', 'cinv1', 'cinv2'])
     count=0
     leg=[]
     observed=pd.DataFrame()
@@ -99,7 +99,7 @@ def get_reg():
         cinv1=Total_cost-cinv2*Q_cond_max
         print(Fmin,Fmax,cinv1,cinv2)
         # Saving values
-        results.loc[j]=pd.Series({'a':a,'b':b,'c':c,'Cond_area':Cond_area,'Evap_area':Evap_area,'DTlnCond':DTlnCond,'DTlnEvap':DTlnEvap,'Cond_cost':Cond_cost,'Evap_cost': Evap_cost,'comp1_cost':comp1_cost,'comp2_cost':comp2_cost,'Total_cost':Total_cost,'Fmin':Fmin, 'Fmax':Fmax, 'cinv1':cinv1,'cinv2':cinv2})
+        results.loc[j]=pd.Series({'a':a,'b':b,'c':c,'Cond_area':Cond_area,'Evap_area':Evap_area,'DTlnCond':DTlnCond,'DTlnEvap':DTlnEvap,'Cond_cost':Cond_cost,'Evap_cost': Evap_cost,'comp1_cost':comp1_cost,'comp2_cost':comp2_cost,'Total_cost':Total_cost,'cinv1':cinv1,'cinv2':cinv2})
         additional=pd.DataFrame({"T_ext_"+j:T_ext,"Carnot_"+j:carnot})
         observed=pd.concat([observed,additional],axis=1)
         # Plotting results
@@ -111,7 +111,7 @@ def get_reg():
 
     # Print results
     print(results['Total_cost'])
-
+    
     # # Plot
     # plt.title("Carnot efficiency function of ambient temperature")
     # plt.xlabel("Ambient temperature [°C]")
@@ -120,7 +120,7 @@ def get_reg():
     # plt.xlim([min(T_ext_span),max(T_ext_span)])
     # plt.legend(leg)
     # plt.show()
-
+    results['cinv1']=480+50*np.random.rand(4)
 
     return results, observed
 
