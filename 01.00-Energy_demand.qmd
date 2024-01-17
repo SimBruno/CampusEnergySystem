@@ -3,6 +3,11 @@ title: "Energy demand of the EPFL campus"
 editor: visual
 ---
 
+```{css, echo=F}
+p {
+  text-align: justify
+}
+```
 
 ```{r, echo=F, results='hide',label='activate venv'}
 #path <- file.path('./venv/bin/python')
@@ -287,7 +292,7 @@ fig_weather.show()
 
 ### Method selection
 
-Clustering via Machine Learning is now widely spread and lot of tools allow for easy implementation. Using Sci-Kit, the weather data are clustered using unsepervised algorithms. Kmeans, Spectral clustering and agglomerate clustering are probed. A common metric used to asses of the relevancy of such clustering is the Sum of Squared Errore (SSE). The visualisation of the clustering for $k=10$ clusters is shown in the figure (@fig-clusteringComp). The SSE is summarized in the table (@tbl-clusteringSSE).
+Clustering via Machine Learning is now widely spread and lot of tools allow for easy implementation. Using Sci-Kit, the weather data are clustered using unsepervised algorithms. Kmeans, Spectral clustering and agglomerate clustering are probed. A common metric used to asses of the relevancy of such clustering is the Sum of Squared Error (SSE). The visualisation of the clustering for $k=10$ clusters is shown in the figure (@fig-clusteringComp). The SSE is summarized in the table (@tbl-clusteringSSE).
 
 _Note:_ the data has been normalized to perform the clustering to improve perfomances, and reversed back to be plotted.
 
@@ -369,6 +374,9 @@ cluster['Q_th'] = Q_th_cluster
 
 cluster.to_csv(os.path.join(PATH,"report-group-3","codes_01_energy_demand", "clusters_data.csv"), index=False)
 
+# compute clustering error
+clustering_error = (buildings['Heat'].loc[buildings.Year == 1].sum()-Q_th_cluster.sum())/buildings['Heat'].loc[buildings.Year == 1].sum()*100
+
 ```
 
 ```{python, echo=F, eval = T}
@@ -391,15 +399,19 @@ cluster.rename(columns={
     'Hours': 'Operating time [h]',
     'Q_th' : 'Heat load [kWh/year]'
 }, inplace=True)
+```
+
+This plot allows us to see that the resulting clustering visually seems to make sense. When reconstructing the clustered heat demands, we do observe 2 null demands: those are the clusters in the top right corner of our plot, which makes sense since those are the one with the highest irradiance and exterior temperature, inducing the lowest, here zero, heat demands. 
+
+
+```{python, echo=F, eval = T}
+#| label: cluster summary table 
+
 html_table = cluster.round(2).to_html()
 title_html = '<h4 style="text-align:center;">Cluster Centroids</h4>'
 final_html = title_html + html_table
 HTML(final_html)
 ```
 
-```{python, echo=F, eval = T}
-#| label: compute clustering error
-clustering_error = (buildings['Heat'].loc[buildings.Year == 1].sum()-Q_th_cluster.sum())/buildings['Heat'].loc[buildings.Year == 1].sum()*100
-```
 
-Computing the sum of the type 1 heat demands and the sum of the cluster heat loads allows to compute the relative error we've made on the total heat demand reconstruction, which is `r reticulate::py_eval("f'{clustering_error:.4}'")`%.
+Computing the sum of the type 1 (medium temperature loop) heat demands and the sum of the cluster heat loads allows to compute the relative error we've made on the total heat demand reconstruction, which is `r reticulate::py_eval("f'{clustering_error:.4}'")`%.

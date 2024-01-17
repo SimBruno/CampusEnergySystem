@@ -1,3 +1,9 @@
+```{css, echo=F}
+p {
+  text-align: justify
+}
+```
+
 # Heat recovery {#sec:heat recovery}
 
 ## Introduction
@@ -89,8 +95,15 @@ print("The OPEX for reference case is:", ref_OPEX, "CHF.\n")
 
 ```
 
+For the subsequent scenarios, we'll compare the resuting OPEX and CAPEX, and compute a payback time to assess how long the system should be running to attain the financial breakeven. To do so, we'll compute it using the following expression:
 
-Using AMPL, the problem is solved and the OPEX is 635641.3566 [CHF/y]
+$$ 
+t_\text{payback} = \frac{\Delta I}{\Delta B} = \frac{CAPEX_\text{scenario}}{OPEX_\text{ref}-OPEX_\text{scenario}}
+$$
+
+Where $\Delta I = CAPEX_\text{scenario}$ is the total (i.e non annualized) investment for the equipment and $\Delta B = OPEX_\text{ref}-OPEX_\text{scenario}$ is the annual benefit, in our case the economies made compared to the reference OPEX.
+
+_NB:_ in the subsequent tables, the CAPEX are often given in their annualized form, to make the comparison and computation of the total annualized cost more obvious. The selected baseline is 20 years of operation, which allows the reader to easily retrieve the total non annualized investment cost by simply multiplying the CAPEX by 20. Furthermore, it allows to set a comparison point with the subsequent payback time calculated, as one expect them to be $t_\text{payback} < 20$ years.
 
 ## Data Center heat recovery {#subsec:case-2}
 
@@ -181,8 +194,9 @@ DC_TOTEX    = round(DC_data['obj'],2)
 DC_OPEX     = round(DC_data['OPEX'].values[0][0],2)
 DC_CAPEX    = round(DC_data['CAPEX'].values[0][0],2)
 DC_AHEDC    = round(DC_data['AHEDC'].values[0][0],2)
+DC_DTmin    = round(DC_data['DTmin'].values[0][0],2)
 
-DC_payback  = round(DC_CAPEX/(ref_TOTEX-DC_OPEX),2)
+DC_payback  = round(DC_CAPEX*20/(ref_TOTEX-DC_OPEX),2) # CAPEX is annualized over 20 years
 
 html_table_dc_data = "<h5 style='text-align:center;'>DC optimization results</h5>\n\n"
 html_table_dc_data += "<table border='1' style='border-collapse: collapse;'>\n"
@@ -191,6 +205,7 @@ html_table_dc_data += f"<tr><td>TOTEX</td><td>{DC_TOTEX} CHF</td></tr>\n"
 html_table_dc_data += f"<tr><td>OPEX</td><td>{DC_OPEX} CHF</td></tr>\n"
 html_table_dc_data += f"<tr><td>CAPEX</td><td>{DC_CAPEX} CHF</td></tr>\n"
 html_table_dc_data += f"<tr><td>HEX Area</td><td>{DC_AHEDC} m<sup>2</sup></td></tr>\n"
+html_table_dc_data += f"<tr><td>DT min</td><td>{DC_DTmin} K</td></tr>\n"
 html_table_dc_data += f"<tr><td>Payback time</td><td>{DC_payback} years</td></tr>\n"
 html_table_dc_data += "</table>"
 
@@ -200,7 +215,7 @@ print("The TOTEX for DC case is:", DC_TOTEX, "CHF.\n")
 
 ```
 
-The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-DC_TOTEX:.2f}'")` [CHF/y].
+The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-DC_TOTEX:.2f}'")` [CHF/y] and the payback time allows to breakeven after `r reticulate::py_eval("f'{DC_payback:.2f}'")` years. The optimal DT computed for this optimization yields `r reticulate::py_eval("f'{DC_DTmin:.2f}'")` degrees, which sounds pretty feasible in our context. 
 
 ## Air ventilation heat recovery {#subsec:case-3}
 
@@ -278,8 +293,9 @@ vent_TOTEX    = round(vent_data['obj'],2)
 vent_OPEX     = round(vent_data['OPEX'].values[0][0],2)
 vent_CAPEX    = round(vent_data['CAPEX'].values[0][0],2)
 vent_AHEDC    = round(vent_data['Area_Vent'].values[0][0],2)
+vent_DTminVent= round(vent_data['DTminVent'].values[0][0],2)
 
-vent_payback  = round(vent_CAPEX/(ref_OPEX-vent_OPEX),2)
+vent_payback  = round(vent_CAPEX*20/(ref_OPEX-vent_OPEX),2) # CAPEX is annualized over 20 years
 
 html_table_vent_data = "<h5 style='text-align:center;'>Ventilation optimization results</h5>\n\n"
 html_table_vent_data += "<table border='1' style='border-collapse: collapse;'>\n"
@@ -287,7 +303,8 @@ html_table_vent_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
 html_table_vent_data += f"<tr><td>TOTEX</td><td>{vent_TOTEX} CHF</td></tr>\n"
 html_table_vent_data += f"<tr><td>OPEX</td><td>{vent_OPEX} CHF</td></tr>\n"
 html_table_vent_data += f"<tr><td>CAPEX</td><td>{vent_CAPEX} CHF</td></tr>\n"
-html_table_vent_data += f"<tr><td>A<sub>vent</sub></td><td>{vent_AHEDC } m<sup>2</sup></td></tr>\n"
+html_table_vent_data += f"<tr><td>A<sub>vent</sub></td><td>{vent_AHEDC} m<sup>2</sup></td></tr>\n"
+html_table_vent_data += f"<tr><td>DT<sub>vent</sub> min</sub></td><td>{vent_DTminVent} K</td></tr>\n"
 html_table_vent_data += f"<tr><td>Payback time</td><td>{vent_payback} years</td></tr>\n"
 html_table_vent_data += "</table>"
 
@@ -297,6 +314,8 @@ print("The TOTEX for vent case is:", vent_CAPEX, "CHF.\n")
 
 
 ```
+
+The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-vent_TOTEX:.2f}'")` [CHF/y] and the payback time allows to breakeven after `r reticulate::py_eval("f'{vent_payback:.2f}'")` years. The minimal DT for the ventilation HEX is `r reticulate::py_eval("f'{vent_DTminVent:.2f}'")` degrees, which is higher than for the DC recovery. This is expected since the calorific power of an Air-Air HEX is lower.
 
 ## Air ventilation with Heat pump integration {#subsec:case-4}
 
@@ -372,9 +391,10 @@ vent_HP_TOTEX    = round(vent_HP_data['obj'],2)
 vent_HP_OPEX     = round(vent_HP_data['OPEX'].values[0][0],2)
 vent_HP_CAPEX    = round(vent_HP_data['CAPEX'].values[0][0],2)
 vent_HP_AHEDC    = round(vent_HP_data['Area_Vent'].values[0][0],2)
+vent_HP_DTminVent= round(vent_HP_data['DTminVent'].values[0][0],2)
 vent_HP_HPcost   = round(vent_HP_data['Cost_HP'].values[0][0],2)
 
-vent_HP_payback  = round(vent_HP_CAPEX/(vent_HP_OPEX-ref_OPEX),2)
+vent_HP_payback  = round(vent_HP_CAPEX*20/(vent_HP_OPEX-ref_OPEX),2) #capex is annualized over 20 years
 
 html_table_vent_HP_data = "<h5 style='text-align:center;'>Ventilation with HP optimization results</h5>\n\n"
 html_table_vent_HP_data += "<table border='1' style='border-collapse: collapse;'>\n"
@@ -384,12 +404,17 @@ html_table_vent_HP_data += f"<tr><td>OPEX</td><td>{vent_HP_OPEX } CHF</td></tr>\
 html_table_vent_HP_data += f"<tr><td>CAPEX</td><td>{vent_HP_CAPEX} CHF</td></tr>\n"
 html_table_vent_HP_data += f"<tr><td>CAPEX<sub>HP</sub></td><td>{vent_HP_HPcost} CHF</td></tr>\n"
 html_table_vent_HP_data += f"<tr><td>A<sub>vent</sub></td><td>{vent_HP_AHEDC} m<sup>2</sup></td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>DT<sub>vent</sub> min</td><td>{vent_HP_DTminVent} K</td></tr>\n"
 html_table_vent_HP_data += f"<tr><td>Payback time</td><td>{vent_HP_payback} years</td></tr>\n"
 html_table_vent_HP_data += "</table>"
 
 HTML(html_table_vent_HP_data)
 
 ```
+
+The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-vent_HP_TOTEX:.2f}'")` [CHF/y] and the payback time allows to breakeven after `r reticulate::py_eval("f'{vent_HP_payback:.2f}'")` years. The minimal DT for the ventilation HEX is `r reticulate::py_eval("f'{vent_HP_DTminVent:.2f}'")` degrees, which is very high. This is due to the fact that the preheating done by the HP lowers the direct efficiency of the ventilation HEX. This call for a higher temperature difference to activate the heat transfer, and thus discourage the implementation of such solution. This is the interpretation that the optimisation results suggests, as the ultra low HEX area and super small HP are probably numerical artifact to be interpreted as zero values. This is reinforced by the fact that this results neglects the implementation of new technologies, and the final results is equal to the reference case. The conclusion here is that the mix of these two technologies are not worth it.
+
+_NB:_ this result has to be taken with a bit a critical thinking. One may think that a worst case scenario should rather lead to a null HP, returning to the case 3 solution, and yielding similar results. The fact this is not the case may raise question. Observing the case 4 flowsheet allows to hypothetise that the forced heat exchange with the HP loop doesn't let the optimization tend back to the case 3.
 
 ## Conclusion: which scenario enables a higher cost savings?
 
