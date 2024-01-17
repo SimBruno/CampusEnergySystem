@@ -385,13 +385,14 @@ if __name__ == '__main__':
   # TOTEX,EMISSIONS=get_pareto(criteria1.TOTEX,criteria2.Emissions,n=14)
   # draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 
-  # data=optimize(criteria=criteria.TOTEX)
-  # print(data['use'][data['use']!=0].dropna())
-  # print(data['InvCost'].values[0][0])
-  # print(data['use_recovery'].values[0][0])
+  data=optimize(criteria=criteria.parametric,c_elec=150)
+  print(data['use'][data['use']!=0].dropna())
+  print(data['TotEnvCost'].values[0][0])
+  print(data['use_recovery'].values[0][0])
+  print(data['FlowOutUnit'].loc['Electricity'].loc['ElecGridBuy'])
   
-  CAPEX,TOTENVEX=get_pareto(criteria1.CAPEX,criteria2.parametric,n=6)
-  draw_pareto(CAPEX,TOTENVEX,"CAPEX [CHF/yr]", "TOTEX + Emissions [CHF/yr]")
+  # CAPEX,TOTENVEX=get_pareto(criteria1.CAPEX,criteria2.parametric,n=6)
+  # draw_pareto(CAPEX,TOTENVEX,"CAPEX [CHF/yr]", "TOTEX + Emissions [CHF/yr]")
  
 
 

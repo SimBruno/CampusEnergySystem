@@ -1,45 +1,3 @@
-# Energy system optimization
-
-## Introduction
-
-In this section, the whole EPFL campus is going to be modelled. Different technologies, such as PV panels, boilers, heat pumps with different fluids and a double stage heat pump, solide oxyde fuel cells, and solar thermal collectors, are investigated to satisfy EPFL's needs in electricty and heat. The different technologies are integrated into the model, considering their performance, size and cost, enabling thereby to make projections on Capex, Opex and Envex. The goal of the section is to conclude the analysis, by giving a final scenario which can be optimized according to the given need. More precisely, a scenario investigating the lowest operating cost, one the lowest capital expenditure and one for the lowest environmental emissions. Finally, a sensitivity analysis on the ressource prices and environmental impacts is conducted to examine the influence of the different parameters on the solution. 
-The system on which the study is conducted, is the on with the ... ?
-
-
-## Scenario analysis
-
-The different scenarios are described in the following 
-### Scenario 1: CAPEX optimization
-
-The optimization of Capex lead the following result:
-TEchnologies used:
-
-### Scenario 2: OPEX optimization
-
-### Scenario 3: Emission optimization
-
-### Scenario 4: TOTEX optimization (without ENVEX)
-
-### Scenario 5: TOTEX optimization (with ENVEX)
-
-
-### Recapitulative table:
-
-| Scenario                         | CAPEX (CHF/year) | OPEX (CHF/year) | Emissions (tCO2/year) | TOTEX (no Envex) (CHF/year)| TOTEX (with ENVEX) (CHF/year)|
-|----------------------------------|------------------|-----------------|-----------------------|----------------------------|------------------------------|
-| Scenario 1 | 1 | 2| 3|4 |5|
-| Scenario 2 |  1 | 2| 3|4 |5|
-| Scenario 3 | 1 | 2| 3|4 |5|   
-| Scenario 3 | 1 | 2| 3|4 |5|  
-| Scenario 3 | 1 | 2| 3|4 |5|                   
-
-```{r, echo=F, results='hide',label='activate venv'}
-#path <- file.path('./venv/bin/python')
-library(reticulate)
-#use_python(path)
-use_virtualenv('./venv', required=FALSE)
-```
-
 ```{python, echo=F, results='hide', label='load data'}
 import matplotlib
 matplotlib.use('Agg')
@@ -88,15 +46,167 @@ class criteria2(Enum):
     parametric = 'parametric'
 ```
 
-## Example 1 
-I want to optimize the operational cost, and I know that NatGas will cost 0.32. What will be the Investment costs? and what technology will be used?
+# Energy system optimization
 
+## Introduction
+
+In this section, the whole EPFL campus is going to be modelled. Different technologies, such as PV panels, boilers, heat pumps with different fluids and a double stage heat pump, solide oxyde fuel cells, and solar thermal collectors, are investigated to satisfy EPFL's needs in electricty and heat. The different technologies are integrated into the model, considering their performance, size and cost, enabling thereby to make projections on Capex, Opex and Envex. The goal of the section is to conclude the analysis, by giving a final scenario which can be optimized according to the given need. More precisely, a scenario investigating the lowest operating cost, one the lowest capital expenditure and one for the lowest environmental emissions. Finally, a sensitivity analysis on the ressource prices and environmental impacts is conducted to examine the influence of the different parameters on the solution. 
+The system on which the study is conducted, is the on with the ... ?
+
+
+## Scenario analysis
+
+The different scenarios are described in the following 
+<!-- ### Scenario 1: CAPEX optimization
+
+The optimization of Capex lead the following result:
+TEchnologies used:
+
+### Scenario 2: OPEX optimization
+
+### Scenario 3: Emission optimization
+
+### Scenario 4: TOTEX optimization (without ENVEX)
+
+### Scenario 5: TOTEX optimization (with ENVEX) -->
+
+### Scenario 1 CAPEX
+
+```{python, echo=F, eval=T,label= optimize_CAPEX, results='hide'}
+
+data=fct3.optimize(criteria=criteria.CAPEX)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_CAPEX}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["Boiler"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print(data['mult_t'].loc["NatGasGrid"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+```
+
+
+### Scenario 2 OPEX
 ```{python, echo=F, eval=T,label= optimize_OPEX, results='hide'}
+
+data=fct3.optimize(criteria=criteria.OPEX)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_OPEX}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["Boiler"])
+print(data['mult_t'].loc["R1270_LT"])
+print(data['mult_t'].loc["PV"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print(data['mult_t'].loc["NatGasGrid"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+```
+
+### Scenario 3 Emissions
+```{python, echo=F, eval=T,label= optimize_Emissions, results='hide'}
+
+data=fct3.optimize(criteria=criteria.Emissions)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_Emissions}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["STC"])
+print(data['mult_t'].loc["R290_MT"])
+print(data['mult_t'].loc["SOFC"])
+print(data['mult_t'].loc["HydrogenGrid"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print(data['mult_t'].loc["ElecGridSell"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+```
+
+### Scenario 4 TOTEX
+```{python, echo=F, eval=T,label= optimize_TOTEX, results='hide'}
+
+data=fct3.optimize(criteria=criteria.TOTEX)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_TOTEX}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["STC"])
+print(data['mult_t'].loc["Boiler"])
+print(data['mult_t'].loc["NatGasGrid"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+```
+
+### Scenario 5 TOTEX + CO2 tax : 120e-6 CHF/gCO2 #CO2 tax in Switzerland 2022 
+```{python, echo=F, eval=T,label= optimize_parametric, results='hide'}
+
+data=fct3.optimize(criteria=criteria.parametric)
+```
+
+
+```{python, echo=F, eval=T,label= diplay_optimize_paramteric}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["STC"])
+print(data['mult_t'].loc["Boiler"])
+print(data['mult_t'].loc["NatGasGrid"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+#print("The total cost is %.3e [CHF/yr]" %(data['TotEnvCost'].values[0][0])) # display does not work, do not know why
+print(data['TotEnvCost'])
+```
+
+
+
+
+
+
+
+
+
+### Recapitulative table:
+
+| Scenario                         | CAPEX (CHF/year) | OPEX (CHF/year) | Emissions (tCO2/year) | TOTEX (no Envex) (CHF/year)| TOTEX (with ENVEX) (CHF/year)|
+|----------------------------------|------------------|-----------------|-----------------------|----------------------------|------------------------------|
+| Scenario 1 | 1 | 2| 3|4 |5|
+| Scenario 2 |  1 | 2| 3|4 |5|
+| Scenario 3 | 1 | 2| 3|4 |5|   
+| Scenario 3 | 1 | 2| 3|4 |5|  
+| Scenario 3 | 1 | 2| 3|4 |5|                   
+
+```{r, echo=F, results='hide',label='activate venv'}
+#path <- file.path('./venv/bin/python')
+library(reticulate)
+#use_python(path)
+use_virtualenv('./venv', required=FALSE)
+```
+
+
+
+<!-- ## Example 1 
+I want to optimize the operational cost, and I know that NatGas will cost 0.32. What will be the Investment costs? and what technology will be used? -->
+
+```{python, echo=F, eval=T,label= optimize_OPEX_exple, results='hide'}
 
 data=fct3.optimize(criteria=criteria.OPEX,NatGasGrid=0.32)
 ```
 
-```{python, echo=F, eval=T,label= diplay_optimize_OPEX}
+```{python, echo=F, eval=T,label= diplay_optimize_OPEX_exple}
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
 
@@ -248,14 +358,15 @@ import numpy as np
 price = []
 x = np.arange(30, 100, 1)
 for gas_price in x:
-    data = fct3.optimize(criteria=criteria.TOTEX,c_elec=gas_price)
+    data = fct3.optimize(criteria=criteria.parametric,c_elec=gas_price)
     #df = pd.read_pickle('./optimize_dump.pkl')
     #df.head()
-    price.append(data['Totalcost'].values[0][0])
+    price.append(data['TotEnvCost'].values[0][0])
 
+#oui
 x_def = 75.3
-y_def_data = fct3.optimize(criteria=criteria.TOTEX,c_elec=x_def)
-y_def = y_def_data['Totalcost'].values[0][0]
+y_def_data = fct3.optimize(criteria=criteria.parametric,c_elec=x_def)
+y_def = y_def_data['TotEnvCost'].values[0][0]
 
 fig = go.Figure(data=go.Scatter(x=x, y=price, mode='markers'))
 fig = fig.add_trace(go.Scatter(x=[x_def], y=[y_def], mode='markers', marker=dict(color='red')))

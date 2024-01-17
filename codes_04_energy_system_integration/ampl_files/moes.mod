@@ -281,7 +281,8 @@ subject to em_cstr:
 	Emissions = sum{u in Utilities, t in Time} (FlowInUnit['Electricity',u,t] * top[t] * c_elec)
 	+ sum{u in Utilities, t in Time} (FlowInUnit['Natgas',u,t] * top[t] * c_gas)
 	+ sum{u in UtilitiesOfType['Heating'],t in Time} (mult_t[u,t]*Qheatingsupply[u]*top[t]*technology_emission[u])
-	+ sum{tc in Technologies diff UtilitiesOfType['Heating'],t in Time,l in Layers} (mult_t[tc,t]*top[t]*technology_emission[tc]*FlowOutUnit[l,tc,t]);
+	+ sum{tc in Technologies diff UtilitiesOfType['Heating'],t in Time,l in Layers} (mult_t[tc,t]*top[t]*technology_emission[tc]*FlowOutUnit[l,tc,t])
+	+ sum{t in Time} (FlowOutUnit['Electricity','ElecGridBuy',t]* top[t] * c_elec);
 
 subject to TotEnvCost_def:
 	TotEnvCost=Totalcost+CO2tax*Emissions;

@@ -1,0 +1,444 @@
+```{python, echo=F, results='hide', label='load data'}
+import matplotlib
+matplotlib.use('Agg')
+#import codes_01_energy_demand.NR_functions as fct1
+#import codes_03_HP_modeling.Regression_Mirco.carnot_regression as fct2
+#from codes_01_energy_demand.NR_functions import WeatherClustering
+
+import codes_04_energy_system_integration.functions as fct3
+import numpy as np; from numpy import matlib
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering
+import os
+import plotly.express as px
+import plotly.graph_objects as go
+from IPython.display import display, HTML
+import amplpy
+from amplpy import AMPL, DataFrame
+import sys
+import re
+import glob
+from enum import Enum
+```
+
+```{python, echo=F, eval=T, label=import_classes}
+class criteria(Enum):
+    OPEX = 'OPEX'
+    CAPEX = 'CAPEX'
+    Emissions = 'Emissions'
+    TOTEX = 'TOTEX'
+    parametric = 'parametric'
+
+class criteria1(Enum):
+    OPEX = 'OPEX'
+    CAPEX = 'CAPEX'
+    Emissions = 'Emissions'
+    TOTEX = 'TOTEX'
+    parametric = 'parametric'
+
+class criteria2(Enum):
+    OPEX = 'OPEX'
+    CAPEX = 'CAPEX'
+    Emissions = 'Emissions'
+    TOTEX = 'TOTEX'
+    parametric = 'parametric'
+```
+
+
+# Energy system optimization
+
+## Introduction
+
+In this section, the whole EPFL campus is going to be modelled. Different technologies, such as PV panels, boilers, heat pumps with different fluids and a double stage heat pump, solide oxyde fuel cells, and solar thermal collectors, are investigated to satisfy EPFL's needs in electricty and heat. The different technologies are integrated into the model, considering their performance, size and cost, enabling thereby to make projections on Capex, Opex and Envex. The goal of the section is to conclude the analysis, by giving a final scenario which can be optimized according to the given need. More precisely, a scenario investigating the lowest operating cost, one the lowest capital expenditure and one for the lowest environmental emissions. Finally, a sensitivity analysis on the ressource prices and environmental impacts is conducted to examine the influence of the different parameters on the solution. 
+The system on which the study is conducted, is the on with the ... ?
+
+
+## Scenario analysis
+
+The different scenarios are described in the following 
+<!-- ### Scenario 1: CAPEX optimization
+
+The optimization of Capex lead the following result:
+TEchnologies used:
+
+### Scenario 2: OPEX optimization
+
+### Scenario 3: Emission optimization
+
+### Scenario 4: TOTEX optimization (without ENVEX)
+
+### Scenario 5: TOTEX optimization (with ENVEX) -->
+
+### Scenario 1 CAPEX
+
+
+```{python, echo=F, eval=T,label= optimize_CAPEX, results='hide'}
+
+data=fct3.optimize(criteria=criteria.CAPEX)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_CAPEX}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["Boiler"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print(data['mult_t'].loc["NatGasGrid"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+```
+
+
+
+### Scenario 2 OPEX
+
+```{python, echo=F, eval=T,label= optimize_OPEX, results='hide'}
+
+data=fct3.optimize(criteria=criteria.OPEX)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_OPEX}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["Boiler"])
+print(data['mult_t'].loc["R1270_LT"])
+print(data['mult_t'].loc["PV"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print(data['mult_t'].loc["NatGasGrid"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+```
+
+
+### Scenario 3 Emissions
+
+```{python, echo=F, eval=T,label= optimize_Emissions, results='hide'}
+
+data=fct3.optimize(criteria=criteria.Emissions)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_Emissions}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["STC"])
+print(data['mult_t'].loc["R290_MT"])
+print(data['mult_t'].loc["SOFC"])
+print(data['mult_t'].loc["HydrogenGrid"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print(data['mult_t'].loc["ElecGridSell"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+```
+
+
+### Scenario 4 TOTEX
+
+```{python, echo=F, eval=T,label= optimize_TOTEX, results='hide'}
+
+data=fct3.optimize(criteria=criteria.TOTEX)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_TOTEX}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["STC"])
+print(data['mult_t'].loc["Boiler"])
+print(data['mult_t'].loc["NatGasGrid"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+```
+
+
+### Scenario 5 TOTEX + CO2 tax : 120e-6 CHF/gCO2 #CO2 tax in Switzerland 2022 
+
+```{python, echo=F, eval=T,label= optimize_parametric, results='hide'}
+
+data=fct3.optimize(criteria=criteria.parametric)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_paramteric}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+print(data['mult_t'].loc["STC"])
+print(data['mult_t'].loc["Boiler"])
+print(data['mult_t'].loc["NatGasGrid"])
+print(data['mult_t'].loc["ElecGridBuy"])
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
+print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
+#print("The total cost is %.3e [CHF/yr]" %(data['TotEnvCost'].values[0][0])) # display does not work, do not know why
+print(data['TotEnvCost'])
+```
+
+
+
+
+
+
+
+
+
+
+### Recapitulative table:
+
+| Scenario                         | CAPEX (CHF/year) | OPEX (CHF/year) | Emissions (tCO2/year) | TOTEX (no Envex) (CHF/year)| TOTEX (with ENVEX) (CHF/year)|
+|----------------------------------|------------------|-----------------|-----------------------|----------------------------|------------------------------|
+| Scenario 1 | 1 | 2| 3|4 |5|
+| Scenario 2 |  1 | 2| 3|4 |5|
+| Scenario 3 | 1 | 2| 3|4 |5|   
+| Scenario 3 | 1 | 2| 3|4 |5|  
+| Scenario 3 | 1 | 2| 3|4 |5|                   
+
+
+```{r, echo=F, results='hide',label='activate venv'}
+#path <- file.path('./venv/bin/python')
+library(reticulate)
+#use_python(path)
+use_virtualenv('./venv', required=FALSE)
+```
+
+
+
+
+<!-- ## Example 1 
+I want to optimize the operational cost, and I know that NatGas will cost 0.32. What will be the Investment costs? and what technology will be used? -->
+
+
+```{python, echo=F, eval=T,label= optimize_OPEX_exple, results='hide'}
+
+data=fct3.optimize(criteria=criteria.OPEX,NatGasGrid=0.32)
+```
+
+```{python, echo=F, eval=T,label= diplay_optimize_OPEX_exple}
+print("The technologies used are:")
+print(data['use'][data['use']!=0].dropna().index.values)
+
+print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
+```
+
+
+## Pareto Analysis
+
+### Pareto TOTEX-Emissions
+I want to draw the pareto front between TOTEX and Emissions
+
+
+```{python, echo=F, eval=T,label= get_pareto1, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto1}
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+
+|                        | **Optimal TOTEX** | **Optimal TOTEX & GWP** | **Optimal GWP** |
+|:----------------------:|:-----------------:|:-----------------------:|:---------------:|
+|   **TOTEX [MCHF/y]**   |         3         |            5            |        20       |
+| **Emissions [tCO2/y]** |        4300       |           950           |       100       |
+
+The most optimized point is the one at (950tCO2/yr;5MCH/yr). Indeed, it gives the lowest TOTEX for a reasonable low emissions. Emissions could be reduced by almost 10 but then TOTEX would be multiplied by 4 and reached 20MCHF/yr. If it is assumed TOTEX can’t be too high, then 950tCO2/yr is deemed acceptable. On contrary, if EPFL was not willing to invest on emission reduction it could select the solution on the far right where TOTEX is reduced by 1.5 to reach 3MCHF/yr but emissions would then be at 4000tCO2/yr.
+
+
+```{r CO2_EPFL_real_data, out.width='100%', fig.align='center', fig.cap='Carbon footprint of EPFL', echo=F}
+#| label: fig-git-login
+knitr::include_graphics('Figures/BILANCO2EPFLFR-1.png')
+```
+
+
+By comparing with values directly measured by EPFL @EPFL_emissions, the optimization done gives results in the same order of magnitude. If it is indeed assumed that Electricity emission on campus are not for heating then only 4ktCO2/yr are emitted for heating, which is really close to the 1ktCO2/yr found after the optimization.
+
+### Pareto OPEX-Emissions and CAPEX-Emissions
+Here are other Pareto between OPEX and Emissions and CAPEX and Emissions 
+
+
+```{python, echo=F, eval=T,label= get_pareto2, results='hide'}
+OPEX,EMISSIONS=fct3.get_pareto(criteria1.OPEX,criteria2.Emissions,n=30)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto2}
+fct3.draw_pareto(OPEX,EMISSIONS,"OPEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+```{python, echo=F, eval=T,label= get_pareto3, results='hide'}
+CAPEX,EMISSIONS=fct3.get_pareto(criteria1.CAPEX,criteria2.Emissions,n=30)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto3}
+fct3.draw_pareto(CAPEX,EMISSIONS,"CAPEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+
+
+## Sensitivity Analysis
+
+### Variation in the Natural Gas cost
+
+With the current geopolitical tension between western countries and Russia, the natural gas price is very sensitive.
+
+
+```{python, echo=F, eval=T,label= sensitivity_gas, results='hide'}
+import plotly.graph_objects as go
+import pandas as pd
+import numpy as np
+
+price = []
+x = np.arange(0.001, 0.3, 0.01)
+for gas_price in x:
+    data = fct3.optimize(criteria=criteria.TOTEX,NatGasGrid=gas_price)
+    #df = pd.read_pickle('./optimize_dump.pkl')
+    #df.head()
+    price.append(data['Totalcost'].values[0][0])
+
+x_def = 0.0303
+y_def_data = fct3.optimize(criteria=criteria.TOTEX,NatGasGrid=x_def)
+y_def = y_def_data['Totalcost'].values[0][0]
+
+fig = go.Figure(data=go.Scatter(x=x, y=price, mode='markers'))
+fig = fig.add_trace(go.Scatter(x=[x_def], y=[y_def], mode='markers', marker=dict(color='red')))
+fig = fig.update_layout(title='Natural Gas Price Plot with TOTEX objective', xaxis_title='Gas price (CHF/kWh)', yaxis_title='TOTEX (CHF/y)', showlegend = False)
+fig.show()
+```
+
+
+In this plot it is possible to observe how TOTEX increases with an increase of the gas price. The red dot corresponds to the price of gas used to performed the first Pareto curves presented above. 
+The goal of this first sensitity analysis is thus to replot another Pareto curve TOTEX-Emissions but this time with a higher gas price. 
+Let's choose a price of 0.29CHF/kWh (highest point on the graph)
+
+
+```{python, echo=F, eval=T,label= get_pareto_ng, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, NatGasGrid_pareto=0.291)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_ng}
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+Now the Pareto is different from the original case. Because gas price has been increased, it is not anymore optimal to choose utilities which require use of gas. 
+That's why if we retake our first optimal point at 950tCO2/yr, this time it is not anymore be in the optimal part of the graph. Instead, it is located in the rigth tail of the Pareto curve. This means the optimal point is now to lower emissions values. More precisely, a relevant optimal point could be at 400tCO2/yr for a TOTEX of 8MCHF/yr. 
+Thus increasing the gas price by almost 10, only increases the optimal TOTEX by 60% but enables to reduce emissions by 60%.
+Let's note that only optimal values found on the Pareto are compared. The TOTEX vs gas price curve was only used to select a relevant gas price to perform the Multi-objective optimisation and the plot the Pareto curve.
+
+
+### Variation in the Electricity cost
+
+This time let's see what happen when the price of bought electricity changes.
+
+
+```{python, echo=F, eval=T,label= sensitivity_elec, results='hide'}
+import plotly.graph_objects as go
+import pandas as pd
+import numpy as np
+
+price = []
+x = np.arange(0.06, 0.5, 0.01)
+for gas_price in x:
+    data = fct3.optimize(criteria=criteria.TOTEX,ElecGridBuy=gas_price)
+    #df = pd.read_pickle('./optimize_dump.pkl')
+    #df.head()
+    price.append(data['Totalcost'].values[0][0])
+
+x_def = 0.0916
+y_def_data = fct3.optimize(criteria=criteria.TOTEX,ElecGridBuy=x_def)
+y_def = y_def_data['Totalcost'].values[0][0]
+
+fig = go.Figure(data=go.Scatter(x=x, y=price, mode='markers'))
+fig = fig.add_trace(go.Scatter(x=[x_def], y=[y_def], mode='markers', marker=dict(color='red')))
+fig = fig.update_layout(title='Electricity Price Plot with TOTEX objective', xaxis_title='Electricity Price (CHF/kWh)', yaxis_title='TOTEX (CHF/y)', showlegend = False)
+fig.show()
+```
+
+
+It appears TOTEX increases lineraly with electricity prices. The red dot is again corresponding to the price of electricity used in the orignal TOTEX-Emissions Pareto.
+It can be noticed the plot starts at 0.06CHF/kWh. Indeed at lower buying prices, it would be more interesting to sell electricity since $BuyPrice < SellPrice$.
+Let's see how the optimal point from Multi-objective optimisation changes when electricity is now bought at 0.49CHF/kWh.
+
+
+```{python, echo=F, eval=T,label= get_pareto_elec, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, ElecGridBuy_pareto=0.49)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_elec}
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+
+This time the original optimal point of 950tCO2/yr is lying below the optimal region of the obtained Pareto. This means that for the same emissions, the TOTEX is now increased. 
+By selecting on the obtained Pareto the optimal point located at 1000tCO2/yr, the TOTEX is now 17.5MCHF/yr. This is a price increase of 350% compared to the original optimal point (with a minor emission increase of 5%). Thus if electricity prices increase, the optimal solution would be far more expensive than if gas prices are increased. 
+
+### Variation in the Electricity carbon footprint
+
+
+```{python, echo=F, eval=T,label= sensitivity_elec_carb, results='hide'}
+import plotly.graph_objects as go
+import pandas as pd
+import numpy as np
+
+price = []
+x = np.arange(30, 100, 1)
+for gas_price in x:
+    data = fct3.optimize(criteria=criteria.parametric,c_elec=gas_price)
+    #df = pd.read_pickle('./optimize_dump.pkl')
+    #df.head()
+    price.append(data['TotEnvCost'].values[0][0])
+
+#oui
+x_def = 75.3
+y_def_data = fct3.optimize(criteria=criteria.parametric,c_elec=x_def)
+y_def = y_def_data['TotEnvCost'].values[0][0]
+
+fig = go.Figure(data=go.Scatter(x=x, y=price, mode='markers'))
+fig = fig.add_trace(go.Scatter(x=[x_def], y=[y_def], mode='markers', marker=dict(color='red')))
+fig = fig.update_layout(title='Electricity Carbon Footprint Plot with TOTEX objective', xaxis_title='Electricity carbon footprint (gCO2/kWh)', yaxis_title='TOTEX (CHF/y)', showlegend = False)
+fig.show()
+```
+
+
+pareto if elec price at 30 gCO2/kWh
+
+
+```{python, echo=F, eval=T,label= get_pareto_elec_carb, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, c_elec_pareto=30)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_elec_carb}
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+
+
+### Optimization without considering Boiler
+
+Finally, let's see how preventing the optimizer to select a certain technology will impact the optimal TOTEX-Emissions point. 
+
+
+```{python, echo=F, eval=T,label= get_pareto_woboiler, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, remove_tech_pareto=["Boiler"])
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_woboiler}
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+
+Here Boiler has been removed. It means EPFL would not be allowed to use a boiler to answer the heating demand of the campus.
+Emissions are drastically reduced. Indeed, the optimal point is now inferior to 40tCO2/yr. 
+It makes sense since Boiler was the main user of NatGas so by removing it, the emissions are reduced and mainly due to electricity generation. 
+However, the TOTEX is now increased around 15 to 17.5MCHF/yr. Such price increase is high and thus compared to the original Pareto or the other sensitivity analysis, it is always a question on what is the target for the EPFL. 
+
+Do they have unlimited founding to reduce their emissions? In that case removing boiler and other equipment requiring use of gas would be the best solution. 
+Or instead, is the budget limited and in that case it would be better to assume gas price are higher like in the first sensitivity analysis to reduce emissions while keeping a reasonable TOTEX. 
+
+<!-- Here you report about your energy systems optimization. This is the last part of the discussion where you wrap-up everything you did. -->
+
