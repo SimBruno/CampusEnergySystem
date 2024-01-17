@@ -1,6 +1,19 @@
-# Preface
+# Abstract
 
+<!--
 In light of the MOES course at EPFL, the following project models a new energy infrastructure at EPFL for heating supply. In fact, the current heating system being close to its end of lifetime, it has to be replaced improving its performance. To do so, the current heating demands are classified first. Then, different scenarios for the heating supply are analyzed, such as introducing heat pumps, using waste heat or preheating the air provided by the ventilation system. Thereby, the possibility to recover waste heat is considered, more precisely by collecting the heat produced by the data center. Each option is evaluated based on their energetic efficiency, and economic viability considering investment and operating cost. At the end, the optimized scenario for the renewed heat supply system will be presented as solution.
+-->
+
+With the current heating system at EPFL still relying on old fossil technologies like boiler, it has to be redesigned to improve its energetic performance and thus reduce its costs and emissions.
+
+First, an assessment of the current heating demand is done on the entire campus. Only heating demand is considered for this project. To refine the model and get a more accurate representation of the demand, heat gains due to people, equipment and solar radiations are removed from the overall heat that has to be provided. 
+However, once the yearly demand is established, and to avoid dealing with too much data in the following optimization, data is clustered over 6 periods, each characterized by a temperature, an irraditation and a heat demand, in addition to an extra period representing the worst case scenario.
+
+The whole demand being modeled, different scenarios are then considered to improve the heating supply. After defining the reference heating system which is currently used at EPFL, three variations are then investigated: one with the use of Data Center to preheat the water before it enters EPFL heating system, the other with use of air ventilation to preheat the air entering the system and a final combination of both ventilation and heat pump to preheat the inlet flows. Costs analysis, performed with AMPL solver, (CAPEX and OPEX) enables to conclude that the use of .... is the most promising solution.
+
+Heat pumps being a promising technology to provide heat via recovery, a double-stage heat pump used on the campus is then further investigated. More precisely the heat pump is modelled on the software $\textit{VALI}$ to assess the optimal working fluid to be used. A degree of Freedom analysis is also performed on each unit of the heat pump to determine the required equations and measurements to be made to obtain a feasible model. After runing the model with both propane and propylene and computing a cost evaluation 
+
+Finally, a full model can be built to evaluate how energy demand (heat and electricity) can be answered on the campus based on various scenario. In addition to reuse the clusteres for heat demand determined beforehand as well as the cheapest heat recovery method and optimal working fluid for the heat pump, the models is also upgraded with other technologies: a boiler, PV solar panels, an SOFC and some STC panels. The model is run with AMPL solver and can be used to minimize different KPIS such as the TOTEX, CAPEX, OPEX or Emissions. In addition, to study the impact of critical parameters on the model outcomes, sensitivity analysis are performed such as the increase of natural gas or electricity price or the impossibility to use some specific technologies like the boiler. 
 
 
 ```{r Campus EPFL, out.width='100%', fig.align='center', fig.cap='EPFL Campus', echo=F, fig.show='hold'}
