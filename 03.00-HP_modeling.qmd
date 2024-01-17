@@ -63,6 +63,12 @@ The state variables of the flows are characterized by a minimum number of state 
 
 For this analysis, we'll consider the steady-state operation of the system, i.e. no accumulation.
 
+
+```{r double-stage, out.width='80%', fig.align='center', fig.cap='Vali model of the double-stage heat pump',echo=F}
+#| label: fig-double-stage
+knitr::include_graphics('Figures/double_stage.png')
+```
+
 ## System DOF analysis
 
 A simple preliminary analysis allows to determine the overall minimum DOF of the system, giving a lower bound of measurements necessary to make it solvable. Representing the system as a flowsheet allows to retrieve the number of variables and equations. The variables consists of all the material flows, the electricity flows and the heat flows, assuming that each material flows bring 3 variables. The equations are one mass balance and one energy balance per unit in the system, the isentropic efficiencies for both compressor as well as the isenthalpic expansions in the valves. Finally, having 9 flows, all of them having 1 phase, and 8 units yields:
@@ -226,7 +232,57 @@ Now that all the types of unit models are characterized, it should be possible t
 
 - `Option 5`: All values are specified in the following equation $COP_{real}=\dfrac{Q_{cond,load}}{Q_{cond,load}-Q_{evap}}$, which makes the model overspecified.
 
-Doing that only leaves us with one viable options, which is `Option 4`. Using that set of inputs indeed let VALI run and reconcile data. Now that the model is running with our default fluid, we can inquire for other working fluids. 
+- `Option 1`: For this option, it is a bit more difficult. Let's observe only the first stage as a subsystem, as in @fig-first-stage. 
+
+```{r first-stage, out.width='80%', fig.align='center', fig.cap='First stage of the heat pump',echo=F}
+#| label: fig-first-stage
+knitr::include_graphics('Figures/first_stage.png')
+```
+
+Let's first remove the flow $hp_9$, as it is the same as $hp_1$. Now for each flow, 4 variables describe it, linked by 2 equations. Considering no leakage, the mass flow is also defined. Lastly, for flow number 3 we declare its isentropic value:
+
+| Flow  | Variables  | # Variables |Equations  | # Equations associated |
+|-------|-----------|----------|--------|------|
+| $hp_1$ | $T_1,p_1,h_1$    | 3     | $h_1=h(T_1,p_1)$ | 1 |
+|        |      $s_1$       | 1     | $s_1=s(T_1,p_1)$ | 1 |
+| $hp_2$ | $T_2,p_2,h_2$    | 3     | $h_2=h(T_2p_2)$  | 1 |
+|        |      $s_2$       | 1     | $s_2=s(T_2,p_2)$ | 1 |
+| $hp_3$ | $T_3,p_3,h_3$    | 3     | $h_3=h(T_3,p_3)$ | 1 |
+|        |      $s_3$       | 1     | $s_3=s(T_3,p_3)$ | 1 |
+|        |   $h_{3,s}$      | 1     | $h_{3,s}=h(p_3,s_2)$ | 1 |
+| $hp_8$ | $T_8,p_8,h_8$    | 3     | $h_8=h(T_8,p_8)$ | 1 |
+|        |      $s_8$       | 1     | $s_8=s(T_8,p_8)$ | 1 |
+| $Mass$ | $\dot{m}$| 1 | - | 0 |
+
+We can proceed similarly for each unit:
+
+| Unit  | Variables  | # Variables |Equations | # Equations associated|
+|-------|--------|-------|--------|------------|
+| Valve | -    | 0    | $h_8=h_1$  | 1 |
+| Evaporator | $\Delta p$    | 1  | $\Delta p=p_2-p_1$    | 1 |
+|            | $Q_{evap}$    | 1  | $Q_{evap}=\dot{m}(h_2-h_1)$     | 1 |
+| Compressor | $W_{comp,1}$    | 1  | $W_{comp,1}=\dot{m}(h_3-h_2)$   | 1 |
+|  | $\pi$    | 1   | $\pi=\frac{p_3}{p_2}$   | 1 |
+|  | $\eta$    | 1   | $\eta=\frac{}{p_2}$   | 1 |
+| Flash | $Q_f$    | 1   |  $Q_f=\dot{m}(h_3-h_8)$  | 1 |
+
+and finally we can add 2 energy balances:
+
+| System  | Variables  | # Variables | Equations | # Equations associated |
+|-------|---------|----------|--------|--------|
+| Global  | $Q_{load},W_{comp,2}$ | 2 | $Q_{load}=W_{comp,1}+W_{comp,2}+Q_{evap}$ | 1 |
+| Local   |- | 0 | $Q_{f}=W_{comp,1} + Q_{evap}$ | 1 |
+
+Let's summarize everything:
+
+|  $~$ | # Variables |  # Equations associated | DOF |
+|-------|---------|----------|--------|
+| Total  | 26 | 18 |  8 |
+
+Therefore, 8 values should be fixed. In `option 1`, only 5 variables ($\eta,\Delta p, Q_{evap}, W_{comp,2}$ and $Q_{load}$) are specified. There could be a way to specify the pressure in the flash tank ($specify $p_8$) or the heat transferred to the second stage (specify $Q_f$)  from the rest of the system, but even with that, it would only increase  the number of specifications up to 7, which is still one missing. Therefore, the system in `option 1` is underspecified and cannot be solved.
+
+
+Finally, that only leaves us with one viable options, which is `Option 4`. Using that set of inputs indeed let VALI run and reconcile data. Now that the model is running with our default fluid, we can inquire for other working fluids. 
 
 ### Model adjustment to a second working fluid 
 
@@ -234,10 +290,12 @@ Let's choose a new working fluid from @fig-working-fluid
 ```{r working_fluid, out.width='100%', fig.align='center', fig.cap='Selected refrigerants for the study', echo=F, fig.show='hold'}
 #| label: fig-working-fluid
 knitr::include_graphics('Figures/working_fluid.png')
+
 ```
 
 The modern challenge of working fluid selection resides in balancing good thermal properties, long lifetime and environmental friendliness. As the latter is one of the critical parameters for all the project, let's ensure to use a fluid with a small global warming potential. The choice restricts to either Ammonia or Propylene when looking at the GWP. Even though propylene has a higher lifetime, it is considered as a safer fluid. In fact, ammonia is a very toxic chemical, being corrosive both to skin and eyes @Ammonia.  To be sure that propylene is a good choice, its thermal properties are studied in detail [propylene] (https://encyclopedia.airliquide.com/propene#safety-compatibility).
 Starting with the freezing point, it is at 87.96K, which is low enough to ensure that the propylene is not going to be solid in the heat pump. Its critical point is at 46 bar, which is high enough to avoid it, leading to good fluid stability within the heat pump. When working with propylene, it is important to pressurize it, to enable liquefication. Typical pressure values of propylene are around 2-9 bar. Hence, there is an increased risk when working with this gas. As for the latent heat of vaporization, it has a similar value than propane, i.e. 438.96 kJ/kg. Lastly, due to its high lifetime, it should be avoided to release propylene into the environment and its flammability should be considered when working with it.
+
 
 <!-- **Task**
 
@@ -270,7 +328,8 @@ Note that the measurement file indicates where the reconciled file should be sav
 
 ## Performance and cost evaluation
 The purpose of this section is to evaluate the performance of the double stage heat pump and the cost of the equipments. The performance is evaluated for low temperature supply ($50°C$) and high temperature supply ($65°C$) for both fluids. The goal is to perform a regression on the second law efficiency to model its evolution with the external ambient temperature. In the last section,  data was measured on the heat pump for both fluids and both temperature levels at different external temperatures. Data reconciliation was performed with the model in order to minimize the measurements error. These results will now be used to evaluate the heat pump performance at different temperatures, and fit these measurements on a regression model. The following model will be used:
-$$ C_{carnot}=a\cdot T_{ext}^2- b\cdot T_{ext}+c$$
+$$ C_{carnot}=a\cdot T_{ext}^2+ b\cdot T_{ext}+c$$
+
 
 with $T_{ext}$ the external ambient temperature. Regression is performed using AMPL, which allows to simultaneously get the equipment price. First, let's write the optimization problem for regression:
 \begin{array}{l}
@@ -282,7 +341,7 @@ with $T_{ext}$ the external ambient temperature. Regression is performed using A
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | Carnot efficiencies                          |                                                                                                                   |
 | Real carnot efficiency                           | $C_{factor,1}=\dfrac{Q_{cond}(t)}{W_{hp}(t)}\dfrac{T_{ln,cond}(t)-T_{evap}(t)}{T_{ln,cond}(t)}~\forall t \text{ where } W_{hp}(t)>0$                                                                          |
-| Regression model                           | $C_{factor,1}=a\cdot T_{ext}^2- b\cdot T_{ext}+c$                                                                    |
+| Regression model                           | $C_{factor,1}=a\cdot T_{ext}^2+ b\cdot T_{ext}+c$                                                                    |
 | Log mean temperature of the condenser | $T_{ln,cond}(t)=\dfrac{T_{EPFL,in}(t)-T_{EPFL,out}(t)}{\ln{\left(\dfrac{T_{EPFL,in}(t)}{T_{EPFL,out}(t)}\right)}}$ |
 | Work supplied by compressors | $W_{hp}(t)=W_{comp,1}(t)+W_{comp,2}(t)$ |
 
@@ -319,7 +378,7 @@ results, observed =fct2.get_reg()
 PATH = os.path.join(os.path.dirname(os.getcwd()),"report-group-3", "codes_03_HP_modeling","Regression_Mirco","regression_results.csv")
 
 
-results.to_csv(PATH)
+results.to_csv(PATH,float_format="%.4f")
 ```
 
 ```{r table-widget, echo=F, eval=T, fig.cap= 'Results of the regression'}
@@ -332,24 +391,25 @@ datatable(regression_results, options = list(pageLength = 5, scrollX=TRUE)
 )
 ```
 
-Note that cinv1 is in CHF/y and cinv2 is in CHF/kW/y. We consider that for the heat pump at low temperature, it is able to provide heat at 55°C and that for medium temperature, it is able to provide heat at 70°C. The Fmin and Fmax values are compared with a reference size of 1000 $kW_{heat}$. Data from R1270 seems to be incorrect. I'll have to work on that.
-```{python, echo=F, eval=T,label= plot_regression}
+Note that cinv1 is in CHF/y and cinv2 is in CHF/kW/y. All areas are in m$^2$ and all costs are in CHF/yr We consider that for the heat pump at low temperature, it is able to provide heat at 55°C and that for medium temperature, it is able to provide heat at 70°C. The regression for each fluid is shown in @fig-plot_regression
+```{python, echo=F, eval=T,label= plot_regression,fig.cap='Regression fitting on the second law efficiencies'}
+#| label: fig-plot_regression
 T_ext_span=np.linspace(0,15,100)
 carnot_span=pd.DataFrame(index=T_ext_span)
 colors=['blue','brown','green','red']
 
 for j in results.index.values:
-    carnot_span[j]=results.loc[j]['a']*np.power(T_ext_span,2)-results.loc[j]['b']*T_ext_span+results.loc[j]['c']
+    carnot_span[j]=results.loc[j]['a']*np.power(T_ext_span,2)+results.loc[j]['b']*T_ext_span+results.loc[j]['c']
 
-fig = px.line(carnot_span, x=carnot_span.index, y=carnot_span.columns, title='Carnot efficiency function of ambient temperature',labels={'index': 'Ambient temperature [°C]', 'value':'Carnot efficiency','variable': 'Fluids'},color_discrete_sequence=colors)
+fig = px.line(carnot_span, x=carnot_span.index, y=carnot_span.columns, title='Carnot efficiency function of ambient temperature',labels={'index': 'Ambient temperature [°C]', 'value':'Carnot efficiency','variable': 'Fluids'},color_discrete_sequence=colors).add_scatter(x=[5],y=[0.5],mode='markers',marker=dict(color='black',opacity=0),name='Observed data').add_trace(go.Scatter(x=[5],y=[0.5],name='Regression',line=dict(color='black'),marker=dict(size=0,opacity=0)))
+
+
 
 count=0
 for j in results.index.values:
-    fig.add_scatter(x=observed['T_ext_'+j],y=observed['Carnot_'+j],mode='markers',marker=dict(color=colors[count]),showlegend=False)
+    fig.add_scatter(x=observed['T_ext_'+j],y=observed['Carnot_'+j],mode='markers',marker=dict(color=colors[count]),showlegend=False,)
     count+=1
 
-fig.add_scatter(x=[5],y=[0.5],mode='markers',marker=dict(color='black',opacity=0),name='Observed data')
-fig.add_trace(go.Scatter(x=[5],y=[0.5],name='Regression',line=dict(color='black'),marker=dict(size=0,opacity=0)))
 ```
 
 <!-- **Given**
