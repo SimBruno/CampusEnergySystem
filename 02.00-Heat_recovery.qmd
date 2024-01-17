@@ -394,7 +394,7 @@ vent_HP_AHEDC    = round(vent_HP_data['Area_Vent'].values[0][0],2)
 vent_HP_DTminVent= round(vent_HP_data['DTminVent'].values[0][0],2)
 vent_HP_HPcost   = round(vent_HP_data['Cost_HP'].values[0][0],2)
 
-vent_HP_payback  = round(vent_HP_CAPEX*20/(vent_HP_OPEX-ref_OPEX),2) #capex is annualized over 20 years
+vent_HP_payback  = round(vent_HP_CAPEX*20/(ref_OPEX-vent_HP_OPEX),2) #capex is annualized over 20 years
 
 html_table_vent_HP_data = "<h5 style='text-align:center;'>Ventilation with HP optimization results</h5>\n\n"
 html_table_vent_HP_data += "<table border='1' style='border-collapse: collapse;'>\n"
