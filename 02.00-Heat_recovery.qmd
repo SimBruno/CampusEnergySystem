@@ -8,7 +8,7 @@ p {
 
 ## Introduction
 
-In this section, EPFL's current heat supply system an possible improvments are investigated. At first, the reference case is presented, where heat is provided to EPFL at $T=65°C$, using the lake water as cooling and a single heat pump to provide the necessary heating demand. Then in order to improve this system, 3 scenarios are assessed:
+In this section, EPFL's current heat supply system ans possible improvments are investigated. At first, the reference case is presented, where heat is provided to EPFL at $T=65°C$, using the lake water as cooling and a single heat pump to provide the necessary heating demand. Then in order to improve this system, 3 scenarios are assessed:
 
 - The use of the adjacent DataCenter, to recover its heat and preheat the lake water for the HP (while cooling the datacenter itself). 
 
@@ -25,7 +25,7 @@ These scenarios will decrease both the operating cost and the environmental impa
 knitr::include_graphics('Figures/task_2_case_1.png')
 ```
 
-For the reference case, heat is only supplied by the heat pumps for buildings at $T_{EPFL,medium}=338$ [K]. Considering heat pumps are already installed, there is no CAPEX. The only operational costs are the electricity cost for running the heat pumps. EPFL heat pumps take as cold source lake geneva which is at $T_{HP,high-in}=280 [K]$. The fixed return temperature to the lake is at $T_{HP,high-in}=276 [K]$. The fixed return temperature from the buildings is at $T_{EPFL,medium-out}=303$ [K]. The heat-pump is assumed to have a second law (exergetic) efficiency of $\epsilon=55\%$. Finally, the electricity cost is considered fixed at $C_{el}=0.2$ $[\dfrac{CHF}{kWh}]$.
+For the reference case, heat is only supplied by the heat pump for buildings at $T_{EPFL,medium}=338$ [K]. Considering that the heating system is already installed, there is no CAPEX. The only operational costs are the electricity cost for running the heat pumps. EPFL heat pumps use the lake as cold source, which is at $T_{HP,high-in}=280 [K]$. The fixed return temperature to the lake is at $T_{HP,high-in}=276 [K]$. The fixed outlet temperature of the buildings is at $T_{EPFL,medium-out}=303$ [K]. The heat pump is assumed to have a second law (exergetic) efficiency of $\epsilon=55\%$. Finally, the electricity cost is considered fixed at $C_{el}=0.2$ $[\dfrac{CHF}{kWh}]$.
 
 Let's solve the following optimization problem, in order to obtain the less expensive solution:
 \begin{array}{l}
@@ -52,7 +52,7 @@ Let's solve the following optimization problem, in order to obtain the less expe
 | log mean temperature in evaporator for COP | $T_{LM,evap,ref}=\dfrac{T_{HP,high-in}-T_{HP,high-out}}{\ln{\left( \dfrac{T_{HP,high-in}}{T_{HP,high-out}}\right)}}$           |
 | Definition of COP                          | $COP=\epsilon \dfrac{T_{LM,cond,ref}}{(T_{LM,cond,ref}-T_{LM,evap,ref})}$   
 
-Where $\dot{M}Cp_{Lake}$ and $\dot{M}Cp_{EPFL}$ are the flow of the lake and the EPFL supply system respectively. Note that $E$ is the heat pump electricity in [kW], $Q_{cond,ref}$ and $Q_{evap,ref}$ are the heat power in [kW] flowing through the condenser and the evaporator respectively, $Q_{heating}(t)$ is the EPFL medium heat consumption. Data is clustered using the clusters produced before. $t_{op}$ is the operational time for each cluster. $T_{LM,cond,ref}$, $T_{LM,evap,ref}$ are the logarithmic mean temperatures at the condenser and the evaporator respectively. Finally, $\epsilon$ is the Carnot efficiency of the heat pump.
+Where $\dot{M}Cp_{Lake}$ and $\dot{M}Cp_{EPFL}$ are the flows of the lake and the EPFL supply system respectively. Note that $E$ is the heat pump electricity consumption in [kW], $Q_{cond,ref}$ and $Q_{evap,ref}$ are the heating powers in [kW] flowing through the condenser and the evaporator respectively, $Q_{heating}(t)$ is the EPFL medium heat consumption. The Qheating from the defined clusters are used as heat load for the first 2 scenarios. $t_{op}$ is the operational time for every cluster. $T_{LM,cond,ref}$, $T_{LM,evap,ref}$ are the logarithmic mean temperatures at the condenser and the evaporator respectively. Finally, $\epsilon$ is the Carnot efficiency of the heat pump.
 </details>
 
 ```{python, eval = T, echo = F, results='hide'}
@@ -112,7 +112,7 @@ _NB:_ in the subsequent tables, the CAPEX are often given in their annualized fo
 knitr::include_graphics('Figures/task_2_case_2.png')
 ```
 
-In this scenario, heat recovery is applied using the data center. The data center produces 574 [kW] of heat, and must be cooled. Fluid enters at fixed temperature $T_{ret}=290$ [K] and leaves at fixed temperature $T_{DC,in}=333$ [K]. A heat exchanger is installed at the outlet of the data center, to recover heat for EPFL buildings. To ensure complete cooling of the data center and preheat lake water for the heat pump, a Free cooling heat exchanger is also installed. The goal of this scenario is to determine the size of the heat exchanger $A_{HE,DC}$ $[m^2]$ in order to lower the TOTEX of the heat supply system. The optimization problem is as follows:
+In this scenario, heat recovery is applied using the data center. The data center produces 574 [kW] of heat, and must be cooled. Fluid enters at a fixed temperature $T_{ret}=290$ [K] and leaves at a fixed temperature $T_{DC,in}=333$ [K]. A heat exchanger is installed at the outlet of the data center, to recover heat for EPFL buildings. To ensure complete cooling of the data center and preheat lake water for the heat pump, a "free cooling" heat exchanger is also installed. The goal of this scenario is to determine the size of the heat exchanger $A_{HE,DC}$ $[m^2]$ in order to lower the TOTEX of the heat supply system. The optimization problem is as follows:
 
 \begin{array}{l}
 \min{CAPEX + OPEX} \\
@@ -144,8 +144,8 @@ In this scenario, heat recovery is applied using the data center. The data cente
 | Log-mean temperature difference of heat exchanger                          | $\Delta T_{LM,DC}(t)=\dfrac{(T_{DC,in}-T_{Radin}(t))-(T_{DC,out}(t)-T_{EPFL,medium-out})}{\ln{\left( \dfrac{T_{DC,in}-T_{Radin}(t)}{T_{DC,out}(t)-T_{EPFL,medium-out}}\right)}}~\forall t$                                                              |
 
 
-Where $Q_{free}(t)$ and $Q_{rad}(t)$ are the heat exchanges in the free cooling heat exchanger and the heat exchanger respectively. The lifetime considered is $n=20$ years and the interest is $i=5\%$.
-Note that for this scenario, the Heat pump COP is not constant, since inlet and outlet temperatures of the condenser and evaporator are not constant. The problem becomes highly non-linear. It is possible to reduce the complexity by linearizing the log-mean temperatures for the Heat pump into mean temperatures:
+Where $Q_{free}(t)$ and $Q_{rad}(t)$ are the heat loads exchanged in the free cooling heat exchanger and the heat exchanger respectively. The lifetime considered is $n=20$ years and the interest is $i=5\%$.
+Note that for this scenario, the Heat pump COP is not constant, since inlet and outlet temperatures of the condenser and evaporator are not constant. The problem becomes non-linear. It is possible to reduce the complexity by linearizing the log-mean temperatures for the Heat pump into mean temperatures:
 
 | Constraint type                            | Equation                                                                                                                   |
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
@@ -224,12 +224,12 @@ The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-DC_TOTEX:.2f}'")` [CH
 knitr::include_graphics('Figures/task_2_case_3.png')
 ```
 
-For this 2nd scenario, heat recovery (also named here as ventilation) is performed via air ventilation (HEX). This time the clustered weather data will be used (Temperature [°C] and Irradiation [$kW/m{^2}$]). 
+For this third scenario, heat recovery (also named here as ventilation) is performed via an air ventilation heat exchanger. This time the clustered weather data will be used (Temperature [°C] and Irradiation [$kW/m{^2}$]). 
 Recall that 6 cluster points were defined for the weather data. In addition to this, in order to ensure the heating system is still working in extreme cases, a 7th cluster point is added. This cluster point is defined as the coldest day of the year with an irradiation of 0 [$kW/m{^2}$]. Data concerning the building $k_{th}$, $k_{sun}$, Floor Area, electricity demand and internal heat gains from people are added for each building of the heating system.
 
 As mentioned the incoming air flow towards the EPFL ($T_{ext}$) can be preheated with the exiting flow from EPFL ($T_{int}=21°C$). Thus compared to reference case, $T_{ext,new}$ is hotter than $T_{ext,ref}$. 
 
-Thanks to this air-ventilation preheating, the heat demand will reduce according to the following equation:
+Thanks to this air-ventilation preheating, the heat demand will be reduced according to the following equation:
 
 $$ Q(t)=A_{th}[U(T_{int}-T_{ext}(t))+m_{air}cp_{air}(T_{int}-T_{ext,new}(t))-k_{sun}Irr(t)-Q_{ppl}(t)]-Q_{el}(t) $$
 
@@ -261,7 +261,7 @@ The optimization problem still search to minimize the TOTEX. The problem is as f
 | HEX Entrance (to avoid reversal of HEX)                          | $T_{int}(t) \geqslant T_{ext,new}(t)+\Delta T_{min}~\forall t$                                                              |
 | Temperature check at cold side                          | $T_{ext,new}(t) \geqslant T_{ext}(t)~\forall t$                                                              |
 
-Where $\Delta T_{min}$ is the minimum temperature difference between hot and cold flows in the HEX. As the increase in $\Delta T$ reduces the OPEX, but increases the CAPEX (and vice-versa),$\Delta T_{min}$ is the optimal value to reach. Also in this scenario COP is constant. 
+Where $\Delta T_{min}$ is the minimum temperature difference between hot and cold flows in the HEX. As the increase in $\Delta T$ increases the OPEX, but reduces the CAPEX (and vice-versa),$\Delta T_{min}$ is the optimal value to reach. Also in this scenario COP is constant. 
 </details>
 
 All constraint equations from reference case (MASS BALANCE and MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION) are not repeated here but must also be considered as constraints.
@@ -315,7 +315,7 @@ print("The TOTEX for vent case is:", vent_CAPEX, "CHF.\n")
 
 ```
 
-The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-vent_TOTEX:.2f}'")` [CHF/y] and the payback time allows to breakeven after `r reticulate::py_eval("f'{vent_payback:.2f}'")` years. The minimal DT for the ventilation HEX is `r reticulate::py_eval("f'{vent_DTminVent:.2f}'")` degrees, which is higher than for the DC recovery. This is expected since the calorific power of an Air-Air HEX is lower.
+The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-vent_TOTEX:.2f}'")` [CHF/y] and the payback time allows to breakeven after `r reticulate::py_eval("f'{vent_payback:.2f}'")` years. The minimal DT for the ventilation HEX is `r reticulate::py_eval("f'{vent_DTminVent:.2f}'")` degrees.
 
 ## Air ventilation with Heat pump integration {#subsec:case-4}
 
@@ -324,7 +324,7 @@ The cost reduction is `r reticulate::py_eval("f'{ref_TOTEX-vent_TOTEX:.2f}'")` [
 knitr::include_graphics('Figures/task_2_case_4.png')
 ```
 
-In this final scenario, in addition to the Heat Recovery added in the previous scenario, a Heat Pump is installed to further increase the temperature entering the EPFL heating system. In that case the Heat Recovery is used to preheat the flow entering the newly installed HP, instead of direclty preheat the entering flow of the EPFL heating system. Data imported for this scenario are the same as the ones used in scenario 2. Also due to the new HP, new flows are present and must be considered: T_{ext,new}, T_{air,in} and T_{release,2}. T_{int} will again be fixed at 21°C. The optimization problem is as follows (altough VENTILATION constraints are similar to the previous scenario, they were re-written due to the change in the concerned heat flows they are applied to):
+In this final scenario, in addition to the Heat Recovery added in the previous scenario, a Heat Pump is installed to further increase the temperature entering the EPFL heating system. In that case the Heat Recovery is used to preheat the flow entering the newly installed HP, instead of direclty preheating the entering flow of the EPFL heating system. Data imported for this scenario are the same as the ones used in scenario 3. Also due to the new HP, new flows are present and must be considered: $T_{ext,new}$, $T_{air,in}$ and $T_{release,2}$. $T_{int}$ will again be fixed at 21°C. The optimization problem is as follows (altough VENTILATION constraints are similar to the previous scenario, they were re-written due to the change in the concerned heat flows they are applied to):
 
 \begin{array}{l}
 \min{CAPEX + OPEX} \\
@@ -350,7 +350,7 @@ In this final scenario, in addition to the Heat Recovery added in the previous s
 | HEX Entrance (to avoid reversal of HEX)                          | $T_{release}(t) \geqslant T_{ext}(t)+\Delta T_{min}~\forall t$                                                              |
 | HEX Entrance (to avoid reversal of HEX)                          | $T_{int}(t) \geqslant T_{ext,new}(t)+\Delta T_{min}~\forall t$                                                              |
 | Temperature check at cold side of heat recovery                         | $T_{ext,new}(t) \geqslant T_{ext}(t)~\forall t$                                                              |
-Where $\Delta T_{min}$ is the minimum temperature difference between hot and cold flows in the HEX. As the increase in $\Delta T$ reduces the OPEX, but increases the CAPEX (and vice-versa),$\Delta T_{min}$ is the optimal value to reach. Also in this scenario COP is constant. 
+ 
 
 But the optimization problem is also following new constraints specific to the added Air-Air HP:
 
