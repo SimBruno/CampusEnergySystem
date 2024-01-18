@@ -110,8 +110,8 @@ param eps := 0.001;
 ################################
 ## VENTILATION
 
-subject to la_contrainte_a_la_con:
-	Area_Vent<=1500;
+#subject to la_contrainte_a_la_con:
+#	Area_Vent<=1500;
 
 subject to overallHeatTransfer{b in MediumTempBuildings}: # Uenv calculation for each building based on k_th and mass of air used
 	Uenv[b] = k_th[b] - mair*Cpair/3600;
@@ -128,7 +128,7 @@ subject to Heat_Vent2 {t in Time}: #HEX heat load from the other side;
 # subject to DTLNVent1 {t in Time}: #DTLN ventilation
 # 	DTLNVent[t] * log((Tint-Text_new[t]+eps)/(Trelease[t]-Text[t]+eps)) = ((Tint-Text_new[t]+eps)-(Trelease[t]-Text[t]+eps)) ; #CHANGED
 subject to DTLNVent1 {t in Time}:
-	DTLNVent[t]=((Tint-Text_new[t])+(Trelease[t]-Text[t]))/2;
+	DTLNVent[t]=((Tint-Text_new[t])+(Trelease[t]-Text[t]))/2 +273;
 
 subject to Area_Vent1 {t in Time}: #Area of ventilation HEX
 	Area_Vent >= Heat_Vent[t]/(Uvent*DTLNVent[t]);
@@ -212,6 +212,18 @@ subject to dTLMCondensor_2{t in Time}: #the logarithmic mean temperature in the 
 subject to dTLMEvaporatorHP_2{t in Time}: #the logarithmic mean temperature in the new Evaporator, Note: should be in K
 	TLMEvapHP_2[t]*log((Trelease[t]+273.15)/(Trelease_2[t]+273.15)) = (Trelease[t] - Trelease_2[t]);
 
+## IF SOME PROBLEMS OF COP and TEMPERATURE ARRIVE -> Remember that the log mean is always smaller than the aritmetic mean, but larger than the geometric mean. 
+subject to dTLMCondensor_rule{t in Time}: # One of inequalities for Condenser
+	TLMCond_2[t] <= (Tair_in[t]+273+Text_new[t]+273)/2;
+
+#subject to dTLMCondensor_rule2{t in Time}: # The other inequality for Condenser
+#	TLMCond_2[t] >= ((Tair_in[t]+273)*(Text_new[t]+273))**(1/2);
+
+subject to dTLMEvaporatorHP_rule{t in Time}: # One of inequalities for Evaporator
+	TLMEvapHP_2[t] <= ((Trelease[t]+273.15) + (Trelease_2[t]+273.15))/2;
+
+#subject to dTLMEvaporatorHP_rule2{t in Time}: # The other inequality for Evaporator
+#	TLMEvapHP_2[t] >= (((Trelease[t]+273.15))*(Trelease_2[t]+273.15))**(1/2);
 ## COST CONSIDERATIONS
 
 subject to Costs_HP {t in Time}: # new HP cost

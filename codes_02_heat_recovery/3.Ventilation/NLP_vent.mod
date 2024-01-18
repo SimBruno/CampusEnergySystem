@@ -49,7 +49,7 @@ param bHE 				:= 0.6;   #HE cost parameter
 ################################
 # Variables
 
-var Text_new{Time} 	;   	  #[degC]
+var Text_new{Time} 	>= 0;   	  #[degC]
 var Trelease{Time}	>= 0; 	  #[degC]
 var Qheating{Time} 	>= 0; 	  #your heat demand from the MILP part, is now a variable.
 
@@ -104,9 +104,9 @@ subject to Heat_Vent2 {t in Time}: #HEX heat load from the other side;
 	Heat_Vent[t]=sum{b in MediumTempBuildings} ((mair_out/3600)*FloorArea[b]*Cpair*(Tint-Trelease[t]));
 	
 subject to DTLNVent1 {t in Time}: 
-	DTLNVent[t] * log((Tint-Text_new[t])/(Trelease[t]-Text[t])) = ((Tint-Text_new[t])-(Trelease[t]-Text[t])); #DTLN ventilation -> pay attention to this value: why is it special?
+	#DTLNVent[t] * log((Tint-Text_new[t])/(Trelease[t]-Text[t])) = ((Tint-Text_new[t])-(Trelease[t]-Text[t])); #DTLN ventilation -> pay attention to this value: why is it special?
 	#DTLNVent[t] = (((Tint-Text_new[t])*(Text[t]-Trelease[t])^2+(Trelease[t]-Text[t])*(Tint-Text_new[t])^2)/2)^1/3;
-
+	DTLNVent[t] = (Tint+Trelease[t])/2 - (Text[t]+Text_new[t])/2 + 273;
 #subject to dTLNVent_rule{t in Time}: DTLNVent[t]<=((Text_new[t]-Tint+0.001)+273+(Text[t]-Trelease[t]+0.001)+273)/2; # One of inequalities for Condenser
 
 
@@ -114,7 +114,7 @@ subject to DTLNVent1 {t in Time}:
 	
 
 subject to Area_Vent1 {t in Time}: 
-	Area_Vent*Uvent*DTLNVent[t]>=Heat_Vent[t]; #Area of ventilation HEX
+	Area_Vent*Uvent*DTLNVent[t]=Heat_Vent[t]; #Area of ventilation HEX
 	
 subject to DTminVent1 {t in Time}: 
 	Trelease[t]>=Text[t] + DTminVent; #DTmin needed on one side of HEX
