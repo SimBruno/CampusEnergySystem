@@ -51,7 +51,7 @@ class criteria2(Enum):
 ## Introduction
 
 In this section, the whole EPFL campus is going to be modelled. Different technologies, such as PV panels, boilers, heat pumps with different fluids and a double stage heat pump, solide oxyde fuel cells, and solar thermal collectors, are investigated to satisfy EPFL's needs in electricty and heat. The different technologies are integrated into the model, considering their performance, size and cost, enabling thereby to make projections on Capex, Opex and Envex. The goal of the section is to conclude the analysis, by giving a final scenario which can be optimized according to the given need. More precisely, a scenario investigating the lowest operating cost, one the lowest capital expenditure and one for the lowest environmental emissions. Finally, a sensitivity analysis on the ressource prices and environmental impacts is conducted to examine the influence of the different parameters on the solution. 
-The system on which the study is conducted, is the on with the (task 2)... ?
+The system on which the study is conducted, is the on with the heat pump heat recovery system on the ventilation side.
 
 
 ## Scenario analysis
@@ -70,6 +70,9 @@ TEchnologies used:
 ### Scenario 5: TOTEX optimization (with ENVEX) -->
 
 ### Scenario 1 CAPEX
+For the first scenario, the capital expenditure is minimized. The table below summarizes the different utilities which are chosen by the model, and their corresponding heat load:
+
+
 
 ```{python, echo=F, eval=F,label= optimize_CAPEX, results='hide'}
 
@@ -100,6 +103,7 @@ print(data['TotEnvCost'])
 | Cluster 5 | 3198.6      | 3554           | 12258.2      |  
 | Cluster 6 | 31713.6     | 35237.3        | 12258.2      |
 
+As one can see, the whole electricity need is covered by buying the necessary, which is logical since buying the electrcity will lead to lower investment. To heat, the only technology is the boiler, which uses natural gas as fuel to provide heat. The necessary amount of bought gas is given in the second column. The Cost is given at the end in comparison with the other scenarios
 ### Scenario 2 OPEX
 ```{python, echo=F, eval=F,label= optimize_OPEX, results='hide'}
 
@@ -121,6 +125,9 @@ print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
 print(data['TotEnvCost'])
 ```
 
+As for the Opex optimization, the model will choose the lowest operational cost per year, leading to the following result:
+
+
 |           | Boiler (kW) | NatGasbuy (kW) | R1270_LT (kW)| PV (kW)       | Elecbuy (kW) |
 |-----------|-------------|----------------|--------------|---------------|--------------|
 | Cluster 0 | 5594.6      | 6216.2         | 5479         |87.8           |13587.5       |
@@ -130,8 +137,7 @@ print(data['TotEnvCost'])
 | Cluster 4 | 0           | 0              | 0            |627.4          |11630.8       |
 | Cluster 5 | 0           | 0              | 3198.6       |96.7           |12863.5       |  
 | Cluster 6 | 26234.6     | 29149.5        | 12258.2      |0              |13588.2       |
-
-
+Again, a major part of electricity is provided by buying it and the rest by PV cells. More precisely, for clusters 1 & 4, which represent the clusters witnessing the highest amount of solar radiation, the system will choose more PV cells, thus lowering the electricity purchase. For the heating, the boiler is the used the most for cluster 6, which is for the extreme cases where most heat must be supplied. The rest of the heating load is covered by the heat pump using fluid R1270. One notices that for cluster 5, the heat pump provides all the necessary heating load, and the boiler is not used.
 ### Scenario 3 Emissions
 ```{python, echo=F, eval=F,label= optimize_Emissions, results='hide'}
 
@@ -155,6 +161,8 @@ print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
 print(data['TotEnvCost'])
 ```
 
+The following scenario aims to reduce the total emissions:
+
 |           | SOFC (kW)   | Hydrogenbuy (kW) | R290_MT (kW) | PV (kW)       | Elecbuy (kW) |
 |-----------|-------------|------------------|--------------|---------------|--------------|
 | Cluster 0 | 10050.9     | 25217.2          | 1022.7       |87.8           |0             |
@@ -165,7 +173,7 @@ print(data['TotEnvCost'])
 | Cluster 5 | 3198.6      | 7996.5           | 0            |96.7           |8163.2        | 
 | Cluster 6 | 19713.6     | 49283.9          | 12000        |0              |0             |
 
-
+One notices that again electricity is bought, but only for 4 of the clusters. In fact, in the cases where no electricity is bought, it is provided by the SOFC. The SOFC delivering both heat and electricity, it is especially efficient for the clusters where the heating demand is large. To fuel the SOFC, hydrogen needs to be bought. The rest of the electricity demand is covered by PV pannels, except for the extreme cluster, and the rest of the heating load by the heat pump for the cases where the heating demand is highest.
 
 ### Scenario 4 TOTEX
 ```{python, echo=F, eval=F,label= optimize_TOTEX, results='hide'}
@@ -187,6 +195,8 @@ print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
 print(data['TotEnvCost'])
 ```
 
+Then, an optimization was performed using the total cost without the CO2 tax as the objective function: 
+
 |           | Boiler (kW) | NatGasbuy (kW) | Elecbuy (kW) | STC (kW)      |
 |-----------|-------------|----------------|--------------|---------------|
 | Cluster 0 | 10634.7     | 11816.3        | 12258.2      |438.9          |
@@ -197,10 +207,12 @@ print(data['TotEnvCost'])
 | Cluster 5 | 2715.2      | 3016.9         | 12258.2      |483.4          |  
 | Cluster 6 | 31713.6     | 35237.3        | 12258.2      |0              |
 
+It is similar to the case of the CAPEX but STC are added to reduce the heat supply by the boiler. However, for the extreme cluster which is the last one, there is no irradiation thus the STC cannot be used. Again, all the electricity needed is bought.
 
 
 
-### Scenario 5 TOTEX + CO2 tax : 120e-6 CHF/gCO2 #CO2 tax in Switzerland 2022 
+### Scenario 5 TOTEX + CO2 tax : 120e-6 CHF/gCO2
+
 ```{python, echo=F, eval=F,label= optimize_parametric, results='hide'}
 
 data=fct3.optimize(criteria=criteria.parametric)
@@ -221,6 +233,7 @@ print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
 print(data['TotEnvCost'])
 ```
 
+Finally, the CO2 tax is added to the total cost:
 
 |           | Boiler (kW) | NatGasbuy (kW) | Elecbuy (kW) | STC (kW)      |
 |-----------|-------------|----------------|--------------|---------------|
@@ -232,6 +245,7 @@ print(data['TotEnvCost'])
 | Cluster 5 | 2715.2      | 3016.9         | 12258.2      |483.4          |  
 | Cluster 6 | 31713.6     | 35237.3        | 12258.2      |0              |
 
+The technologies used are the same as the previous scenario but considering the CO2 tax leads to lower boiler and higher STC use. However, the CO2 tax is not high enough to influence the choice of technologies or to have a significant impact on the used share.
 
 
 
@@ -241,13 +255,17 @@ print(data['TotEnvCost'])
 
 ### Recapitulative table:
 
+After investigating the technologies used for different scenarios, one can study their cost:
+
 | Scenario                         | CAPEX (CHF/year) | OPEX (CHF/year) | Emissions (tCO2/year) | TOTEX (no Envex) (CHF/year)| TOTEX (with ENVEX) (CHF/year)|
 |----------------------------------|------------------|-----------------|-----------------------|----------------------------|------------------------------|
 | Scenario 1 | 2.900e+05 | 3.046e+06 | 6.415e+03|3.336e+06 |4.106e+06|
-| Scenario 2 |  3.702e+06 | 3.702e+06| 4.595e+03|6.597e+06 |7.148e+06|
+| Scenario 2 |  3.702e+06 | 2.895e+06| 4.595e+03|6.597e+06 |7.148e+06|
 | Scenario 3 | 2.891e+08 | 1.395e+07| 8.479e+02|3.030e+08 |3.031e+08|   
 | Scenario 4 | 2.964e+05 | 3.022e+06| 6.231e+03|3.318e+06 |4.066e+06|  
 | Scenario 5 | 3.315e+05 | 2.995e+06| 6.027e+03|3.326e+06 |4.050e+06|                   
+
+Note that, the results are consistent since the cost minima are well associated with the functions to be minimized. Then, one can see that between the OPEX and the CAPEX cases, the CAPEX scenario is the best one in terms of total price. Finally, comparing scenario 3 and scenario 5, it should be noted that CO2 emissions are divided by 10, but the total cost is multiplied by 100, demonstrating the difficulty of reducing CO2 emissions while paying attention to the final cost of the system. 
 
 ```{r, echo=F, results='hide',label='activate venv'}
 #path <- file.path('./venv/bin/python')
