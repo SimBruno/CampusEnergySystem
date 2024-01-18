@@ -73,8 +73,8 @@ subject to Tcontrol1{t in Time}:
 subject to Tcontrol2 {t in Time}:
     TDCout[t] >=EPFLMediumOut+DTmin; #[degC]=[degC]
 
-subject to Tcontrol3 {t in Time}: 
-    TDCout[t] >= THPin[t]+DTmin;
+#subject to Tcontrol3 {t in Time}: 
+    #TDCout[t] >= THPin[t]+DTmin;
 
 ## MEETING HEATING DEMAND, ELECTRICAL CONSUMPTION
 subject to dTLMDataCenter {t in Time}: #the logarithmic mean temperature difference in the heat recovery HE can be computed

@@ -51,12 +51,11 @@ class criteria2(Enum):
 ## Introduction
 
 In this section, the whole EPFL campus is going to be modelled. Different technologies, such as PV panels, boilers, heat pumps with different fluids and a double stage heat pump, solide oxyde fuel cells, and solar thermal collectors, are investigated to satisfy EPFL's needs in electricty and heat. The different technologies are integrated into the model, considering their performance, size and cost, enabling thereby to make projections on Capex, Opex and Envex. The goal of the section is to conclude the analysis, by giving a final scenario which can be optimized according to the given need. More precisely, a scenario investigating the lowest operating cost, one the lowest capital expenditure and one for the lowest environmental emissions. Finally, a sensitivity analysis on the ressource prices and environmental impacts is conducted to examine the influence of the different parameters on the solution. 
-The system on which the study is conducted, is the on with the ... ?
+The system on which the study is conducted, is the on with the (task 2)... ?
 
 
 ## Scenario analysis
 
-The different scenarios are described in the following 
 <!-- ### Scenario 1: CAPEX optimization
 
 The optimization of Capex lead the following result:
@@ -72,105 +71,166 @@ TEchnologies used:
 
 ### Scenario 1 CAPEX
 
-```{python, echo=F, eval=T,label= optimize_CAPEX, results='hide'}
+```{python, echo=F, eval=F,label= optimize_CAPEX, results='hide'}
 
 data=fct3.optimize(criteria=criteria.CAPEX)
 ```
 
-```{python, echo=F, eval=T,label= diplay_optimize_CAPEX}
+```{python, echo=F, eval=F,label= diplay_optimize_CAPEX}
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
-print(data['mult_t'].loc["Boiler"])
-print(data['mult_t'].loc["ElecGridBuy"])
-print(data['mult_t'].loc["NatGasGrid"])
+print(data['mult_t'].loc["Boiler"]*10000)
+print(data['mult_t'].loc["ElecGridBuy"]*1000)
+print(data['mult_t'].loc["ElecGridSell"]*1000)
+print(data['mult_t'].loc["NatGasGrid"]*1000)
 print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
 print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+print(data['TotEnvCost'])
 ```
 
+|           | Boiler (kW) | NatGasbuy (kW) | Elecbuy (kW) |
+|-----------|-------------|----------------|--------------|
+| Cluster 0 | 11073.6     | 12304          | 12258.2      |
+| Cluster 1 | 0           | 0              | 12258.2      |
+| Cluster 2 | 7317.4      | 8130.5         | 12258.2      |
+| Cluster 3 | 19457.6     | 21619.6        | 12258.2      |
+| Cluster 4 | 0           | 0              | 12258.2      |
+| Cluster 5 | 3198.6      | 3554           | 12258.2      |  
+| Cluster 6 | 31713.6     | 35237.3        | 12258.2      |
 
 ### Scenario 2 OPEX
-```{python, echo=F, eval=T,label= optimize_OPEX, results='hide'}
+```{python, echo=F, eval=F,label= optimize_OPEX, results='hide'}
 
 data=fct3.optimize(criteria=criteria.OPEX)
 ```
 
-```{python, echo=F, eval=T,label= diplay_optimize_OPEX}
+```{python, echo=F, eval=F,label= diplay_optimize_OPEX}
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
-print(data['mult_t'].loc["Boiler"])
-print(data['mult_t'].loc["R1270_LT"])
-print(data['mult_t'].loc["PV"])
-print(data['mult_t'].loc["ElecGridBuy"])
-print(data['mult_t'].loc["NatGasGrid"])
+print(data['mult_t'].loc["Boiler"]*10000)
+print(data['mult_t'].loc["R1270_LT"]*1000)
+print(data['mult_t'].loc["PV"]*3)
+print(data['mult_t'].loc["ElecGridBuy"]*1000)
+print(data['mult_t'].loc["NatGasGrid"]*1000)
 print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
 print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+print(data['TotEnvCost'])
 ```
 
+|           | Boiler (kW) | NatGasbuy (kW) | R1270_LT (kW)| PV (kW)       | Elecbuy (kW) |
+|-----------|-------------|----------------|--------------|---------------|--------------|
+| Cluster 0 | 5594.6      | 6216.2         | 5479         |87.8           |13587.5       |
+| Cluster 1 | 0           | 0              | 0            |1208.6         |11049.6       |
+| Cluster 2 | 1838.4      | 2042.7         | 5479         |627.8          |13073.2       |
+| Cluster 3 | 13978.6     | 15531.8        | 5479         |70.5           |13696.5       |
+| Cluster 4 | 0           | 0              | 0            |627.4          |11630.8       |
+| Cluster 5 | 0           | 0              | 3198.6       |96.7           |12863.5       |  
+| Cluster 6 | 26234.6     | 29149.5        | 12258.2      |0              |13588.2       |
+
+
 ### Scenario 3 Emissions
-```{python, echo=F, eval=T,label= optimize_Emissions, results='hide'}
+```{python, echo=F, eval=F,label= optimize_Emissions, results='hide'}
 
 data=fct3.optimize(criteria=criteria.Emissions)
 ```
 
-```{python, echo=F, eval=T,label= diplay_optimize_Emissions}
+```{python, echo=F, eval=F,label= diplay_optimize_Emissions}
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
-print(data['mult_t'].loc["STC"])
-print(data['mult_t'].loc["R290_MT"])
-print(data['mult_t'].loc["SOFC"])
-print(data['mult_t'].loc["HydrogenGrid"])
-print(data['mult_t'].loc["ElecGridBuy"])
-print(data['mult_t'].loc["ElecGridSell"])
+print(data['mult_t'].loc["STC"]*3)
+print(data['mult_t'].loc["R290_MT"]*1000)
+print(data['mult_t'].loc["SOFC"]*100)
+print(data['mult_t'].loc["HydrogenGrid"]*1000)
+print(data['mult_t'].loc["ElecGridBuy"]*1000)
+print(data['mult_t'].loc["ElecGridSell"]*1000)
+print(data['mult_t'].loc["PV"]*3)
 print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
 print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+print(data['TotEnvCost'])
 ```
 
+|           | SOFC (kW)   | Hydrogenbuy (kW) | R290_MT (kW) | PV (kW)       | Elecbuy (kW) |
+|-----------|-------------|------------------|--------------|---------------|--------------|
+| Cluster 0 | 10050.9     | 25217.2          | 1022.7       |87.8           |0             |
+| Cluster 1 | 0           | 0                | 0            |1208.6         |11049.6       |
+| Cluster 2 | 7317.4      | 18293.5          | 0            |627.8          |2483.6        |
+| Cluster 3 | 12033.6     | 30084.0          | 7424         |70.5           |0             |
+| Cluster 4 | 0           | 0                | 0            |627.4          |11630.7       |
+| Cluster 5 | 3198.6      | 7996.5           | 0            |96.7           |8163.2        | 
+| Cluster 6 | 19713.6     | 49283.9          | 12000        |0              |0             |
+
+
+
 ### Scenario 4 TOTEX
-```{python, echo=F, eval=T,label= optimize_TOTEX, results='hide'}
+```{python, echo=F, eval=F,label= optimize_TOTEX, results='hide'}
 
 data=fct3.optimize(criteria=criteria.TOTEX)
 ```
 
-```{python, echo=F, eval=T,label= diplay_optimize_TOTEX}
+```{python, echo=F, eval=F,label= diplay_optimize_TOTEX}
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
-print(data['mult_t'].loc["STC"])
-print(data['mult_t'].loc["Boiler"])
-print(data['mult_t'].loc["NatGasGrid"])
-print(data['mult_t'].loc["ElecGridBuy"])
+print(data['mult_t'].loc["STC"]*3)
+print(data['mult_t'].loc["Boiler"]*10000)
+print(data['mult_t'].loc["NatGasGrid"]*1000)
+print(data['mult_t'].loc["ElecGridBuy"]*1000)
 print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
 print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
+print(data['TotEnvCost'])
 ```
 
+|           | Boiler (kW) | NatGasbuy (kW) | Elecbuy (kW) | STC (kW)      |
+|-----------|-------------|----------------|--------------|---------------|
+| Cluster 0 | 10634.7     | 11816.3        | 12258.2      |438.9          |
+| Cluster 1 | 0           | 0              | 12258.2      |0              |
+| Cluster 2 | 6834.0      | 7593.3         | 12258.2      |483.4          |
+| Cluster 3 | 19105.0     | 21227.8        | 12258.2      |352.6          |
+| Cluster 4 | 0           | 0              | 12258.2      |0              |
+| Cluster 5 | 2715.2      | 3016.9         | 12258.2      |483.4          |  
+| Cluster 6 | 31713.6     | 35237.3        | 12258.2      |0              |
+
+
+
+
 ### Scenario 5 TOTEX + CO2 tax : 120e-6 CHF/gCO2 #CO2 tax in Switzerland 2022 
-```{python, echo=F, eval=T,label= optimize_parametric, results='hide'}
+```{python, echo=F, eval=F,label= optimize_parametric, results='hide'}
 
 data=fct3.optimize(criteria=criteria.parametric)
 ```
 
 
-```{python, echo=F, eval=T,label= diplay_optimize_paramteric}
+```{python, echo=F, eval=F,label= diplay_optimize_paramteric}
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
-print(data['mult_t'].loc["STC"])
-print(data['mult_t'].loc["Boiler"])
-print(data['mult_t'].loc["NatGasGrid"])
-print(data['mult_t'].loc["ElecGridBuy"])
+print(data['mult_t'].loc["STC"]*3)
+print(data['mult_t'].loc["Boiler"]*10000)
+print(data['mult_t'].loc["NatGasGrid"]*1000)
+print(data['mult_t'].loc["ElecGridBuy"]*1000)
 print("The investment cost is %.3e [CHF/yr]" %(data['InvCost'].values[0][0]))
 print("The operating cost is %.3e [CHF/yr]" %(data['OpCost'].values[0][0]))
 print("The CO2 emissions are %.3e [g/yr]" %(data['Emissions'].values[0][0]))
-#print("The total cost is %.3e [CHF/yr]" %(data['TotEnvCost'].values[0][0])) # display does not work, do not know why
+print("The total cost is %.3e [CHF/yr]" %(data['Totalcost'].values[0][0]))
 print(data['TotEnvCost'])
 ```
 
+
+|           | Boiler (kW) | NatGasbuy (kW) | Elecbuy (kW) | STC (kW)      |
+|-----------|-------------|----------------|--------------|---------------|
+| Cluster 0 | 10634.7     | 11816.3        | 12258.2      | 438.9         |
+| Cluster 1 | 0           | 0              | 12258.2      |0              |
+| Cluster 2 | 4178.6      | 4642.9         | 12258.2      |3138.8         |
+| Cluster 3 | 19105.0     | 21227.8        | 12258.2      |352.6          |
+| Cluster 4 | 0           | 0              | 12258.2      |0              |
+| Cluster 5 | 2715.2      | 3016.9         | 12258.2      |483.4          |  
+| Cluster 6 | 31713.6     | 35237.3        | 12258.2      |0              |
 
 
 
@@ -183,11 +243,11 @@ print(data['TotEnvCost'])
 
 | Scenario                         | CAPEX (CHF/year) | OPEX (CHF/year) | Emissions (tCO2/year) | TOTEX (no Envex) (CHF/year)| TOTEX (with ENVEX) (CHF/year)|
 |----------------------------------|------------------|-----------------|-----------------------|----------------------------|------------------------------|
-| Scenario 1 | 1 | 2| 3|4 |5|
-| Scenario 2 |  1 | 2| 3|4 |5|
-| Scenario 3 | 1 | 2| 3|4 |5|   
-| Scenario 3 | 1 | 2| 3|4 |5|  
-| Scenario 3 | 1 | 2| 3|4 |5|                   
+| Scenario 1 | 2.900e+05 | 3.046e+06 | 6.415e+03|3.336e+06 |4.106e+06|
+| Scenario 2 |  3.702e+06 | 3.702e+06| 4.595e+03|6.597e+06 |7.148e+06|
+| Scenario 3 | 2.891e+08 | 1.395e+07| 8.479e+02|3.030e+08 |3.031e+08|   
+| Scenario 4 | 2.964e+05 | 3.022e+06| 6.231e+03|3.318e+06 |4.066e+06|  
+| Scenario 5 | 3.315e+05 | 2.995e+06| 6.027e+03|3.326e+06 |4.050e+06|                   
 
 ```{r, echo=F, results='hide',label='activate venv'}
 #path <- file.path('./venv/bin/python')
@@ -201,12 +261,12 @@ use_virtualenv('./venv', required=FALSE)
 <!-- ## Example 1 
 I want to optimize the operational cost, and I know that NatGas will cost 0.32. What will be the Investment costs? and what technology will be used? -->
 
-```{python, echo=F, eval=T,label= optimize_OPEX_exple, results='hide'}
+```{python, echo=F, eval=F,label= optimize_OPEX_exple, results='hide'}
 
 data=fct3.optimize(criteria=criteria.OPEX,NatGasGrid=0.32)
 ```
 
-```{python, echo=F, eval=T,label= diplay_optimize_OPEX_exple}
+```{python, echo=F, eval=F,label= diplay_optimize_OPEX_exple}
 print("The technologies used are:")
 print(data['use'][data['use']!=0].dropna().index.values)
 
