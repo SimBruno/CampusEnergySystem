@@ -346,7 +346,8 @@ with $T_{ext}$ the external ambient temperature. Regression is performed using A
 | Work supplied by compressors | $W_{hp}(t)=W_{comp,1}(t)+W_{comp,2}(t)$ |
 
 Where $Q_{cond}$ is the total heat load to supply, $W_{comp,1}$ is the energy supplied by the first compressor and $W_{comp,2}$ is the energy supplied by the second compressor of the two-stage heat pump. $T_{EPFL,in}$ and $T_{EPFL,out}$ are the heat exchanger temperatures at inlet and outlet respectively on the heat supply side. $T_{evap}$ is the temperature at the evaporator (where heat is taken from the lake). Lastly, the factors $a$, $b$, and $c$ are the variables to determine by thsi regression. The equipment cost can be retrieved using the following equations:
-
+<details>
+<summary>Click to display all the constraints</summary>
 | Constraint type                            | Equation                                                                                                                   |
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | Costs |               |
@@ -370,7 +371,7 @@ Where $Q_{cond}$ is the total heat load to supply, $W_{comp,1}$ is the energy su
 | Evaporator heat at maximum load |  $Q_{evap}^{max}=Q_{evap}(t_{max})$        |
 | First heat pump power at maximum load |  $W_{comp,1}^{max}=W_{comp,1}(t_{max})$        |
 | Second heat pump power at maximum load |  $W_{comp,2}^{max}=W_{comp,2}(t_{max})$        |
-
+</details>
 
 The results are shown in @fig-regression_results
 ```{python, echo=F, eval=T,label= get_regression,results='hide'}

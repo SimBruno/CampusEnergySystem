@@ -78,7 +78,7 @@ datatable(buildings,
 ```
 
 
-Where $Ground$ is the building surface area in $[m^2]$, $Heat$ is the building annual heating consumption in $[kWh]$, $Elec$ is the building annual electricity consumption in $[kWh]$ and $Year$ is the building group identifier.
+Where $Heated surf$ is the building surface area in $[m^2]$, $Heat cons$ is the building annual heating consumption in $[kWh]$, $Elec cons$ is the building annual electricity consumption in $[kWh]$ and $Constr. zear$ is the building group identifier. All buildings in the group identifier 1 are heated in the temperature loop at $65$°C and all buildings in the group identifier 2 are heated in the temperature loop at $50$°C
 
 Furthermore, the hourly weather data during that year are also available, i.e external temperature and solar irradiation. Thanks to these data, it is possible to characterize the physical properties of the buildings. Performing an energy balance on a building yields the following equation:
 $$
@@ -113,6 +113,7 @@ profile_off, profile_class, profile_rest, profile_elec = fct1.occupancy_profile(
 
 
 ```{python, eval =T, echo=F, results='show', label='plot profiles', fig.cap='Occupancy profiles'}
+#| label: fig-occupancy_profiles
 fig, axs = plt.subplots(1, 4, figsize=(14, 3))
 
 profiles = [profile_off, profile_class, profile_rest, profile_elec]
@@ -154,7 +155,7 @@ $$
 0 = A_\text{th} \cdot (k_\text{th} \cdot (T_\text{int} - T_\text{ext}(t)) - k_\text{sun} \cdot i_\text{mean}(t) - q_\text{people,mean}(t) - f_\text{el} \cdot q_\text{el,mean}(t)) 
 $${#eq-switch-off}
 
-Combining equations @eq-heat-demand and @eq-switch-off allows constructing a system of two equations and two unknowns. However, since a sum is involved in equation @eq-heat-demand, the system is nonlinear. The solutions will thus be estimated through numerical methods, e.g. a 2D Newton-Raphson algorithm.
+Combining equations @eq-heat-demand and @eq-switch-off allows constructing a system of two equations and two unknowns. However, since a sum of piecewise functions is involved in equation @eq-heat-demand, the system is nonlinear. The solutions will thus be estimated through numerical methods, e.g. a 2D Newton-Raphson algorithm.
 
 
 <!--Generate k_th and k_th -->
@@ -239,7 +240,7 @@ datatable(
 Having determined $k_\text{th}$ and $k_\text{sun}$, a sensitivity analysis can be performed to study their impact on the energy consumption of the buildings. On one hand, $k_\text{th}$, which represents the leakage losses, should be decreased and on the other hand, $k_\text{sun}$, which characterizes the solar gains, needs to be increased. The solar gains can be increased by changing the absorptivity of the building, i.e. either by replacing the building’s coating or using a different paint on the exterior façade. As for the constraint on $k_\text{th}$, it is the sum of the ventilation and the building losses : $k_\text{th}=U_\text{env}+\dot{m_\text{air}}Cp_\text{air}$. The air renewal rate meeting requirements to avoid high $CO_\text{2}$ concentration, it is difficult to change this value to decrease the leakage losses. Therefore, one must decrease the value of $U_\text{env}$. To do so, the building isolation can be improved by changing the thickness or the material of the walls and windows. However, this is linked to high renovation cost and to long labor duration compared to the possible gains by changing $k_\text{sun}$. Increasing $k_\text{sun}$ 75 $\%$, one can influence the evolution of the heat demand:
 
 ```{r ksun-var, out.width='100%', fig.align='center', fig.cap='Variation of Qheating with different ksun', echo=F, fig.show='hold'}
-#| label: ksun-var
+#| label: fig-ksun-var
 knitr::include_graphics('Figures/k_sun_var.png')
 ```
 
@@ -260,8 +261,8 @@ weekend) and the external temperature is greater than 16 °C.
 - Type O: the coldest hour of the year as extreme timestep.
 
 
-```{python, echo=F, eval=T}
-#| label: weather cluster plotting
+```{python, echo=F, eval=T, fig.cap='Preprocessing of weather data'}
+#| label: fig-weather-cluster-plotting
 
 #Add 'Type' column
 weather = fct1.preprocess_data(weather, profile_elec)
@@ -379,8 +380,8 @@ clustering_error = (buildings['Heat'].loc[buildings.Year == 1].sum()-Q_th_cluste
 
 ```
 
-```{python, echo=F, eval = T}
-#| label: plot clustering 
+```{python, echo=F, eval = T, fig.cap='Clustering results'}
+#| label: fig-plot-clustering 
 # Scatter plot for weather data type A
 fig = px.scatter(weather.loc[weather['Type']=='A'], x='Temp', y='Irr', color="Cluster", 
                  title='Weather data type A', labels={'Temp': 'Temperature [°C]', 'Irr': 'Irradiation [W/m2]'})
@@ -404,8 +405,8 @@ cluster.rename(columns={
 This plot allows us to see that the resulting clustering visually seems to make sense. When reconstructing the clustered heat demands, we do observe 2 null demands: those are the clusters in the top right corner of our plot, which makes sense since those are the one with the highest irradiance and exterior temperature, inducing the lowest, here zero, heat demands. 
 
 
-```{python, echo=F, eval = T}
-#| label: cluster summary table 
+```{python, echo=F, eval = T, fig.cap='Summary of the clustering'}
+#| label: fig-cluster-summary-table 
 
 html_table = cluster.round(2).to_html()
 title_html = '<h4 style="text-align:center;">Cluster Centroids</h4>'
