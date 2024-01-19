@@ -1,3 +1,9 @@
+```{css, echo=F}
+p {
+  text-align: justify
+}
+```
+
 ```{python, echo=F, results='hide', label='load data'}
 import matplotlib
 matplotlib.use('Agg')
@@ -104,6 +110,7 @@ print(data['TotEnvCost'])
 | Cluster 6 | 31713.6     | 35237.3        | 12258.2      |
 
 As one can see, the whole electricity need is covered by buying the necessary, which is logical since buying the electrcity will lead to lower investment. To heat, the only technology is the boiler, which uses natural gas as fuel to provide heat. The necessary amount of bought gas is given in the second column. The Cost is given at the end in comparison with the other scenarios
+
 ### Scenario 2 OPEX
 ```{python, echo=F, eval=F,label= optimize_OPEX, results='hide'}
 
@@ -138,6 +145,7 @@ As for the Opex optimization, the model will choose the lowest operational cost 
 | Cluster 5 | 0           | 0              | 3198.6       |96.7           |12863.5       |  
 | Cluster 6 | 26234.6     | 29149.5        | 12258.2      |0              |13588.2       |
 Again, a major part of electricity is provided by buying it and the rest by PV cells. More precisely, for clusters 1 & 4, which represent the clusters witnessing the highest amount of solar radiation, the system will choose more PV cells, thus lowering the electricity purchase. For the heating, the boiler is the used the most for cluster 6, which is for the extreme cases where most heat must be supplied. The rest of the heating load is covered by the heat pump using fluid R1270. One notices that for cluster 5, the heat pump provides all the necessary heating load, and the boiler is not used.
+
 ### Scenario 3 Emissions
 ```{python, echo=F, eval=F,label= optimize_Emissions, results='hide'}
 
@@ -209,8 +217,6 @@ Then, an optimization was performed using the total cost without the CO2 tax as 
 
 It is similar to the case of the CAPEX but STC are added to reduce the heat supply by the boiler. However, for the extreme cluster which is the last one, there is no irradiation thus the STC cannot be used. Again, all the electricity needed is bought.
 
-
-
 ### Scenario 5 TOTEX + CO2 tax : 120e-6 CHF/gCO2
 
 ```{python, echo=F, eval=F,label= optimize_parametric, results='hide'}
@@ -248,11 +254,6 @@ Finally, the CO2 tax is added to the total cost:
 The technologies used are the same as the previous scenario but considering the CO2 tax leads to lower boiler and higher STC use. However, the CO2 tax is not high enough to influence the choice of technologies or to have a significant impact on the used share.
 
 
-
-
-
-
-
 ### Recapitulative table:
 
 After investigating the technologies used for different scenarios, one can study their cost:
@@ -273,7 +274,6 @@ library(reticulate)
 #use_python(path)
 use_virtualenv('./venv', required=FALSE)
 ```
-
 
 
 <!-- ## Example 1 
@@ -470,5 +470,3 @@ Overall except on the 3rd case (emission factor reduction) it is always a trade-
 Do they have unlimited founding to reduce their emissions? In that case removing boiler and other equipment requiring use of gas would be the best solution. 
 Or instead, is the budget limited and in that case it would be better to assume gas price are higher like in the first sensitivity analysis to reduce emissions while keeping a reasonable TOTEX. 
 Finally if Switzerland decides to reduce its electricity carbon footprint, it would overall be the best solutions for the campus to save money while have a lower carbon footprint.
-
-<!-- Here you report about your energy systems optimization. This is the last part of the discussion where you wrap-up everything you did. -->
