@@ -1,11 +1,251 @@
+
+```{r, echo=F, results='hide',label='activate venv'}
+#path <- file.path('./venv/bin/python')
+library(reticulate)
+#use_python(path)
+use_virtualenv('./venv', required=FALSE)
+```
+
+```{python, echo=F, results='hide', label='load data'}
+import matplotlib
+matplotlib.use('Agg')
+import codes_01_energy_demand.NR_functions as fct1
+from codes_01_energy_demand.NR_functions import WeatherClustering
+import numpy as np; from numpy import matlib
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering
+import os
+import plotly.express as px
+import plotly.graph_objects as go
+from IPython.display import display, HTML
+import codecs
+import codes_03_HP_modeling.Regression_Mirco.carnot_regression as fct2
+```
+
+```{python, echo=F, results='hide', label='load parameters'}
+weather, buildings = fct1.load_data_weather_buildings()
+h = 8760  # Hours in a year
+T_th = 273 + 16 # Cut off temperature [K]
+cp_air = 1152 # Air specific heat capacity [J/(m3.K)] 
+T_int = 273 + 21 # Set point temperature [K]
+air_new = 2.5 # Air renewal [m3/(m2.h)]
+Vent = 0 # [...]
+f_el = 0.8 # Share of electricity demand which is converted to heat appliances
+```
+
+
 # Conclusions
 
-At the end of the project, the main recommendations and findings are reported.
+The purpose of this project is to provide solutions for the new energy system of EPFL, based on different scenarios, such as decarbonization or evolution of electricity and gas price.
 
-The most important values are reported and presented in a synthetic (graphical and tabulated) way. The conclusions should include the key take-home messages with the key numbers associated. 
+
+## Energy demand of the EPFL campus
+First, a thermal model of the buildings was developped. The main goal was to determine the heat gains/losses to the environment, as well as the gains from solar irradiance. By performing energy balance, and using data of energy consumptions, results were obtained and can be seen in @fig-thermalProp
+
+
+```{r result_buildings, echo=F, eval=T, fig.cap= 'Thermal properties of the buildings'}
+#| label: fig-thermalProp
+
+thermal_properties <- read.csv("codes_01_energy_demand/thermal_properties.csv")
+
+library(DT)
+
+col_names <- c("FloorArea [m²]","specElec [kW/m²]", "k_th [kW/m²]","k_sun [-]","specQ_people [kW/m²]")
+
+datatable(
+  round(thermal_properties, digits=5),
+  options = list(
+    pageLength = 5,
+    scrollX = TRUE
+  ),
+  colnames = col_names
+)
+```
+
+Then, in order to reduce the quantity of temporal data, clustering is performed on irradiance and external temperature. Only timeframe where heating is required are kept. Kmeans clustering is used and methods such as elbow or silhouette helped decide the optimal number of clustering: $n=6$. Additionally, a cluster with the hour at extreme weather conditions, i.e. Temperature and irradiance at their lowest, is added. The results are displayed in @fig-cluster-summary-table and the clusters are shown in @fig-plot-clustering.
+
+```{python, echo=F, results='hide', label='generate kth and ksun'}
+#Run the NR algorithm to produce the k_th and k_sun for every building
+
+profile_off, profile_class, profile_rest, profile_elec = fct1.occupancy_profile()
+q_people = fct1.people_gains(profile_class, profile_rest, profile_off)
+thermal_properties  = pd.DataFrame(columns=['FloorArea', 'specElec', 'k_th', 'k_sun', 'specQ_people'])
+NR_info             = pd.DataFrame(columns=['error_k_th','error_k_sun','number_iteration'])
+Q_th = pd.DataFrame(columns=buildings['Name']) 
+T_ext = weather.Temp + 273 # K
+irr = weather.Irr # W/m2
+
+q_people = fct1.people_gains(profile_class, profile_rest, profile_off)
+
+for building_id in buildings['Name']:
+    #Estimate k_th and k_sun for each building
+    q_elec = fct1.elec_gains(building_id, buildings, profile_elec)
+    [k_th, k_sun, number_iteration, error1, error2, A_th, specQ_people, specElec, heating_indicator] = fct1.solving_NR(building_id, buildings, weather, q_elec, q_people, profile_elec)
+    thermal_properties.loc[building_id] = pd.Series({'FloorArea': A_th, 'specElec': specElec/1000, 'k_th': k_th/1000, 'k_sun': k_sun,'specQ_people': specQ_people/1000})
+    NR_info.loc[building_id] = pd.Series({'error_k_th': error1,'error_k_sun':error2,'number_iteration':number_iteration})
+
+
+    #Compute Q_th for each hour
+    Q_th[building_id] = A_th*(k_th*(T_int-T_ext) - q_people - k_sun*irr - q_elec*f_el)/1000 # Wh--> kWh
+    Q_th[heating_indicator==0] = 0 # Set Q_th to be only heat demand
+
+
+```
+
+```{python, echo=F, eval=T, results = 'hide'}
+#| label: perform clustering
+
+
+
+
+weather = fct1.preprocess_data(weather, profile_elec)
+weather, cluster = fct1.clusteringCorentin(weather,n_clusters=6)
+
+Q_th_cluster = pd.DataFrame(columns=buildings.Name)
+# Extract thermal_properties of buildings
+A_th            = thermal_properties['FloorArea']    # m^2
+k_th            = thermal_properties['k_th']         # kW/m^2 K
+k_sun           = thermal_properties['k_sun']        # -
+specQ_people    = thermal_properties['specQ_people'] # kW/m^2
+specElec        = thermal_properties['specElec']     # kW/m^2
+
+T_cluster       = cluster['Temp'] + 273              # C° --> K
+irr_cluster     = cluster['Irr']/1000                # W/m^2 --> kW/m^2 
+
+# Recompute thermal load for each cluster using cluster centers
+for building_id in buildings['Name']:
+    Q_th_cluster[building_id] = A_th[building_id]*(k_th[building_id]*(T_int-T_cluster) - k_sun[building_id]*irr_cluster - specQ_people[building_id] - specElec[building_id]*f_el) # [kWh]
+
+Q_th_cluster[Q_th_cluster < 0]  = 0                                                         # Set negative values to 0
+Q_th_cluster                    = Q_th_cluster[buildings['Name'].loc[buildings.Year == 1]]  # Select only medium temp buildings
+Q_th_cluster                    = Q_th_cluster.sum(axis=1)                                  # Get total hourly demand per cluster
+Q_th_cluster                    = Q_th_cluster*cluster['Hours']                             # Get annual demand
+
+cluster['Q_th'] = Q_th_cluster
+
+
+# compute clustering error
+clustering_error = (buildings['Heat'].loc[buildings.Year == 1].sum()-Q_th_cluster.sum())/buildings['Heat'].loc[buildings.Year == 1].sum()*100
+cluster.rename(columns={
+    'Temp': 'Temperature [°C]',
+    'Irr': 'Irradiance [W/m²]',
+    'Hours': 'Operating time [h]',
+    'Q_th' : 'Heat load [kWh/year]'
+}, inplace=True)
+```
+
+```{python, echo=F, eval = T, fig.cap='Clustering results'}
+#| label: fig-plot-clustering 
+# Scatter plot for weather data type A
+fig = px.scatter(weather.loc[weather['Type']=='A'], x='Temp', y='Irr', color="Cluster", 
+                 title='Weather data type A', labels={'Temp': 'Temperature [°C]', 'Irr': 'Irradiation [W/m2]'})
+cluster_trace = go.Scatter(
+    x=cluster.iloc[:, 0],
+    y=cluster.iloc[:, 1],
+    mode='markers',
+    marker=dict(color='red', size=20, opacity=0.8),
+    name='Cluster Centroids'
+)
+fig.add_trace(cluster_trace)
+
+cluster.rename(columns={
+    'Temp': 'Temperature [°C]',
+    'Irr': 'Irradiance [W/m²]',
+    'Hours': 'Operating time [h]',
+    'Q_th' : 'Heat load [kWh/year]'
+}, inplace=True)
+```
+
+
+
+
+```{python, echo=F, eval = T, fig.cap='Summary of the clustering'}
+#| label: fig-cluster-summary-table 
+
+html_table = cluster.round(2).to_html()
+title_html = '<h4 style="text-align:center;">Cluster Centroids</h4>'
+final_html = title_html + html_table
+HTML(final_html)
+```
+
+
+## Heat recovery
+Using the thermal models of the buildings and the clusters, some potential heat recovery solutions are assessed. Only medium temperature buildings are observed ($T=65$°C). The reference scenario consists only of a heat pump. Then, 3 scenarios are compared:
+
+- The use of the adjacent DataCenter, to recover its heat and preheat the lake water for the HP (while cooling the datacenter itself). 
+
+- The use of an air ventilation system to preheat the air entering the EPFL heating system, thanks to exiting EPFL heat flow (still in adition to the HP used in the reference case).
+
+- The combination of the ventilation system and an external Air-Air HP to preheat the flow before reaching the HP of the reference case.
+
+All these scenario are optimized in TOTEX, considering the primary heat pump is already installed. A summary of the results obtained is available in @fig-summary-tabulate
+
+```{python, eval = T, echo = F, results='show',fig.cap='Summary of the heat recovery scenarios'}
+#| label: fig-summary-tabulate
+
+html_table_summary=open(os.path.join(os.getcwd(),"codes_02_heat_recovery","results","table_summary"),"r")
+HTML(html_table_summary.read())
+
+```
+
+## Modelling of a heat pump and data reconciliation
+
+Now, EPFL may need double stage heat pumps for their new energy system. They have the advantage to perform extremely well, but can be expansive. The goal of this section is to construct a valid model of a double stage heat pump for two different working fluids, get reconciled data from measurements, and retrieve costs and performances.
+
+The working fluids selected for comparison are propane and propylene. While propylene is expansive and may have more safety issues, its thermodynamical characteristics are better.
+
+By performing a degree of freedom analysis, we were able to select a minimum set of variables to fully characterize the model. Measurements from experts were used to perform data reconciliation. Some measurements are redundant when fed into the model. This allows us to reduce the potential errors in measurements by minimizing the relative error between the measurements and the model.
+
+Finally, we used these reconciled files to perform a regression on the second law efficiency of each double stage heat pump. Each measurement was performed at a different external temperature. We fitted a regression of the type $$ C_{carnot}=a\cdot T_{ext}^2+ b\cdot T_{ext}+c$$ Moreover, the price of each unit was estimated. This was performed for both working fluids at both temperature levels ($50$°C and $65$°C). A summary of the results obtained is available in @fig-regression_results. The regression fitting on second law efficiency is shown in @fig-plot_regression
+
+```{r table-widget, echo=F, eval=T, fig.cap= 'Results of the regression'}
+#| label: fig-regression_results
+regression_results <- read.csv("codes_03_HP_modeling/Regression_Mirco/regression_results.csv")
+
+library(DT)
+
+datatable(regression_results, options = list(pageLength = 5, scrollX=TRUE)            
+)
+```
+```{python, echo=F, eval=T,label= get_regression,results='hide'}
+results, observed =fct2.get_reg()
+```
+
+```{python, echo=F, eval=T,label= plot_regression,fig.cap='Regression fitting on the second law efficiencies'}
+#| label: fig-plot_regression
+
+T_ext_span=np.linspace(0,15,100)
+carnot_span=pd.DataFrame(index=T_ext_span)
+colors=['blue','brown','green','red']
+
+for j in results.index.values:
+    carnot_span[j]=results.loc[j]['a']*np.power(T_ext_span,2)+results.loc[j]['b']*T_ext_span+results.loc[j]['c']
+
+fig = px.line(carnot_span, x=carnot_span.index, y=carnot_span.columns, title='Carnot efficiency function of ambient temperature',labels={'index': 'Ambient temperature [°C]', 'value':'Carnot efficiency','variable': 'Fluids'},color_discrete_sequence=colors).add_scatter(x=[5],y=[0.5],mode='markers',marker=dict(color='black',opacity=0),name='Observed data').add_trace(go.Scatter(x=[5],y=[0.5],name='Regression',line=dict(color='black'),marker=dict(size=0,opacity=0)))
+
+
+
+count=0
+for j in results.index.values:
+    fig.add_scatter(x=observed['T_ext_'+j],y=observed['Carnot_'+j],mode='markers',marker=dict(color=colors[count]),showlegend=False,)
+    count+=1
+
+```
+
+
+## Energy system optimization
+
+**Complete : Summary of results obtained**
+
 
 
 Keep in mind that the emissions considered are only from electricity and natural gas import. A more refined model may include emissions from technology installation. For example, all technologies not using imported electricity or natural gas will produce zero CO2 emissions. Therefore, technologies not relying on imports (such as PV) are artificially encouraged in all our scenarios optimizing emissions.
 
 
 In many scenarios, the TOTEX increase is huge. It may be caused by the extreme cluster, i.e. the hour in the year where temperature and irradiation are at their lowest. This extreme cluster causes a large energy demand in a short period of time, i.e. a large heating power. This has the effect to require installation of certain technologies almost only for one hour in the year, and thus increasing the TOTEX drastically. The model used considers that heat must be balanced for each hour, avoiding comfort temperature dynamics. However, in reality, it may not be true for this extreme hour. Less heat could be delivered for this specific hour, which would cause a slight decrease in the comfort temperature. But this decrease in comfort temperature can be recovered by heating slightly more for the next hours. Overall, the maximum power required would be reduced, and unnecessary technologies may not have to be installed, which would lower drastically the TOTEX. However, considering temperature dynamics may overcomplexify the model. A nice trick would be to artificially change the few extreme weather data, while keeping the overall heat demand similar. This should provide more realistic results on the technologies to install and the TOTEX, but no information on the evolution of the comfort temperature could be retrieved. Buildings have a large temperature inertia. Not meeting totally the heat demand for a few hours would not cause a large temperature drop, but since the trick explained before cannot measure directly the effect on the comfort temperature, the method should be used very carefully, by computing temperature dynamics a posteriori.
+<!-- At the end of the project, the main recommendations and findings are reported.
+
+The most important values are reported and presented in a synthetic (graphical and tabulated) way. The conclusions should include the key take-home messages with the key numbers associated.  -->
