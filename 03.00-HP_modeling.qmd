@@ -413,6 +413,8 @@ for j in results.index.values:
 
 ```
 
+The better performing heat pumps are those with propylene as a working fluid, but they are also the most expansive. The investment costs $cinv1$ and $cinv2$, as well as the coefficients $a$,$b$,$c$  will be used for the next section in all double stage heat pump models, for the assessment of the whole EPFL energy system. We will let the model decide which heat pump to use.
+
 <!-- **Given**
 
 Three AMPL files: *moes2021_P4_Rxxx.dat*, *moes2021_P4.mod* and *moes2021_P4.run*.
