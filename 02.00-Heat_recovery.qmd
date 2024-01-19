@@ -444,3 +444,25 @@ Html_file.close()
 
 HTML(html_table_summary)
 ```
+
+
+```{python, eval = T, echo = F, results='hide'}
+import pandas as pd
+import plotly.express as px
+df = px.data.medals_wide()
+
+data = {
+    'Case': ['ref case', 'DC case', 'vent case', 'vent_HP case'],
+    'OPEX [CHF/year]': [627362.05, 601755.22, 572749.68, 489240.35],
+    'CAPEX [CHF/year]': [0, 12064.6, 12099.71, 26869.12],
+    'TOTEX [CHF/year]': [627362.05, 613819.82, 584849.39, 516109.47]
+}
+df1 = pd.DataFrame(data)
+ 
+fig = px.bar(df1, x="Case", 
+             y=["OPEX [CHF/year]", "CAPEX [CHF/year]"], 
+             title="Cost Visualisation for the 4 Different Cases")
+fig = fig.update_layout(yaxis_title="Cost [CHF/year]")
+
+fig.show()
+```
