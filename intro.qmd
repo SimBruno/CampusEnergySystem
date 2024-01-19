@@ -1,0 +1,10 @@
+# Introduction
+
+EPFL’s systems utilities are satisfying heating, cooling, and electricity demand of the campus. However, the current system is relying on old and pollutant technologies, at the end of there operating lifetime. The infrastructure management team requested an analysis on how to improve and replace the current energy system by a cheaper and more environmentally friendly one. The goal of this report is to conduct energetic (efficiency), economic (investment and operating costs) and environmental (CO2-emissions) performance analysis of different solutions.
+
+Firstly, the current energy demand of the EPFL campus is determined. Then a first NLP optimisation of Energy Systems, comparing four different scenarios, by analyzing the possibility of heat recovery on the campus. After this, a deeper analysis of the two-stage heat pump is done by modelisation on Vali software. Finally, by combining the best heat recovery scenario and the most efficient two-stage heat pump, a MILP optimisation of energy systems is conducted to determine the optimal operating point and analyze the sensitive parameters.
+
+```{r Campus EPFL, out.width='100%', fig.align='center', fig.cap='EPFL Campus', echo=F, fig.show='hold'}
+#| label: fig-Campus-EPFL
+knitr::include_graphics('Figures/Campus.png')
+```
