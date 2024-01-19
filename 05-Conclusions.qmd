@@ -230,9 +230,9 @@ Now, EPFL may need double stage heat pumps for their new energy system. They hav
 
 The working fluids selected for comparison are propane and propylene. While propylene is expansive and may have more safety issues, its thermodynamical characteristics are better.
 
-By performing a degree of freedom analysis, we were able to select a minimum set of variables to fully characterize the model. Measurements from experts were used to perform data reconciliation. Some measurements are redundant when fed into the model. This allows us to reduce the potential errors in measurements by minimizing the relative error between the measurements and the model.
+By performing a degree of freedom analysis, it is possible to select a minimum set of variables to fully characterize the model. Measurements from experts were used to perform data reconciliation. Some measurements are redundant when fed into the model. This allows us to reduce the potential errors in measurements by minimizing the relative error between the measurements and the model.
 
-Finally, we used these reconciled files to perform a regression on the second law efficiency of each double stage heat pump. Each measurement was performed at a different external temperature. We fitted a regression of the type $$ C_{carnot}=a\cdot T_{ext}^2+ b\cdot T_{ext}+c$$ Moreover, the price of each unit was estimated. This was performed for both working fluids at both temperature levels ($50$°C and $65$°C). A summary of the results obtained is available in @fig-regression_results. The regression fitting on second law efficiency is shown in @fig-plot_regression
+Finally, these reconciled files were used to perform a regression on the second law efficiency of each double stage heat pump. Each measurement was performed at a different external temperature. A regression was fitted, of the type $$ C_{carnot}=a\cdot T_{ext}^2+ b\cdot T_{ext}+c$$ Moreover, the price of each unit was estimated. This was performed for both working fluids at both temperature levels ($50$°C and $65$°C). A summary of the results obtained is available in @fig-regression_results. The regression fitting on second law efficiency is shown in @fig-plot_regression
 
 ```{r table-widget, echo=F, eval=T, fig.cap= 'Results of the regression'}
 #| label: fig-regression_results
@@ -294,12 +294,20 @@ TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30)
 #| label: fig-pareto_base
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 ```
+A pareto-optimal point, which represents a good trade-off lies around 2000tCO2/yr and 11.5MCH/yr.
+
 
 Then, scenarios with a sensitivity analysis on the gas and electricity price, as well as electricity carbon footprint were asssessed. Gas price is very sensitive to geopolitical factors, and its price may suddenly become huge in the next years. Electricity price and carbon footprint are also uncertain in Switzerland, since it depends on the future decisions of the population and investments from the government about electricity production and distribution, as well as agreements with Europe.
 
 It was shown that TOTEX varies locally linearly with electricity price and carbon footprint, while it asymptotically reaches a finite value with gas price.
 
-A pareto curve is drawn in @fig-pareto_gas for a scenario where gas price increased from $0.03$ CHF/kWh to $0.29$ CHF/kWh
+By drawing a pareto with a higher gas price ($0.29$ CHF/kWh instead of $0.03$ CHF/kWh), it is clear that choosing utilities which require use of gas is not optimal anymore. A relevant optimal trade-off point has emissions of 1500tCO2/yr for a TOTEX of 14MCHF/yr. 
+Thus increasing the gas price by almost 10, only increases the optimal TOTEX by 22% but enables to reduce emissions by 25%.
+
+By drawing a pareto with a higher electricity price ($0.49$ CHF/kWh instead of $0.0916$ CHF/kWh), a new trade-off optimal point could be selected,with Emissions of 2600tCO2/yr and a TOTEX of 18.1MCHF/yr. This is a price increase of 57% compared to the original optimal point (with an emission increase of 30%). Thus if electricity prices increase, the optimal solution would be far more expensive as well as more polluting than if gas prices increased. This comes from the fact that increase in electricity price leads to use of more gas to produce heat. In addition less electricity is bought thus alternative solutions like PV are needed to produce electricity, which is more expensive than buying it.
+
+By drawing a pareto with a lower electricity carbon footprint ($30$ gCO2/kWh instead of $75.3$ gCO2/kWh), a new trade-off optimal point could be selected, with emissions around 1000tCO2/yr for a TOTEX of 8.5MCHF/yr. This is a 26% decrease in TOTEX compared to the original optimal point and a 50% decrease in emissions. Electricity buying being less expensive than installing lots of new equipment to produce its own electricity, it makes sense that with a reduction of electricity emissions factor, there is even more incentive to buy electricity. Thus overal cost is reduced at the same time as emissions. 
+<!-- A pareto curve is drawn in @fig-pareto_gas for a scenario where gas price increased from $0.03$ CHF/kWh to $0.29$ CHF/kWh
 ```{python, echo=F, eval=T,label= get_pareto_ng, results='hide'}
 TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, NatGasGrid_pareto=0.291)
 ```
@@ -307,9 +315,9 @@ TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, NatGas
 ```{python, echo=F, eval=T,label= draw_pareto_ng, fig.cap='Pareto curve for scenario with electricity price at 0.49CHF/kWh'}
 #| label: fig-pareto_gas
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
-```
+``` -->
 
-A pareto curve is drawn in @fig-pareto_elec_price for a scenario where electicity price increased from $0.0916$ CHF/kWh to $0.49$ CHF/kWh
+<!-- A pareto curve is drawn in @fig-pareto_elec_price for a scenario where electicity price increased from $0.0916$ CHF/kWh to $0.49$ CHF/kWh
 
 ```{python, echo=F, eval=T,label= get_pareto_elec, results='hide'}
 TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, ElecGridBuy_pareto=0.49)
@@ -318,9 +326,13 @@ TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, ElecGr
 ```{python, echo=F, eval=T,label= draw_pareto_elec,fig.cap='Pareto curve for scenario with electricity price at 0.49CHF/kWh'}
 #| label: fig-pareto_elec_price
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
-```
+``` -->
 
-A pareto curve is drawn in @fig-pareto_elec_carb for a scenario where electicity price increased from $75.3$ gCO2/kWh to $30$ gCO2/kWh
+
+
+
+
+<!-- A pareto curve is drawn in @fig-pareto_elec_carb for a scenario where electicity price increased from $75.3$ gCO2/kWh to $30$ gCO2/kWh
 
 ```{python, echo=F, eval=T,label= get_pareto_elec_carb, results='hide'}
 TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, c_elec_pareto=30)
@@ -329,9 +341,10 @@ TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, c_elec
 ```{python, echo=F, eval=T,label= draw_pareto_elec_carb,fig.cap='Pareto curve for scenario with electricity carbon footprint at 30gCO2/kWh'}
 #| label: fig-pareto_elec_carb
 fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
-```
+``` -->
 
 Finally, a scenario where EPFL decides not to rely on natural gas anymore and ban boilers was assessed. The pareto front is show in @fig-pareto_woboiler
+
 
 ```{python, echo=F, eval=T,label= get_pareto_woboiler, results='hide'}
 TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, remove_tech_pareto=["Boiler"])
@@ -343,6 +356,8 @@ fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
 ```
 
 
+Emissions are reduced. Compared to the original case, it is a 38% reduction in emissions but an increase of 62% of TOTEX which is now around 18.6MCHF/yr.
+It makes sense since the Boiler was the main user of NatGas so by removing it, the emissions are reduced but investments are needed to equiped the campus with other heating technologies. 
 
 Keep in mind that the emissions considered are only from electricity and natural gas import. A more refined model may include emissions from technology installation. For example, all technologies not using imported electricity or natural gas will produce zero CO2 emissions. Therefore, technologies not relying on imports (such as PV) are artificially encouraged in all our scenarios optimizing emissions.
 
