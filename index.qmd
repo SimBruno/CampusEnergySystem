@@ -16,11 +16,6 @@ Heat pumps being a promising technology to provide heat via recovery, a double-s
 Finally, a full model can be built to evaluate how energy demand (heat and electricity) can be answered on the campus based on various scenarios. In addition to the reuse of the clusters for heat demand determined beforehand, as well as the cheapest heat recovery method and optimal working fluid for the heat pump, the models is also upgraded with other technologies: a boiler, PV solar panels, an SOFC and STC panels. The model is run with an $\textit{AMPL}$ solver and can be used to minimize different KPIS such as the TOTEX, CAPEX, OPEX or Emissions. In addition, to study the impact of critical parameters on the model outcomes, sensitivity analysis are performed such as the increase of natural gas or electricity prices or the impossibility to use some specific technologies like the boiler. 
 All these analysis enable to conclude that there is always a trade-off between the cost and the emissions of the system. The choice of the optimal solution will thus depend on the priorities of the decision maker: if the priority is to reduce the emissions, TOTEX will most likely undergo massive increase since cheap but polluting technologies like boiler will be avoided. On the other hand, if the priority is to reduce the cost, the emissions will most likely increase. 
 
-
-```{r Campus EPFL, out.width='100%', fig.align='center', fig.cap='EPFL Campus', echo=F, fig.show='hold'}
-#| label: fig-Campus-EPFL
-knitr::include_graphics('Figures/Campus.png')
-```
 ```{r setup venv, eval = T, echo=FALSE, message=FALSE, results="hide"}
 # To set up your virtual environment in python, input the following code in your terminal after running this chunk:
 # For mac

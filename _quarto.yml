@@ -7,6 +7,7 @@ book:
   date: "today"
   chapters:
     - index.qmd
+    - intro.qmd
     #- 00.00-qmd_tutorial.qmd
     - 01.00-Energy_demand.qmd
     - 02.00-Heat_recovery.qmd
