@@ -23,6 +23,37 @@ import plotly.graph_objects as go
 from IPython.display import display, HTML
 import codecs
 import codes_03_HP_modeling.Regression_Mirco.carnot_regression as fct2
+import codes_04_energy_system_integration.functions as fct3
+import amplpy
+from amplpy import AMPL, DataFrame
+import sys
+import re
+import glob
+from enum import Enum
+```
+
+
+```{python, echo=F, eval=T, label=import_classes}
+class criteria(Enum):
+    OPEX = 'OPEX'
+    CAPEX = 'CAPEX'
+    Emissions = 'Emissions'
+    TOTEX = 'TOTEX'
+    parametric = 'parametric'
+
+class criteria1(Enum):
+    OPEX = 'OPEX'
+    CAPEX = 'CAPEX'
+    Emissions = 'Emissions'
+    TOTEX = 'TOTEX'
+    parametric = 'parametric'
+
+class criteria2(Enum):
+    OPEX = 'OPEX'
+    CAPEX = 'CAPEX'
+    Emissions = 'Emissions'
+    TOTEX = 'TOTEX'
+    parametric = 'parametric'
 ```
 
 ```{python, echo=F, results='hide', label='load parameters'}
@@ -64,6 +95,8 @@ datatable(
   colnames = col_names
 )
 ```
+One small flaw in the model is the gain from electric appliances. It was considered that 80% of the electricity used for appliances was transformed into heat. While this is globally a reasonable assumption, it is far off for certain buildings. For example, the Swiss Plasma Center Uses a large amount of electricity for experiences, but the heat is evacuated from the buildings, and not gained.
+
 
 Then, in order to reduce the quantity of temporal data, clustering is performed on irradiance and external temperature. Only timeframe where heating is required are kept. Kmeans clustering is used and methods such as elbow or silhouette helped decide the optimal number of clustering: $n=6$. Additionally, a cluster with the hour at extreme weather conditions, i.e. Temperature and irradiance at their lowest, is added. The results are displayed in @fig-cluster-summary-table and the clusters are shown in @fig-plot-clustering.
 
@@ -238,7 +271,76 @@ for j in results.index.values:
 
 ## Energy system optimization
 
-**Complete : Summary of results obtained**
+The whole EPFL energy system is modelled. The medium and low temperature buildings demand heat, and each building has also an electricity demand. A set of technolgies was modelled to meet this demand: gas boiler, double stage heat pumps, PV, solar thermal collector and solid oxyde fuel cells. The model is able to optimize the TOTEX, CAPEX, OPEX, CO2 equivalent Emissions and TOTEX with a CO2 tax.
+
+5 basic scenarios were assessed by optimizing each criteria. Here is a summary of the results:
+
+| Scenario                         | CAPEX (CHF/year) | OPEX (CHF/year) | Emissions (tCO2/year) | TOTEX (no Envex) (CHF/year)| TOTEX (with ENVEX) (CHF/year)|
+|----------------------------------|------------------|-----------------|-----------------------|----------------------------|------------------------------|
+| Scenario 1: CAPEX | 2.900e+05 | 3.046e+06 | 6.415e+03|3.336e+06 |4.106e+06|
+| Scenario 2: OPEX |  3.702e+06 | 2.895e+06| 4.595e+03|6.597e+06 |7.148e+06|
+| Scenario 3: Emissions | 2.891e+08 | 1.395e+07| 8.479e+02|3.030e+08 |3.031e+08|   
+| Scenario 4: TOTEX  | 2.964e+05 | 3.022e+06| 6.231e+03|3.318e+06 |4.066e+06|  
+| Scenario 5: TOTEX+ CO2 Tax | 3.315e+05 | 2.995e+06| 6.027e+03|3.326e+06 |4.050e+06|    
+
+
+Additionally, a pareto curve between TOTEX and emissions was retrieved. It is show in @fig-pareto_base
+
+```{python, echo=F, eval=T,label= get_pareto1, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto1,fig.cap='Pareto curve between TOTEX and Emissions'}
+#| label: fig-pareto_base
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+Then, scenarios with a sensitivity analysis on the gas and electricity price, as well as electricity carbon footprint were asssessed. Gas price is very sensitive to geopolitical factors, and its price may suddenly become huge in the next years. Electricity price and carbon footprint are also uncertain in Switzerland, since it depends on the future decisions of the population and investments from the government about electricity production and distribution, as well as agreements with Europe.
+
+It was shown that TOTEX varies locally linearly with electricity price and carbon footprint, while it asymptotically reaches a finite value with gas price.
+
+A pareto curve is drawn in @fig-pareto_gas for a scenario where gas price increased from $0.03$ CHF/kWh to $0.29$ CHF/kWh
+```{python, echo=F, eval=T,label= get_pareto_ng, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, NatGasGrid_pareto=0.291)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_ng, fig.cap='Pareto curve for scenario with electricity price at 0.49CHF/kWh'}
+#| label: fig-pareto_gas
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+A pareto curve is drawn in @fig-pareto_elec_price for a scenario where electicity price increased from $0.0916$ CHF/kWh to $0.49$ CHF/kWh
+
+```{python, echo=F, eval=T,label= get_pareto_elec, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, ElecGridBuy_pareto=0.49)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_elec,fig.cap='Pareto curve for scenario with electricity price at 0.49CHF/kWh'}
+#| label: fig-pareto_elec_price
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+A pareto curve is drawn in @fig-pareto_elec_carb for a scenario where electicity price increased from $75.3$ gCO2/kWh to $30$ gCO2/kWh
+
+```{python, echo=F, eval=T,label= get_pareto_elec_carb, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, c_elec_pareto=30)
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_elec_carb,fig.cap='Pareto curve for scenario with electricity carbon footprint at 30gCO2/kWh'}
+#| label: fig-pareto_elec_carb
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
+
+Finally, a scenario where EPFL decides not to rely on natural gas anymore and ban boilers was assessed. The pareto front is show in @fig-pareto_woboiler
+
+```{python, echo=F, eval=T,label= get_pareto_woboiler, results='hide'}
+TOTEX,EMISSIONS=fct3.get_pareto(criteria1.TOTEX,criteria2.Emissions,n=30, remove_tech_pareto=["Boiler"])
+```
+
+```{python, echo=F, eval=T,label= draw_pareto_woboiler, fig.cap='Pareto curve for scenario without boiler'}
+#| label: fig-pareto_woboiler
+fct3.draw_pareto(TOTEX,EMISSIONS,"TOTEX [CHF/yr]", "Emissions [gCO2/yr]")
+```
 
 
 
