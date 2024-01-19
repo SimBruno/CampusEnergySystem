@@ -1,3 +1,9 @@
+```{css, echo=F}
+p {
+  text-align: justify
+}
+```
+
 ```{python, echo=F, results='hide', label='load data'}
 import matplotlib
 matplotlib.use('Agg')

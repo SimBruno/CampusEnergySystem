@@ -1,5 +1,10 @@
-# Modelling of a heat pump and data reconciliation
+```{css, echo=F}
+p {
+  text-align: justify
+}
+```
 
+# Modelling of a heat pump and data reconciliation
 
 ```{r, echo=F, results='hide',label='activate venv'}
 #path <- file.path('./venv/bin/python')
@@ -31,24 +36,6 @@ import sys
 import re
 import glob
 ```
-
-## Degrees of Freedom (DOF) analysis
-
-**Given:**
-
-The VALI model of the 2-stage heat pump with tags set to OFF (the default working fluid is R290, you should not change it) – *R-290.bls*. 
-
-A csv file with 5 combinations of sets, only one of which is correct.
-
-**Task**
-
-Perform a DOF analysis to identify which tags must be set to CST and which ones must remain OFF.
-
-Activate the tags and make sure the model is running properly.
-
-*Hint*: For each component, identify how many measurements are needed for mass and energy balances, how many measurements are set as parameters and how many are calculated by the model. 
-
-**Result**
 
 ## Introduction
 
