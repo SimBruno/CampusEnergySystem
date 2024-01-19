@@ -39,7 +39,6 @@ import glob
 
 ## Introduction
 
-
 The main heating utility at EPFL is an advanced two-stage heat pump. The importance of this equipment leads to an in detail investigation of its functioning. Hence, the goal of this section is to choose an appropriate working fluid for the heat pump based on environmental and economic characteristics. To do so, first a preliminary model in VALI, a process simulation software, is created. A degree of freedom (DOF) is conducted to find the necessary number of measurements. The following procedure is applied to perform the DOF analysis: 
 
 - The state variables of the flows
@@ -58,11 +57,11 @@ knitr::include_graphics('Figures/double_stage.png')
 
 ## System DOF analysis
 
-A simple preliminary analysis allows to determine the overall minimum DOF of the system, giving a lower bound of measurements necessary to make it solvable. Representing the system as a flowsheet allows to retrieve the number of variables and equations. The variables consists of all the material flows, the electricity flows and the heat flows, assuming that each material flows bring 3 variables. The equations are one mass balance and one energy balance per unit in the system, the isentropic efficiencies for both compressor as well as the isenthalpic expansions in the valves. Finally, having 9 flows, all of them having 1 phase, and 8 units yields:
+A simple preliminary analysis allows to determine the overall minimum DOF of the system, giving a lower bound of measurements necessary to make it solvable. Representing the system as a flowsheet allows to retrieve the number of variables and equations. The variables consists of all the material flows (9 flows times 3 state variables), the electricity flows (2 flows) and the heat flows (4 flows). The equations are one mass balance and one energy balance per unit in the system (8 units times 2 flows) , the isentropic efficiencies for both compressors (2 parameters) as well as the isenthalpic expansions in the valves (2 parameters). Finally, having 9 flows, all of them having 1 phase, and 8 units yields:
 
-$n_s = n_v - n_e =  (27+4+2)- (8+8+2+2) = 13$
+$n_s = n_v - n_e =  (27+2+4) - (8+8+2+2) = 13$
 
-And thus $n_s = 13$, meaning that we need at least 13 specifications to characterize the whole system. 
+And thus $n_s = 13$, meaning that we need **at least** 13 specifications to characterize the whole system. 
 
 ### VALI tags propositions
 For this exercise, we're provided with 5 sets of possible tag arrangement. To goal is to determine which one of those is possible based on the DOF analysis. As we can see in (@tbl-DOFprop), all arrangement meet the minimum measurement requirements. However, we're not certain that the local DOF is respected. Summing $n_s$ for each unit processs and substracting the link between them should allow to determine to total number of DOF of the system taking local DOF into account. Since all tag arrangement provide a different number of set points, the solution should be given by the arrangement with matching number of DOF.
@@ -96,8 +95,6 @@ Stating the unit model for a single compressor with one inlet stream and one out
 | (M)   | $\dot{W}_{in} =\eta_{is}\dot{W}_{in,is}$       | 1        |
 | $n_e$ |                                                | 4        |
 
-And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a compressor.
-
 ## Evaporator
 For the evaporator, we proceed the same way. We model the heat exchange of the lake as a constant heat transfer, allowing to simplify the equation statement since only our main flow has to be considered. In the general case, the fluid enters the evaporator with a vapor quality $x_{in}<1$, but based on the assumption that the entering flow is purely gaseous allows to further simplify the modelisation. 
 
@@ -116,8 +113,6 @@ For the evaporator, we proceed the same way. We model the heat exchange of the l
 | (P)   | $\Delta P=0$                                     | 1        |
 | (M)   | $\dot{Q}_{in}= UA\cdot \text{LMTD}$              | 1        |
 | $n_e$ |                                                  | 4        |
-
-And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a compressor.
 
 ## Condensor
 The VALI model suggest to model the condensor in two part: one taking care of the change of temperature (sensible), the second one modelling the phase change (latent). Using the same logic as the evaporator, only the main flow is considered and the other flows are modeled as heat transfer. The unit model equation will be the same for both condensor, and only the heat transfer model will vary. The base variables are the following:
@@ -142,8 +137,6 @@ The model equation for the sensible condensor is to assume a constant pressure d
 | (P)   | $\Delta P=0$                                     | 1        |
 | (M)   | $\dot{Q}_{in}= UA\cdot \text{LMTD}$              | 1        |
 | $n_e$ |                                                  | 4        |
-
-And thus $n_s = n_x-n_e = 2$, meaning that we need 2 specifications to characterize the sensible condensor.
 
 
 ### Latent condensor
@@ -180,9 +173,6 @@ Assuming the expansion valves are not going through a phase change allows to ign
 | $n_e$ |                                                  | 4        |
 
 
-And thus $n_s = n_v-n_e= 3$, meaning we need 3 specifications to characterize a pressure valve.
-
-
 ## Flash tank
 
 The flash tank involves a little bit more of complexity due to the multiple flows mixing. 
@@ -204,9 +194,6 @@ The flash tank involves a little bit more of complexity due to the multiple flow
 | (P)   | $\Delta P_2 = 0$                                 |          |
 | (M)   |                                                  |          |
 | $n_e$ |                                                  | 5        |
-
-
-And thus $n_s = n_x-n_e= 2$, meaning we need 5 specifications to characterize a flash tank.
 
 :::
 
@@ -250,7 +237,7 @@ We can proceed similarly for each unit:
 |            | $Q_{evap}$    | 1  | $Q_{evap}=\dot{m}(h_2-h_1)$     | 1 |
 | Compressor | $W_{comp,1}$    | 1  | $W_{comp,1}=\dot{m}(h_3-h_2)$   | 1 |
 |  | $\pi$    | 1   | $\pi=\frac{p_3}{p_2}$   | 1 |
-|  | $\eta$    | 1   | $\eta=\frac{}{p_2}$   | 1 |
+|  | $\eta$    | 1   | $\eta=\frac{h_{3,s}-h_2}{h_3-h_2}$   | 1 |
 | Flash | $Q_f$    | 1   |  $Q_f=\dot{m}(h_3-h_8)$  | 1 |
 
 and finally we can add 2 energy balances:
@@ -266,7 +253,7 @@ Let's summarize everything:
 |-------|---------|----------|--------|
 | Total  | 26 | 18 |  8 |
 
-Therefore, 8 values should be fixed. In `option 1`, only 5 variables ($\eta,\Delta p, Q_{evap}, W_{comp,2}$ and $Q_{load}$) are specified. There could be a way to specify the pressure in the flash tank ($specify $p_8$) or the heat transferred to the second stage (specify $Q_f$)  from the rest of the system, but even with that, it would only increase  the number of specifications up to 7, which is still one missing. Therefore, the system in `option 1` is underspecified and cannot be solved.
+Therefore, 8 values should be fixed. In `Option 1`, only 5 variables ($\eta,\Delta p, Q_{evap}, W_{comp,2}$ and $Q_{load}$) are specified. There could be a way to specify the pressure in the flash tank (specify $p_8$) or the heat transferred to the second stage (specify $Q_f$)  from the rest of the system, but even with that, it would only increase  the number of specifications up to 7, which is still one missing. Therefore, the system in `Option 1` is underspecified and cannot be solved.
 
 
 Finally, that only leaves us with one viable options, which is `Option 4`. Using that set of inputs indeed let VALI run and reconcile data. Now that the model is running with our default fluid, we can inquire for other working fluids. 
@@ -280,23 +267,9 @@ knitr::include_graphics('Figures/working_fluid.png')
 
 ```
 
-The modern challenge of working fluid selection resides in balancing good thermal properties, long lifetime and environmental friendliness. As the latter is one of the critical parameters for all the project, let's ensure to use a fluid with a small global warming potential. The choice restricts to either Ammonia or Propylene when looking at the GWP. Even though propylene has a higher lifetime, it is considered as a safer fluid. In fact, ammonia is a very toxic chemical, being corrosive both to skin and eyes @Ammonia.  To be sure that propylene is a good choice, its thermal properties are studied in detail [propylene] (https://encyclopedia.airliquide.com/propene#safety-compatibility).
+The modern challenge of working fluid selection resides in balancing good thermal properties and environmental friendliness. As the latter is one of the critical parameters for all the project, let's ensure to use a fluid with a small global warming potential. The choice restricts to either Ammonia or Propylene when looking at the GWP. Even though propylene has a higher lifetime, it is considered as a safer fluid. In fact, ammonia is a very toxic chemical, being corrosive both to skin and eyes @Ammonia.  To be sure that propylene is a good choice, its thermal properties are studied in detail @Propene.
 Starting with the freezing point, it is at 87.96K, which is low enough to ensure that the propylene is not going to be solid in the heat pump. Its critical point is at 46 bar, which is high enough to avoid it, leading to good fluid stability within the heat pump. When working with propylene, it is important to pressurize it, to enable liquefication. Typical pressure values of propylene are around 2-9 bar. Hence, there is an increased risk when working with this gas. As for the latent heat of vaporization, it has a similar value than propane, i.e. 438.96 kJ/kg. Lastly, due to its high lifetime, it should be avoided to release propylene into the environment and its flammability should be considered when working with it.
 
-
-<!-- **Task**
-
-Adjust the model from the previous section to a second working fluid of your choice between the 7 options listed in Table 4.1.
-
-*Hints*:
-
-- Modify the working fluid (Thermod) in your simulation file.
-- Correct the pressure ratio of the compressors so that the high-pressure level corresponds to the saturation pressure for the desired condensation temperature.
-- Adjust the flow rate so that the heat pump has a heating capacity of 6000 kW (the maximum capacity of the HP is in this magnitude).
-
-**Result**
-
-Working model of the 2-stage HP for the working fluid of your choice. -->
 
 ## Data reconciliation
 
@@ -400,45 +373,4 @@ for j in results.index.values:
 
 ```
 
-The better performing heat pumps are those with propylene as a working fluid, but they are also the most expansive. The investment costs $cinv1$ and $cinv2$, as well as the coefficients $a$,$b$,$c$  will be used for the next section in all double stage heat pump models, for the assessment of the whole EPFL energy system. We will let the model decide which heat pump to use.
-
-<!-- **Given**
-
-Three AMPL files: *moes2021_P4_Rxxx.dat*, *moes2021_P4.mod* and *moes2021_P4.run*.
-
-Table with ambient temperatures for each measurement.
-
-**Task**
-
-For the performance evaluation:
-
-- Use the information in the reconciled files from VALI to complete the AMPL model.
-- Derive a regression curve that calculates the Carnot factor as a polynomial function of the ambient temperature for both stages of the HP. You are asked to derive the factors *a*, *b* and *c*. In general, you can assume:
-
-\begin{equation}
-C_{Carnot}^*(t) = a \cdot T_{amb}^2(t) - b \cdot T_{amb}(t) + c
-(\#eq:Carnot1)
-\end{equation}
-
-\begin{equation}
-C_{Carnot} = \frac {Q(t)}{W(t)} \cdot \frac {T_{cond}(t)-T_{evap}(t)}{T_{cond}(t)}
-(\#eq:Carnot2)
-\end{equation}
-
-- Make sure to identify the evaporator and the condenser temperature of both sides accordingly. You will find some hints in the AMPL code. Note that the temperatures in Eq. \@ref(eq:Carnot2) must be in K.
-
-For the cost evaluation:
-
-- Assume the worst case conditions to evaluate the area of the heat exchangers, which is then fixed, and to size the other components (e.g. compressors).
-Calculate the cost for the two-stage HP with cost functions provided in the literature or taken from previous sections. Consider only the costs of the heat exchangers and the compressor, since they are the main contributors to the investment cost of heat pumps. 
-
-**Result**
-
-Polynomial function for the Carnot factor as a function of the ambient temperature Ta.
-
-Size of the heat exchangers and compressor.
-
-Cost of the total system.
-
-Unit cost of the system per kW of heating capacity. -->
-
+The better performing heat pumps are those with propylene as a working fluid, but they are also the most expansive. The investment costs $cinv1$ and $cinv2$, as well as the coefficients $a$,$b$,$c$  will be used for the next section in all double stage heat pump models, for the assessment of the whole EPFL energy system. We will let the model decide which heat pump to use, dependind on the objective function.

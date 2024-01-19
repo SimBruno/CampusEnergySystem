@@ -68,7 +68,7 @@ f_el = 0.8 # Share of electricity demand which is converted to heat appliances
 ```
 
 
-# Conclusions
+# Conclusion
 
 The purpose of this project is to provide solutions for the new energy system of EPFL, based on different scenarios, such as decarbonization or evolution of electricity and gas price.
 

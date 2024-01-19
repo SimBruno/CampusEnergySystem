@@ -8,7 +8,7 @@ p {
 
 ## Introduction
 
-In this section, EPFL's current heat supply system ans possible improvments are investigated. At first, the reference case is presented, where heat is provided to EPFL at $T=65°C$, using the lake water as cooling and a single heat pump to provide the necessary heating demand. Then in order to improve this system, 3 scenarios are assessed:
+In this section, EPFL's current heat supply system ans possible improvments are investigated. At first, the reference case is presented, where heat is provided to EPFL at $T=65°C$ (medium loop heating), using the lake water as cooling and a single heat pump to provide the necessary heating demand. Then in order to improve this system, 3 scenarios are assessed:
 
 -   The use of the adjacent DataCenter, to recover its heat and preheat the lake water for the HP (while cooling the datacenter itself).
 
@@ -90,7 +90,7 @@ ref_payback  = '-'
 html_table_ref_data = "<h5 style='text-align:center;'>Reference case optimization results</h5>\n\n"
 html_table_ref_data += "<table border='1' style='border-collapse: collapse;'>\n"
 html_table_ref_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
-html_table_ref_data += f"<tr><td>Objective</td><td>{ref_TOTEX} CHF</td></tr>\n"
+html_table_ref_data += f"<tr><td>Objective</td><td>{ref_TOTEX} CHF/yr</td></tr>\n"
 html_table_ref_data += "</table>"
 
 HTML(html_table_ref_data)
@@ -203,9 +203,9 @@ DC_payback  = round(DC_CAPEX*20/(ref_TOTEX-DC_OPEX),2) # CAPEX is annualized ove
 html_table_dc_data = "<h5 style='text-align:center;'>DC optimization results</h5>\n\n"
 html_table_dc_data += "<table border='1' style='border-collapse: collapse;'>\n"
 html_table_dc_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
-html_table_dc_data += f"<tr><td>TOTEX</td><td>{DC_TOTEX} CHF</td></tr>\n"
-html_table_dc_data += f"<tr><td>OPEX</td><td>{DC_OPEX} CHF</td></tr>\n"
-html_table_dc_data += f"<tr><td>CAPEX</td><td>{DC_CAPEX} CHF</td></tr>\n"
+html_table_dc_data += f"<tr><td>TOTEX</td><td>{DC_TOTEX} CHF/yr</td></tr>\n"
+html_table_dc_data += f"<tr><td>OPEX</td><td>{DC_OPEX} CHF/yr</td></tr>\n"
+html_table_dc_data += f"<tr><td>CAPEX</td><td>{DC_CAPEX} CHF/yr</td></tr>\n"
 html_table_dc_data += f"<tr><td>HEX Area</td><td>{DC_AHEDC} m<sup>2</sup></td></tr>\n"
 html_table_dc_data += f"<tr><td>DT min</td><td>{DC_DTmin} K</td></tr>\n"
 html_table_dc_data += f"<tr><td>Payback time</td><td>{DC_payback} years</td></tr>\n"
@@ -233,8 +233,6 @@ As mentioned the incoming air flow towards the EPFL ($T_{ext}$) can be preheated
 Thanks to this air-ventilation preheating, the heat demand will be reduced according to the following equation:
 
 $$ Q(t)=A_{th}[U(T_{int}-T_{ext}(t))+m_{air}cp_{air}(T_{int}-T_{ext,new}(t))-k_{sun}Irr(t)-Q_{ppl}(t)]-Q_{el}(t) $$
-
-Contrary to the two previous cases, the heat demand is now varying with time.
 
 The optimization problem still search to minimize the TOTEX. The problem is as follows:
 
@@ -304,9 +302,9 @@ vent_payback  = round(vent_CAPEX*20/(ref_OPEX-vent_OPEX),2) # CAPEX is annualize
 html_table_vent_data = "<h5 style='text-align:center;'>Ventilation optimization results</h5>\n\n"
 html_table_vent_data += "<table border='1' style='border-collapse: collapse;'>\n"
 html_table_vent_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
-html_table_vent_data += f"<tr><td>TOTEX</td><td>{vent_TOTEX} CHF</td></tr>\n"
-html_table_vent_data += f"<tr><td>OPEX</td><td>{vent_OPEX} CHF</td></tr>\n"
-html_table_vent_data += f"<tr><td>CAPEX</td><td>{vent_CAPEX} CHF</td></tr>\n"
+html_table_vent_data += f"<tr><td>TOTEX</td><td>{vent_TOTEX} CHF/yr</td></tr>\n"
+html_table_vent_data += f"<tr><td>OPEX</td><td>{vent_OPEX} CHF/yr</td></tr>\n"
+html_table_vent_data += f"<tr><td>CAPEX</td><td>{vent_CAPEX} CHF/yr</td></tr>\n"
 html_table_vent_data += f"<tr><td>A<sub>vent</sub></td><td>{vent_AHEDC} m<sup>2</sup></td></tr>\n"
 html_table_vent_data += f"<tr><td>DT<sub>vent</sub> min</sub></td><td>{vent_DTminVent} K</td></tr>\n"
 html_table_vent_data += f"<tr><td>Payback time</td><td>{vent_payback} years</td></tr>\n"
@@ -406,9 +404,9 @@ vent_HP_payback  = round(vent_HP_CAPEX*20/(ref_OPEX-vent_HP_OPEX),2) #capex is a
 html_table_vent_HP_data = "<h5 style='text-align:center;'>Ventilation with HP optimization results</h5>\n\n"
 html_table_vent_HP_data += "<table border='1' style='border-collapse: collapse;'>\n"
 html_table_vent_HP_data += "<tr><th>Variable</th><th>Value</th></tr>\n"
-html_table_vent_HP_data += f"<tr><td>TOTEX</td><td>{vent_HP_TOTEX} CHF</td></tr>\n"
-html_table_vent_HP_data += f"<tr><td>OPEX</td><td>{vent_HP_OPEX } CHF</td></tr>\n"
-html_table_vent_HP_data += f"<tr><td>CAPEX</td><td>{vent_HP_CAPEX} CHF</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>TOTEX</td><td>{vent_HP_TOTEX} CHF/yr</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>OPEX</td><td>{vent_HP_OPEX } CHF/yr</td></tr>\n"
+html_table_vent_HP_data += f"<tr><td>CAPEX</td><td>{vent_HP_CAPEX} CHF/yr</td></tr>\n"
 html_table_vent_HP_data += f"<tr><td>CAPEX<sub>HP</sub></td><td>{vent_HP_HPcost} CHF</td></tr>\n"
 html_table_vent_HP_data += f"<tr><td>A<sub>vent</sub></td><td>{vent_HP_AHEDC} m<sup>2</sup></td></tr>\n"
 html_table_vent_HP_data += f"<tr><td>DT<sub>vent</sub> min</td><td>{vent_HP_DTminVent} K</td></tr>\n"
@@ -445,4 +443,26 @@ Html_file.write(html_table_summary)
 Html_file.close()
 
 HTML(html_table_summary)
+```
+
+
+```{python, eval = T, echo = F, results='hide'}
+import pandas as pd
+import plotly.express as px
+df = px.data.medals_wide()
+
+data = {
+    'Case': ['ref case', 'DC case', 'vent case', 'vent_HP case'],
+    'OPEX [CHF/year]': [627362.05, 601755.22, 572749.68, 489240.35],
+    'CAPEX [CHF/year]': [0, 12064.6, 12099.71, 26869.12],
+    'TOTEX [CHF/year]': [627362.05, 613819.82, 584849.39, 516109.47]
+}
+df1 = pd.DataFrame(data)
+ 
+fig = px.bar(df1, x="Case", 
+             y=["OPEX [CHF/year]", "CAPEX [CHF/year]"], 
+             title="Cost Visualisation for the 4 Different Cases")
+fig = fig.update_layout(yaxis_title="Cost [CHF/year]")
+
+fig.show()
 ```
