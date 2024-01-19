@@ -59,6 +59,88 @@ class criteria2(Enum):
 In this section, the whole EPFL campus is going to be modelled. Different technologies, such as PV panels, boilers, heat pumps with different fluids and a double stage heat pump, solide oxyde fuel cells, and solar thermal collectors, are investigated to satisfy EPFL's needs in electricty and heat. The different technologies are integrated into the model, considering their performance, size and cost, enabling thereby to make projections on Capex, Opex and Envex. The goal of the section is to conclude the analysis, by giving a final scenario which can be optimized according to the given need. More precisely, a scenario investigating the lowest operating cost, one the lowest capital expenditure and one for the lowest environmental emissions. Finally, a sensitivity analysis on the ressource prices and environmental impacts is conducted to examine the influence of the different parameters on the solution. 
 The system on which the study is conducted, is the on with the heat pump heat recovery system on the ventilation side.
 
+## Technologies 
+
+Here are the different technologies which can be selected during the model:
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-baqh{text-align:center;vertical-align:top}
+.tg .tg-c3ow{border-color:inherit;text-align:center;vertical-align:top}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-c3ow">Technology</th>
+    <th class="tg-c3ow">cinv1 [CHF/yr]</th>
+    <th class="tg-c3ow">cinv2 [CHF/yr]</th>
+    <th class="tg-baqh">Efficiency [-]</th>
+    <th class="tg-c3ow">Sources</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-c3ow">Boiler</td>
+    <td class="tg-c3ow">330.6</td>
+    <td class="tg-c3ow">9.1</td>
+    <td class="tg-baqh">0.9</td>
+    <td class="tg-c3ow">@Technologies, @SwissEnergyscope</td>
+  </tr>
+  <tr>
+    <td class="tg-baqh">STC</td>
+    <td class="tg-baqh">30.2</td>
+    <td class="tg-baqh">39.6</td>
+    <td class="tg-baqh">0.75</td>
+    <td class="tg-baqh"><span style="font-weight:400;font-style:normal;text-decoration:none">@Technologies, @</span>SwissEnergyscope</td>
+  </tr>
+  <tr>
+    <td class="tg-baqh">PV</td>
+    <td class="tg-baqh">143.3</td>
+    <td class="tg-baqh">457.6</td>
+    <td class="tg-baqh">0.15</td>
+    <td class="tg-baqh"><span style="font-weight:400;font-style:normal;text-decoration:none">@Technologies, @</span>SwissEnergyscope</td>
+  </tr>
+  <tr>
+    <td class="tg-baqh">HP with propane (LT)</td>
+    <td class="tg-baqh">494.2</td>
+    <td class="tg-baqh">91110</td>
+    <td class="tg-baqh">a = 0; b=0.00098; c=0.3075</td>
+    <td class="tg-baqh"><span style="font-weight:400;font-style:normal;text-decoration:none">@Technologies, @</span>SwissEnergyscope</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">HP with propane (MT)</td>
+    <td class="tg-c3ow">494.2</td>
+    <td class="tg-c3ow">99590</td>
+    <td class="tg-baqh">a=0; b=0; c=0.34269</td>
+    <td class="tg-c3ow"><span style="font-weight:400;font-style:normal;text-decoration:none">@Technologies, @</span>SwissEnergyscope</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">HP with propylene (LT)</td>
+    <td class="tg-c3ow">494.2</td>
+    <td class="tg-c3ow">91170</td>
+    <td class="tg-baqh">a=0.00064; b=0; c=0.405</td>
+    <td class="tg-c3ow"><span style="font-weight:400;font-style:normal;text-decoration:none">@Technologies, @</span>SwissEnergyscope</td>
+  </tr>
+  <tr>
+    <td class="tg-baqh">HP with propylene (MT)</td>
+    <td class="tg-baqh">494.2</td>
+    <td class="tg-baqh">116560</td>
+    <td class="tg-baqh">a=1.6e-5; b=0; c=0.5</td>
+    <td class="tg-baqh"><span style="font-weight:400;font-style:normal;text-decoration:none">@Technologies, </span>@SwissEnergyscope</td>
+  </tr>
+  <tr>
+    <td class="tg-baqh">SOFC</td>
+    <td class="tg-baqh">4224</td>
+    <td class="tg-baqh">28540</td>
+    <td class="tg-baqh">0.5 (elec); 0.4(heat)</td>
+    <td class="tg-baqh"><span style="font-weight:400;font-style:normal;text-decoration:none">@Technologies, @</span>SwissEnergyscope</td>
+  </tr>
+</tbody>
+</table>
 
 ## Scenario analysis
 
@@ -76,7 +158,8 @@ TEchnologies used:
 ### Scenario 5: TOTEX optimization (with ENVEX) -->
 
 ### Scenario 1 CAPEX
-For the first scenario, the capital expenditure is minimized. The table below summarizes the different utilities which are chosen by the model, and their corresponding heat load:
+For the first scenario, the capital expenditure is minimized. The table below summarizes the different technologies which can be chosen by the model and their operating and investment cost:
+
 
 
 
