@@ -1,5 +1,6 @@
 # Specific to this project
 
+codes_02_heat_recovery/results/*
 codes_03_HP_modeling/venv
 codes_03_HP_modeling/vali_files/*
 !R-290.bls
@@ -40,6 +41,7 @@ libs
 !ipese/hypothesis.html
 __pycache__
 *.pyc
+
 
 # Covers JetBrains IDEs
 .idea

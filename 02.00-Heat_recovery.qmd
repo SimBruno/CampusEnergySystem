@@ -440,5 +440,9 @@ for case in cases:
 
 html_table_summary += "</table>"
 
+Html_file= open(os.path.join(os.getcwd(),"codes_02_heat_recovery","results","table_summary"),"w")
+Html_file.write(html_table_summary)
+Html_file.close()
+
 HTML(html_table_summary)
 ```
