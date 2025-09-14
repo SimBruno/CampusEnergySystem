@@ -17,7 +17,7 @@ How can EPFL minimize cost (TOTEX) and CO₂ emissions while ensuring comfort an
 Electrification becomes far more attractive as the grid’s emissions factor drops; gas price spikes reduce optimal emissions at moderate cost increases; electricity price spikes push the system back toward gas and raise both cost and emissions.
 
 
-## Methods (pipeline)
+## Methods
 
 ### 1) Building thermal demand modeling  
 Hourly heating demand per building was computed from steady-state energy balances with the following contributions:  
